@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BCB40CB22993B3A700685605 /* SimilarShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CB12993B3A700685605 /* SimilarShape.swift */; };
+		BCB40CB42993B4A100685605 /* FabFluidView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CB32993B4A100685605 /* FabFluidView.swift */; };
+		BCB40CB92993B5B800685605 /* Extension+CGPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CB82993B5B800685605 /* Extension+CGPoint.swift */; };
+		BCB40CBB2993B5D900685605 /* AnimatableDataShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CBA2993B5D900685605 /* AnimatableDataShape.swift */; };
+		BCB40CBD2993B83000685605 /* MorphCircle.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CBC2993B83000685605 /* MorphCircle.swift */; };
 		BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */; };
 		BCBEB588297ED92E00C03B9C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBEB587297ED92E00C03B9C /* ContentView.swift */; };
 		BCBEB58A297ED92F00C03B9C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB589297ED92F00C03B9C /* Assets.xcassets */; };
@@ -16,6 +21,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BCB40CB12993B3A700685605 /* SimilarShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarShape.swift; sourceTree = "<group>"; };
+		BCB40CB32993B4A100685605 /* FabFluidView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FabFluidView.swift; sourceTree = "<group>"; };
+		BCB40CB82993B5B800685605 /* Extension+CGPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+CGPoint.swift"; sourceTree = "<group>"; };
+		BCB40CBA2993B5D900685605 /* AnimatableDataShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatableDataShape.swift; sourceTree = "<group>"; };
+		BCB40CBC2993B83000685605 /* MorphCircle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorphCircle.swift; sourceTree = "<group>"; };
 		BCBEB582297ED92E00C03B9C /* SSRadialMenu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SSRadialMenu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuApp.swift; sourceTree = "<group>"; };
 		BCBEB587297ED92E00C03B9C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -37,6 +47,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BCB40CB02993B38A00685605 /* FluidAnimation */ = {
+			isa = PBXGroup;
+			children = (
+				BCB40CB52993B56300685605 /* Library */,
+				BCB40CB32993B4A100685605 /* FabFluidView.swift */,
+			);
+			path = FluidAnimation;
+			sourceTree = "<group>";
+		};
+		BCB40CB52993B56300685605 /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				BCB40CB12993B3A700685605 /* SimilarShape.swift */,
+				BCB40CB82993B5B800685605 /* Extension+CGPoint.swift */,
+				BCB40CBA2993B5D900685605 /* AnimatableDataShape.swift */,
+				BCB40CBC2993B83000685605 /* MorphCircle.swift */,
+			);
+			path = Library;
+			sourceTree = "<group>";
+		};
 		BCBEB579297ED92E00C03B9C = {
 			isa = PBXGroup;
 			children = (
@@ -77,6 +107,7 @@
 		BCBEB594297ED99900C03B9C /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				BCB40CB02993B38A00685605 /* FluidAnimation */,
 				BCBEB595297ED9BD00C03B9C /* MenuLayout.swift */,
 				BCBEB597297ED9C600C03B9C /* FabMenuView.swift */,
 			);
@@ -156,7 +187,12 @@
 				BCBEB588297ED92E00C03B9C /* ContentView.swift in Sources */,
 				BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */,
 				BCBEB596297ED9BD00C03B9C /* MenuLayout.swift in Sources */,
+				BCB40CB42993B4A100685605 /* FabFluidView.swift in Sources */,
 				BCBEB598297ED9C600C03B9C /* FabMenuView.swift in Sources */,
+				BCB40CB92993B5B800685605 /* Extension+CGPoint.swift in Sources */,
+				BCB40CB22993B3A700685605 /* SimilarShape.swift in Sources */,
+				BCB40CBD2993B83000685605 /* MorphCircle.swift in Sources */,
+				BCB40CBB2993B5D900685605 /* AnimatableDataShape.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

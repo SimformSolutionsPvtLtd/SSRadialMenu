@@ -11,7 +11,8 @@ import SwiftUI
 struct SSRadialMenuApp: App {
     var body: some Scene {
         WindowGroup {
-            FabMenuView()
+        //   FabMenuView()
+            FabFluidView()
         }
     }
 }

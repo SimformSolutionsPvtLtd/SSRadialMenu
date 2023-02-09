@@ -15,12 +15,20 @@ struct MenuButton {
     let action: () -> Void
 }
 
+//var points = [CGPoint]()
+//func getPoint(newpoints: [CGPoint]) {
+//    point = newpoints
+//}
+
 struct MenuStyle: ViewModifier {
     @Binding var isShowing: Bool
     let menuPopStyle: MenuPopStyle
     let distance: CGFloat
     let autoClose: Bool
-    let buttons: [MenuButton]
+//    let buttons: [MenuButton]
+    let buttons: [any View]
+    
+    @State private var isDragging = false
     
     func body(content: Content) -> some View {
         ZStack {
@@ -32,7 +40,6 @@ struct MenuStyle: ViewModifier {
     private var angleDelta: Double {
         switch menuPopStyle {
         case .linear(let anchor):
-            print("##anchor", anchor.anchorPosition)
             return anchor.anchorPosition
         case .circular(let anchor):
             let span = anchor.endAngle - anchor.startAngle
@@ -44,7 +51,6 @@ struct MenuStyle: ViewModifier {
     }
     
     private func pointFor(angleDelta: Double, index: Int) -> CGPoint {
-        
         switch menuPopStyle {
         case .linear(let anchor):
             let space = distance * Double(index + 1)
@@ -58,6 +64,7 @@ struct MenuStyle: ViewModifier {
             let angle = anchor.startAngle + angleDelta * Double(index)
             let sine = sin(angle.radians)
             let cose = cos(angle.radians)
+            print("CGPOINT::",CGPoint(x: distance * cose, y: (distance * sine)))
             return CGPoint(x: distance * cose, y: (distance * sine))
         }
         
@@ -68,7 +75,21 @@ struct MenuStyle: ViewModifier {
         
         ZStack {
             ForEach(0..<buttons.count, id: \.self) { i in
-                menuButtonStyle(buttons[i],offset: pointFor(angleDelta: angle, index: i))
+               // menuButtonStyle(buttons[i],offset: pointFor(angleDelta: angle, index: i))
+               menuShape()
+                    .frame(width: 30)
+                    .foregroundColor(isShowing ? .black : .clear)
+                    .cornerRadius(.infinity)
+                    .offset(x: isShowing ? pointFor(angleDelta: angle, index: i).x : 0,
+                            y: isShowing ? pointFor(angleDelta: angle, index: i).y :0)
+                  //  .opacity(isShowing ? 1 : 0)
+                    .animation(.spring().speed(1), value: isShowing)
+                    .onChange(of: isShowing, perform: { newValue in
+                        isDragging = true
+                        withAnimation(.interpolatingSpring(stiffness: 50, damping: 15)) {
+                            self.isDragging = false
+                        }
+                    })
             }
         }
         .onAppear {
@@ -76,15 +97,25 @@ struct MenuStyle: ViewModifier {
         }
     }
     
-    private func menuButtonStyle(_ button: MenuButton,
+    func menuShape() -> some View {
+        func path(in rect: CGRect) -> Path {
+            return MorphCircle(isDragging: isDragging, isMenu: false).path(in: rect)
+        }
+
+        return GeometryReader { proxy in
+            let rect = proxy.frame(in: CoordinateSpace.local)
+            return AnyView(SimilarShape(path: path(in: rect)))
+        }
+    }
+    
+    private func menuButtonStyle(_ button: any View,
                                  offset: CGPoint) -> some View {
-        return Image(systemName: button.image)
-            .frame(width: button.size, height: button.size)
-            .background(button.color)
+        return Image(systemName: button.customImg)
+            .frame(width: button.customSize, height: button.customSize)
             .cornerRadius(.infinity)
             .shadow(color: .gray, radius: 2, x: 1, y: 1)
             .onTapGesture {
-                button.action()
+             //   button.action()
                 if autoClose {
                     isShowing.toggle()
                 }
@@ -154,7 +185,7 @@ extension View {
                     menuPopStyle: MenuStyle.MenuPopStyle,
                     distance: CGFloat,
                     autoClose: Bool,
-                    buttons: [MenuButton]) -> some View {
+                    buttons: [any View]) -> some View {
         self.modifier(MenuStyle(isShowing: isShowing,
                                 menuPopStyle: menuPopStyle,
                                 distance: distance,
