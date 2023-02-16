@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct FabFluidView: View {
-    @State private var isShowing = false
+    @State private var isShowing = true
     @State var isDragging: Bool = false
     @State private var isMenuDragging = false
     @State private var enableMenuButtons = false
@@ -31,11 +31,10 @@ struct FabFluidView: View {
                     }
                 }
                 .radialMenu(isShowing: $isShowing, menuPopStyle: .circular(.topLeft), distance: 100, autoClose: true, buttons: [
-                        menuShape()
-                            .zIndex(2), menuShape().zIndex(2),menuShape().zIndex(2)
-                        
+                    menuShape(), menuShape(),menuShape()
+
                 ])
-                .zIndex(5)
+
                 .onChange(of: isShowing) { newValue in
                     isMenuDragging = true
                     withAnimation(.interpolatingSpring(stiffness: 50, damping: 15)) {
@@ -47,7 +46,7 @@ struct FabFluidView: View {
 
     func menuShape() -> some View {
         func path(in rect: CGRect) -> Path {
-            return MorphCircle(isDragging: isDragging, isMenu: false).path(in: rect)
+            return MorphCircle(isDragging: isDragging, isMenu: true).path(in: rect)
         }
 
         return GeometryReader { proxy in

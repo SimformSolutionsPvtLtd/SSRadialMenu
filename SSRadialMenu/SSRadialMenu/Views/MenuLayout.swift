@@ -77,9 +77,11 @@ struct MenuStyle: ViewModifier {
             ForEach(0..<buttons.count, id: \.self) { i in
                // menuButtonStyle(buttons[i],offset: pointFor(angleDelta: angle, index: i))
                menuShape()
+                    .rotationEffect(.degrees(180))
                     .frame(width: 30)
-                    .foregroundColor(isShowing ? .black : .clear)
+                   // .foregroundColor(isShowing ? .black : .clear)
                     .cornerRadius(.infinity)
+                   // .position(x: pointFor(angleDelta: angle, index: i).x, y: pointFor(angleDelta: angle, index: i).y)
                     .offset(x: isShowing ? pointFor(angleDelta: angle, index: i).x : 0,
                             y: isShowing ? pointFor(angleDelta: angle, index: i).y :0)
                   //  .opacity(isShowing ? 1 : 0)
@@ -92,6 +94,8 @@ struct MenuStyle: ViewModifier {
                     })
             }
         }
+        .frame(height: 30)
+      //  .background(.purple)
         .onAppear {
             print("##angleDelta:", angle)
         }
@@ -99,7 +103,7 @@ struct MenuStyle: ViewModifier {
     
     func menuShape() -> some View {
         func path(in rect: CGRect) -> Path {
-            return MorphCircle(isDragging: isDragging, isMenu: false).path(in: rect)
+            return MorphCircle(isDragging: isDragging, isMenu: true).path(in: rect)
         }
 
         return GeometryReader { proxy in
@@ -120,8 +124,8 @@ struct MenuStyle: ViewModifier {
                     isShowing.toggle()
                 }
             }
-            .offset(x: isShowing ? offset.x : 0,
-                    y: isShowing ? offset.y :0)
+//            .offset(x: isShowing ? offset.x : 0,
+//                    y: isShowing ? offset.y :0)
             .opacity(isShowing ? 1 : 0)
             .animation(.spring().speed(1), value: isShowing)
     }

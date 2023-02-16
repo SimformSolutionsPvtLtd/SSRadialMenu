@@ -18,7 +18,7 @@ struct MorphCircle: Shape {
 //    let action: () -> Void
     
     init(isDragging: Bool, isMenu: Bool) {
-        self.angleIntervals = Array(stride(from: CGFloat(0.0), to: 360.0, by: isMenu ? 36 : 15))
+        self.angleIntervals = Array(stride(from: CGFloat(0.0), to: 360.0, by:  24))
         self.circlePoints = angleIntervals
             .map { $0.degreesToRadians }
             .map { (cos($0), sin($0)) }
@@ -38,13 +38,30 @@ struct MorphCircle: Shape {
             .map { $0 + center }
         
         if isMenu {
-            let draggingOffset = CGPoint(x: -center.x, y: -center.y)
-            points[6] = lerp(points[6], draggingOffset, by: self.animatableData )
+            let draggingOffset5 = CGPoint(x: -10, y: 80)
+            points[5] = lerp(points[5], draggingOffset5, by: self.animatableData)
         } else {
-            let draggingOffset = center
-        //    points[18] = lerp(points[18], draggingOffset, by: self.animatableData)
-            points[14] = lerp(points[14], draggingOffset, by: self.animatableData)
-          //  points[10] = lerp(points[10], draggingOffset, by: self.animatableData)
+        
+            /// for point[11] done
+            let draggingOffset11 = CGPoint(x: center.x, y: 2*center.y)
+            points[11] = lerp(points[11], draggingOffset11, by: self.animatableData)
+        
+        /// for point[5] done
+//            let draggingOffset5 = CGPoint(x: -10, y: 80)
+//            points[5] = lerp(points[5], draggingOffset5, by: self.animatableData)
+        
+        /// for point[14] done
+//            let draggingOffset14 = CGPoint(x: 10, y: 30)
+//            points[14] = lerp(points[14], draggingOffset14, by: self.animatableData)
+//
+//            let draggingOffset8= CGPoint(x: -40, y: 10)
+//            points[8] = lerp(points[8], draggingOffset8, by: self.animatableData)
+        
+        
+ //       print("draggingOffset:", draggingOffset)
+     //   print("point[12] lerped:", points[12])
+        
+        //  points[10] = lerp(points[10], draggingOffset, by: self.animatableData)
            // print("point[10]:", points[10])
         }
         return interpolateWithCatmullRom(points)
@@ -79,6 +96,20 @@ struct MorphCircle: Shape {
             if index == points.startIndex {
                 path.move(to: point1)
             }
+//            if index == 11 {
+//                print("Point[11]")
+//                print("p1:", point1)
+//                print("cp1:", controlPoint1)
+//                print("cp2:", controlPoint2)
+//                print("p2:", point2)
+//            }
+            if index == 5 {
+                print("Point[5]")
+                print("p1:", point1)
+                print("cp1:", controlPoint1)
+                print("cp2:", controlPoint2)
+                print("p2:", point2)
+            }
             path.addCurve(to: point2, control1: controlPoint1, control2: controlPoint2)
             
           
@@ -89,12 +120,19 @@ struct MorphCircle: Shape {
     
     fileprivate func lerp<T: BinaryFloatingPoint>(_ fromValue: T, _ toValue: T, by amount: T) -> T {
         return fromValue + (toValue - fromValue) * amount
+//                50 + (25-50)
+//                25 + (25-25)
+                    
     }
 
     fileprivate func lerp(_ fromValue: CGPoint, _ toValue: CGPoint, by amount: CGFloat) -> CGPoint {
+//                            (50,25)
         let x = lerp(fromValue.x, toValue.x, by: amount)
+//                        50          25
         let y = lerp(fromValue.y, toValue.y, by: amount)
+//                        25          25
         return CGPoint(x: x, y: y)
+        
     }
 
 }
