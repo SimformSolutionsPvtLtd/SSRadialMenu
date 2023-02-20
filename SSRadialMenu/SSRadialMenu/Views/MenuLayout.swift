@@ -25,10 +25,11 @@ struct MenuStyle: ViewModifier {
     let menuPopStyle: MenuPopStyle
     let distance: CGFloat
     let autoClose: Bool
+    let fabSize: CGFloat
 //    let buttons: [MenuButton]
-    let buttons: [any View]
+    let buttons: [MenuButton]
     
-    @State private var isDragging = false
+    @Binding var isMenuDragging: Bool
     
     func body(content: Content) -> some View {
         ZStack {
@@ -53,19 +54,23 @@ struct MenuStyle: ViewModifier {
     private func pointFor(angleDelta: Double, index: Int) -> CGPoint {
         switch menuPopStyle {
         case .linear(let anchor):
-            let space = distance * Double(index + 1)
+            let space = (fabSize) + distance * CGFloat(index + 1) + CGFloat(30 * index)
             switch anchor {
-            case .popUp: return CGPoint(x: 0, y: -space)
-            case .popDown: return CGPoint(x: 0, y: space)
-            case .popLeft: return CGPoint(x: -space, y: 0)
-            case .popRight: return CGPoint(x: space, y: 0)
+            case .popUp: return CGPoint(x: 0, y: -(space - 15))
+            case .popDown: return CGPoint(x: 0, y: space - 15)
+            case .popLeft: return CGPoint(x: -(space - 15), y: 0)
+            case .popRight: return CGPoint(x: space - 15, y: 0)
             }
         case .circular(let anchor):
             let angle = anchor.startAngle + angleDelta * Double(index)
             let sine = sin(angle.radians)
             let cose = cos(angle.radians)
-            print("CGPOINT::",CGPoint(x: distance * cose, y: (distance * sine)))
-            return CGPoint(x: distance * cose, y: (distance * sine))
+            print("startAngle:", anchor.startAngle)
+            print("angle:", angle)
+            print("sine:", sine)
+            print("cos:", cose)
+            print("point::",CGPoint(x: ( distance * cose), y:  ( distance * sine)))
+            return CGPoint(x: ( distance * cose), y:  ( distance * sine))
         }
         
     }
@@ -75,27 +80,24 @@ struct MenuStyle: ViewModifier {
         
         ZStack {
             ForEach(0..<buttons.count, id: \.self) { i in
-               // menuButtonStyle(buttons[i],offset: pointFor(angleDelta: angle, index: i))
+            //    menuButtonStyle(buttons[i],offset: pointFor(angleDelta: angle, index: i))
                menuShape()
-                    .rotationEffect(.degrees(180))
+                    .foregroundColor(.purple)
                     .frame(width: 30)
-                   // .foregroundColor(isShowing ? .black : .clear)
                     .cornerRadius(.infinity)
-                   // .position(x: pointFor(angleDelta: angle, index: i).x, y: pointFor(angleDelta: angle, index: i).y)
                     .offset(x: isShowing ? pointFor(angleDelta: angle, index: i).x : 0,
                             y: isShowing ? pointFor(angleDelta: angle, index: i).y :0)
-                  //  .opacity(isShowing ? 1 : 0)
-                    .animation(.spring().speed(1), value: isShowing)
+                    .opacity(isShowing ? 1 : 0)
+                    .animation(.spring().speed(0.6), value: isShowing)
                     .onChange(of: isShowing, perform: { newValue in
-                        isDragging = true
+                        isMenuDragging = true
                         withAnimation(.interpolatingSpring(stiffness: 50, damping: 15)) {
-                            self.isDragging = false
+                            self.isMenuDragging = false
                         }
                     })
             }
         }
         .frame(height: 30)
-      //  .background(.purple)
         .onAppear {
             print("##angleDelta:", angle)
         }
@@ -103,7 +105,7 @@ struct MenuStyle: ViewModifier {
     
     func menuShape() -> some View {
         func path(in rect: CGRect) -> Path {
-            return MorphCircle(isDragging: isDragging, isMenu: true).path(in: rect)
+            return MorphCircle(isDragging: isMenuDragging,isMenu: true).path(in: rect)
         }
 
         return GeometryReader { proxy in
@@ -188,13 +190,13 @@ extension View {
     func radialMenu(isShowing: Binding<Bool>,
                     menuPopStyle: MenuStyle.MenuPopStyle,
                     distance: CGFloat,
-                    autoClose: Bool,
-                    buttons: [any View]) -> some View {
+                    autoClose: Bool, isMenuDragging: Binding<Bool>,fabSize: CGFloat,
+                    buttons: [MenuButton]) -> some View {
         self.modifier(MenuStyle(isShowing: isShowing,
                                 menuPopStyle: menuPopStyle,
                                 distance: distance,
-                                autoClose: autoClose,
-                                buttons: buttons))
+                                autoClose: autoClose, fabSize: fabSize,
+                                buttons: buttons, isMenuDragging: isMenuDragging))
     }
 }
 

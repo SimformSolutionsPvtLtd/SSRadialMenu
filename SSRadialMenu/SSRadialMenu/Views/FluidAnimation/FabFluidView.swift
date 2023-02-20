@@ -8,16 +8,17 @@
 import SwiftUI
 
 struct FabFluidView: View {
-    @State private var isShowing = true
+    @State private var isShowing = false
     @State var isDragging: Bool = false
     @State private var isMenuDragging = false
     @State private var enableMenuButtons = false
+    
     var body: some View {
 
         ZStack(alignment: .center) {
 
             fabShape()
-                .frame(width: 50,height: 50)
+                .frame(width: 60,height: 60)
                 .foregroundColor(customColor)
                 .overlay(content: {
                     Image(systemName: customImg)
@@ -26,14 +27,23 @@ struct FabFluidView: View {
                 .onTapGesture {
                     isShowing.toggle()
                     isDragging = true
-                    withAnimation(.interpolatingSpring(stiffness: 150, damping: 5 )) {
+                    withAnimation(.interpolatingSpring(stiffness: 150, damping: 5)) {
                         self.isDragging = false
                     }
                 }
-                .radialMenu(isShowing: $isShowing, menuPopStyle: .circular(.topLeft), distance: 100, autoClose: true, buttons: [
-                    menuShape(), menuShape(),menuShape()
-
+            
+                .radialMenu(isShowing: $isShowing, menuPopStyle: .circular(.topLeft), distance: 50, autoClose: true, isMenuDragging: $isMenuDragging, fabSize: 60, buttons: [
+                    MenuButton(color: .purple, image: "", size: 30, action: {
+                        //
+                    }),
+                    MenuButton(color: .purple, image: "", size: 30, action: {
+                        //
+                    }),
+                    MenuButton(color: .purple, image: "", size: 30, action: {
+                        //
+                    })
                 ])
+               
 
                 .onChange(of: isShowing) { newValue in
                     isMenuDragging = true
@@ -44,20 +54,20 @@ struct FabFluidView: View {
         }
     }
 
-    func menuShape() -> some View {
-        func path(in rect: CGRect) -> Path {
-            return MorphCircle(isDragging: isDragging, isMenu: true).path(in: rect)
-        }
-
-        return GeometryReader { proxy in
-            let rect = proxy.frame(in: CoordinateSpace.local)
-            return AnyView(SimilarShape(path: path(in: rect)))
-        }
-    }
+//    func menuShape() -> some View {
+//        func path(in rect: CGRect) -> Path {
+//            return MorphCircle(isDragging: isDragging).path(in: rect)
+//        }
+//
+//        return GeometryReader { proxy in
+//            let rect = proxy.frame(in: CoordinateSpace.local)
+//            return AnyView(SimilarShape(path: path(in: rect)))
+//        }
+//    }
     
     func fabShape() -> some View {
         func path(in rect: CGRect) -> Path {
-            return MorphCircle(isDragging: isDragging, isMenu: false).path(in: rect)
+            return MorphCircle(isDragging: isDragging,isMenu: false).path(in: rect)
         }
 
         return GeometryReader { proxy in
