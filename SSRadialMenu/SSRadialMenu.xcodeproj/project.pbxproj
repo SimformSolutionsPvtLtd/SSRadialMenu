@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BC7089DF29ACE93900D7D331 /* DynamicLiquidMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7089DE29ACE93900D7D331 /* DynamicLiquidMenu.swift */; };
 		BCB40CB22993B3A700685605 /* SimilarShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CB12993B3A700685605 /* SimilarShape.swift */; };
 		BCB40CB42993B4A100685605 /* FabFluidView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CB32993B4A100685605 /* FabFluidView.swift */; };
 		BCB40CB92993B5B800685605 /* Extension+CGPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CB82993B5B800685605 /* Extension+CGPoint.swift */; };
@@ -21,6 +22,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BC7089DE29ACE93900D7D331 /* DynamicLiquidMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicLiquidMenu.swift; sourceTree = "<group>"; };
 		BCB40CB12993B3A700685605 /* SimilarShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarShape.swift; sourceTree = "<group>"; };
 		BCB40CB32993B4A100685605 /* FabFluidView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FabFluidView.swift; sourceTree = "<group>"; };
 		BCB40CB82993B5B800685605 /* Extension+CGPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+CGPoint.swift"; sourceTree = "<group>"; };
@@ -47,6 +49,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BC7089DD29ACE91900D7D331 /* DynamicLiquidMenu */ = {
+			isa = PBXGroup;
+			children = (
+				BC7089DE29ACE93900D7D331 /* DynamicLiquidMenu.swift */,
+			);
+			path = DynamicLiquidMenu;
+			sourceTree = "<group>";
+		};
 		BCB40CB02993B38A00685605 /* FluidAnimation */ = {
 			isa = PBXGroup;
 			children = (
@@ -86,6 +96,7 @@
 		BCBEB584297ED92E00C03B9C /* SSRadialMenu */ = {
 			isa = PBXGroup;
 			children = (
+				BC7089DD29ACE91900D7D331 /* DynamicLiquidMenu */,
 				BCBEB594297ED99900C03B9C /* Views */,
 				BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */,
 				BCBEB587297ED92E00C03B9C /* ContentView.swift */,
@@ -190,6 +201,7 @@
 				BCB40CB42993B4A100685605 /* FabFluidView.swift in Sources */,
 				BCBEB598297ED9C600C03B9C /* FabMenuView.swift in Sources */,
 				BCB40CB92993B5B800685605 /* Extension+CGPoint.swift in Sources */,
+				BC7089DF29ACE93900D7D331 /* DynamicLiquidMenu.swift in Sources */,
 				BCB40CB22993B3A700685605 /* SimilarShape.swift in Sources */,
 				BCB40CBD2993B83000685605 /* MorphCircle.swift in Sources */,
 				BCB40CBB2993B5D900685605 /* AnimatableDataShape.swift in Sources */,
