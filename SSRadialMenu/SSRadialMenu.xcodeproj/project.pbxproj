@@ -10,7 +10,7 @@
 		7D28060B2B2333E5000820B9 /* SSRadialMenuViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D28060A2B2333E5000820B9 /* SSRadialMenuViewModel.swift */; };
 		7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D28060D2B23341A000820B9 /* MenuItemModel.swift */; };
 		7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */; };
-		7D85930D2B21C6510078C68D /* MenuButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D85930C2B21C6510078C68D /* MenuButtonView.swift */; };
+		7D85930D2B21C6510078C68D /* RadialButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D85930C2B21C6510078C68D /* RadialButtonView.swift */; };
 		BC7089DF29ACE93900D7D331 /* DynamicLiquidMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7089DE29ACE93900D7D331 /* DynamicLiquidMenu.swift */; };
 		BCB40CB22993B3A700685605 /* SimilarShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CB12993B3A700685605 /* SimilarShape.swift */; };
 		BCB40CB42993B4A100685605 /* FabFluidView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB40CB32993B4A100685605 /* FabFluidView.swift */; };
@@ -28,7 +28,7 @@
 		7D28060A2B2333E5000820B9 /* SSRadialMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuViewModel.swift; sourceTree = "<group>"; };
 		7D28060D2B23341A000820B9 /* MenuItemModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemModel.swift; sourceTree = "<group>"; };
 		7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuView.swift; sourceTree = "<group>"; };
-		7D85930C2B21C6510078C68D /* MenuButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuButtonView.swift; sourceTree = "<group>"; };
+		7D85930C2B21C6510078C68D /* RadialButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialButtonView.swift; sourceTree = "<group>"; };
 		BC7089DE29ACE93900D7D331 /* DynamicLiquidMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicLiquidMenu.swift; sourceTree = "<group>"; };
 		BCB40CB12993B3A700685605 /* SimilarShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarShape.swift; sourceTree = "<group>"; };
 		BCB40CB32993B4A100685605 /* FabFluidView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FabFluidView.swift; sourceTree = "<group>"; };
@@ -75,7 +75,7 @@
 		7D85930B2B21C6450078C68D /* CommonView */ = {
 			isa = PBXGroup;
 			children = (
-				7D85930C2B21C6510078C68D /* MenuButtonView.swift */,
+				7D85930C2B21C6510078C68D /* RadialButtonView.swift */,
 			);
 			path = CommonView;
 			sourceTree = "<group>";
@@ -237,7 +237,7 @@
 				BCB40CB92993B5B800685605 /* Extension+CGPoint.swift in Sources */,
 				BC7089DF29ACE93900D7D331 /* DynamicLiquidMenu.swift in Sources */,
 				BCB40CB22993B3A700685605 /* SimilarShape.swift in Sources */,
-				7D85930D2B21C6510078C68D /* MenuButtonView.swift in Sources */,
+				7D85930D2B21C6510078C68D /* RadialButtonView.swift in Sources */,
 				BCB40CBD2993B83000685605 /* MorphCircle.swift in Sources */,
 				7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */,
 				BCB40CBB2993B5D900685605 /* AnimatableDataShape.swift in Sources */,

@@ -12,7 +12,6 @@ struct SSRadialMenuView: View {
     @State var showButtons = false
     @State private var isActivated = false
     @State private var shouldDisplaySubSubMenu = false
-    @State private var visibleIndexes: [Int] = []
     @ObservedObject var viewModel = MenuViewModel()
 }
 
@@ -27,51 +26,46 @@ extension SSRadialMenuView {
 extension SSRadialMenuView {
     private var content: some View {
         ZStack {
-            if shouldDisplaySubSubMenu {
-                ForEach(0..<viewModel.subMenus.count, id: \.self) { i in
-                    SubSubMenuButtonView(
-                        isActivated: $shouldDisplaySubSubMenu,
-                        viewModel: viewModel,
-                        currentItemIndex: i,
-                        action: {
-                            print("Hewdiwhejw")
-                        }
-                    )
-                }
+            ForEach(0..<viewModel.subMenus.count, id: \.self) { i in
+                SubMenusButtonView(
+                    isActivated: $shouldDisplaySubSubMenu,
+                    viewModel: viewModel,
+                    currentItemIndex: i,
+                    action: { }
+                )
+                .transition(.opacity)
+                .animation(
+                    Animation.easeInOut.delay(Double(viewModel.subMenus.count - 1 - i) * 0.1),
+                    value: shouldDisplaySubSubMenu
+                )
             }
+
+
+
             ForEach(0..<viewModel.menus.count, id: \.self) { i in
-                SubMenuButtonView(
+                MenusButtonView(
                     isActivated: $isActivated,
                     shouldDisplaySubSubMenu: $shouldDisplaySubSubMenu,
                     viewModel: viewModel,
                     currentItemIndex: i,
                     action: {
-                        print("Hewdiwhejw")
+                        withAnimation {
+                            shouldDisplaySubSubMenu.toggle()
+                        }
                     }
                 )
-                .transition(
-                    .offset(y: visibleIndexes.contains(i) ? 0 : -1000)
-                )
+                .transition(.opacity)
                 .animation(
-                    Animation.easeInOut.delay(Double(viewModel.menus.count - i - 1) * 0.1)
+                    Animation.easeInOut.delay(Double(viewModel.menus.count - 1 - i) * 0.2),
+                    value: isActivated
                 )
-                .onAppear {
-                    withAnimation {
-                        visibleIndexes.append(i)
-                    }
-                }
             }
-            MenuButtonView(
+            RadialButtonView(
                 systemImage: "plus"
             ) {
                 if !shouldDisplaySubSubMenu {
                     isActivated.toggle()
                 }
-            }
-            .rotationEffect(.degrees(isActivated ? 45 : 0))
-            .animation(.easeInOut, value: isActivated)
-            .onChange(of: shouldDisplaySubSubMenu) { newValue in
-                print("Newvalue : \(newValue)")
             }
         }
         .frame(
