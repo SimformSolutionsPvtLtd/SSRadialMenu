@@ -21,9 +21,9 @@ struct RadialButtonView: View {
         .clipShape(
             .rect(
                 topLeadingRadius: isClicked ? cornerRadius : 50,
-                bottomLeadingRadius: isClicked ? 50 :50,
-                bottomTrailingRadius: isClicked ? 50 : 50,
-                topTrailingRadius: isClicked ? 50 : 50
+                bottomLeadingRadius: 50,
+                bottomTrailingRadius: 50,
+                topTrailingRadius: 50
             )
         )
         .rotationEffect(.degrees(isClicked ? rotationValue : 0))
