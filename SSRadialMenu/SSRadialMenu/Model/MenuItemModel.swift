@@ -11,6 +11,7 @@ struct MenuItem {
     let id = UUID()
     let color: Color
     let icon: String
+    let size: CGFloat
     let menuView: AnyView
     var selected: Bool
 }

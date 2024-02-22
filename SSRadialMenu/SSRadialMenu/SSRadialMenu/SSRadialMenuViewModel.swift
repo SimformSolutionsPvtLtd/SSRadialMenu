@@ -12,18 +12,21 @@ class MenuViewModel: ObservableObject {
         MenuItem(
             color: .red,
             icon: "menucard.fill",
+            size: 60,
             menuView: AnyView(EmptyView()),
             selected: false
         ),
         MenuItem(
             color: .blue,
-            icon: "ellipsis.bubble.fill",
+            icon: "ellipsis.bubble.fill", 
+            size: 60,
             menuView: AnyView(EmptyView()),
             selected: true
         ),
         MenuItem(
             color: .yellow,
             icon: "ellipsis",
+            size: 60,
             menuView: AnyView(EmptyView()),
             selected: false
         ),
@@ -33,24 +36,28 @@ class MenuViewModel: ObservableObject {
         MenuItem(
             color: .pink,
             icon: "menucard.fill",
+            size: 60,
             menuView: AnyView(EmptyView()),
             selected: false
         ),
         MenuItem(
             color: .cyan,
-            icon: "ellipsis.bubble.fill",
+            icon: "ellipsis.bubble.fill", 
+            size: 60,
             menuView: AnyView(EmptyView()),
             selected: true
         ),
         MenuItem(
             color: .green,
-            icon: "ellipsis",
+            icon: "ellipsis", 
+            size: 60,
             menuView: AnyView(EmptyView()),
             selected: false
         ),
         MenuItem(
             color: .gray,
-            icon: "ellipsis",
+            icon: "ellipsis", 
+            size: 60,
             menuView: AnyView(EmptyView()),
             selected: false
         )
