@@ -28,7 +28,11 @@ extension SSRadialMenuView {
         ZStack {
             subMenuView()
             menuView()
-            RadialButtonView(systemImage: "plus") {
+            RadialButtonView(
+                icon: "plus",
+                backGroundColor: .blue,
+                size: 60
+            ) {
                 if !shouldDisplaySubSubMenu {
                     isActivated.toggle()
                 }

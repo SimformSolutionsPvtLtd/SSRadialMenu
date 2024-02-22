@@ -8,40 +8,43 @@
 import SwiftUI
 
 struct RadialButtonView: View {
-    @State private var isClicked = false
+    var icon: String
+    var backGroundColor: Color
+    var size: CGFloat
+    var constantRadius = 50.0
+    @State private var opened = false
     @State private var rotationValue = 45.0
     @State private var cornerRadius = 18.0
-    var systemImage: String
     var action: (() -> Void)? = nil
     
     var body: some View {
         HStack{ }
-        .frame(width: 60, height: 60)
-        .background(Color.blue)
+        .frame(width: size, height: size)
+        .background(backGroundColor)
         .clipShape(
             .rect(
-                topLeadingRadius: isClicked ? cornerRadius : 50,
-                bottomLeadingRadius: 50,
-                bottomTrailingRadius: 50,
-                topTrailingRadius: 50
+                topLeadingRadius: opened ? cornerRadius : constantRadius,
+                bottomLeadingRadius: constantRadius,
+                bottomTrailingRadius: constantRadius,
+                topTrailingRadius: constantRadius
             )
         )
-        .rotationEffect(.degrees(isClicked ? rotationValue : 0))
+        .rotationEffect(.degrees(opened ? rotationValue : 0))
         .animation(.easeInOut, value: cornerRadius)
         .padding(10)
         .padding(10)
         .overlay {
-            Image(systemName: systemImage)
+            Image(systemName: icon)
                 .foregroundColor(.white)
                 .font(.headline)
                 .fontWeight(.bold)
                 .frame(width: 60, height: 60)
-                .rotationEffect(.degrees(isClicked ? 45 : 0))
-                .animation(.easeInOut, value: isClicked)
+                .rotationEffect(.degrees(opened ? 45 : 0))
+                .animation(.easeInOut, value: opened)
         }
         .onTapGesture {
             withAnimation {
-                isClicked.toggle()
+                opened.toggle()
             }
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -74,7 +77,7 @@ struct RadialButtonView: View {
             } else {
                 withAnimation {
                     rotationValue = 45.0
-                    isClicked.toggle()
+                    opened.toggle()
                     timer.invalidate()
                 }
             }
