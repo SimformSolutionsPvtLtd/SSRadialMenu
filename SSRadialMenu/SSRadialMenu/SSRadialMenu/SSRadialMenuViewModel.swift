@@ -15,12 +15,12 @@ class MenuViewModel: ObservableObject {
             menuView: AnyView(EmptyView()),
             selected: false
         ),
-        MenuItem(
-            color: .blue,
-            icon: "ellipsis.bubble.fill",
-            menuView: AnyView(EmptyView()),
-            selected: true
-        ),
+//        MenuItem(
+//            color: .blue,
+//            icon: "ellipsis.bubble.fill",
+//            menuView: AnyView(EmptyView()),
+//            selected: true
+//        ),
         MenuItem(
             color: .yellow,
             icon: "ellipsis",

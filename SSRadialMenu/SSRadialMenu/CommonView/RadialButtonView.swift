@@ -92,7 +92,6 @@ extension RadialButtonView {
     }
 }
 
-
 struct MenusButtonView: View {
     @Binding var isActivated: Bool
     @Binding var shouldDisplaySubSubMenu: Bool

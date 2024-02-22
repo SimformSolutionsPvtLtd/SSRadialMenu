@@ -26,8 +26,6 @@ extension SSRadialMenuView {
 extension SSRadialMenuView {
     private var content: some View {
         ZStack {
-            subMenuView()
-            menuView()
             RadialButtonView(
                 icon: "plus",
                 backGroundColor: .blue,
@@ -37,6 +35,34 @@ extension SSRadialMenuView {
                     isActivated.toggle()
                 }
             }
+            .background {
+                ForEach(0..<viewModel.menus.count, id: \.self) { i in
+                    Button {
+                        isActivated = false
+                    } label: {
+                        Circle()
+                            .fill(viewModel.menus[i].color)
+                            .overlay {
+                                Image(systemName: viewModel.menus[i].icon)
+                                    .font(.largeTitle)
+                                    .fontWeight(.semibold)
+                                    .rotationEffect(-rotationAngle(at: i))
+                            }
+                            .shadow(radius: 10)
+                            .frame(width: 60, height: 60)
+                    }
+                    .foregroundColor(.black)
+                    .offset(
+                        x: -radius
+                    )
+                    .rotationEffect(rotationAngle(at: i))
+                    .transition(.opacity)
+                    .animation(
+                        Animation.easeInOut.delay(Double(viewModel.menus.count - 1 - i) * 0.2),
+                        value: isActivated
+                    )
+                }
+            }
         }
         .frame(
             maxWidth: .infinity,
@@ -44,6 +70,13 @@ extension SSRadialMenuView {
             alignment: .bottomTrailing
         )
         .padding(.trailing, 20)
+    }
+    
+    private var radius: CGFloat {
+        isActivated ? 190 : 0
+    }
+    func rotationAngle(at index: Int) -> Angle {
+        Angle(degrees: 90.0/Double(viewModel.menus.count-1) * Double(index))
     }
 }
 
