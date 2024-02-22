@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RadialButtonView: View {
+    // MARK: - Variables
     var icon: String
     var backGroundColor: Color
     var size: CGFloat
@@ -16,8 +17,15 @@ struct RadialButtonView: View {
     @State private var rotationValue = 45.0
     @State private var cornerRadius = 18.0
     var action: (() -> Void)? = nil
-    
+}
+
+// MARK: Body view
+extension RadialButtonView {
     var body: some View {
+        content
+    }
+    
+    private var content: some View {
         HStack{ }
         .frame(width: size, height: size)
         .background(backGroundColor)
