@@ -32,7 +32,6 @@ struct RadialButtonView: View {
         .rotationEffect(.degrees(opened ? rotationValue : 0))
         .animation(.easeInOut, value: cornerRadius)
         .padding(10)
-        .padding(10)
         .overlay {
             Image(systemName: icon)
                 .foregroundColor(.white)
