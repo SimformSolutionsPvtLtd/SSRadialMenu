@@ -111,9 +111,3 @@ extension SSRadialMenuView {
         }
     }
 }
-
-
-// MARK: - Menu layer
-enum MenuLayer {
-    case first, second, third
-}

@@ -11,6 +11,7 @@
 		7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D28060D2B23341A000820B9 /* MenuItemModel.swift */; };
 		7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */; };
 		7D85930D2B21C6510078C68D /* RadialButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D85930C2B21C6510078C68D /* RadialButtonView.swift */; };
+		7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD9AD242B878A47008E7E8F /* MenuLayer.swift */; };
 		BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */; };
 		BCBEB58A297ED92F00C03B9C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB589297ED92F00C03B9C /* Assets.xcassets */; };
 		BCBEB58E297ED92F00C03B9C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB58D297ED92F00C03B9C /* Preview Assets.xcassets */; };
@@ -21,6 +22,7 @@
 		7D28060D2B23341A000820B9 /* MenuItemModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemModel.swift; sourceTree = "<group>"; };
 		7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuView.swift; sourceTree = "<group>"; };
 		7D85930C2B21C6510078C68D /* RadialButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialButtonView.swift; sourceTree = "<group>"; };
+		7DD9AD242B878A47008E7E8F /* MenuLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuLayer.swift; sourceTree = "<group>"; };
 		BCBEB582297ED92E00C03B9C /* SSRadialMenu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SSRadialMenu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuApp.swift; sourceTree = "<group>"; };
 		BCBEB589297ED92F00C03B9C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -64,6 +66,14 @@
 			path = CommonView;
 			sourceTree = "<group>";
 		};
+		7DD9AD232B878A3C008E7E8F /* Enum */ = {
+			isa = PBXGroup;
+			children = (
+				7DD9AD242B878A47008E7E8F /* MenuLayer.swift */,
+			);
+			path = Enum;
+			sourceTree = "<group>";
+		};
 		BCBEB579297ED92E00C03B9C = {
 			isa = PBXGroup;
 			children = (
@@ -83,6 +93,7 @@
 		BCBEB584297ED92E00C03B9C /* SSRadialMenu */ = {
 			isa = PBXGroup;
 			children = (
+				7DD9AD232B878A3C008E7E8F /* Enum */,
 				7D28060C2B233409000820B9 /* Model */,
 				7D2806092B23336C000820B9 /* SSRadialMenu */,
 				7D85930B2B21C6450078C68D /* CommonView */,
@@ -172,6 +183,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */,
 				7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */,
 				BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */,
 				7D28060B2B2333E5000820B9 /* SSRadialMenuViewModel.swift in Sources */,
