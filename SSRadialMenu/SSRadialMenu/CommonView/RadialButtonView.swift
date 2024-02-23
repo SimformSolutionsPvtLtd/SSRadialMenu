@@ -16,6 +16,7 @@ struct RadialButtonView: View {
     @State private var opened = false
     @State private var rotationValue = 45.0
     @State private var cornerRadius = 18.0
+    @State private var liquidOffset: CGFloat = 0.0
     var action: (() -> Void)? = nil
 }
 
@@ -24,70 +25,33 @@ extension RadialButtonView {
     var body: some View {
         content
     }
-    
+}
+
+// MARK: - Private views
+extension RadialButtonView {
     private var content: some View {
         HStack{ }
-        .frame(width: size, height: size)
-        .background(backGroundColor)
-        .clipShape(
-            .rect(
-                topLeadingRadius: opened ? cornerRadius : constantRadius,
-                bottomLeadingRadius: constantRadius,
-                bottomTrailingRadius: constantRadius,
-                topTrailingRadius: constantRadius
-            )
-        )
-        .rotationEffect(.degrees(opened ? rotationValue : 0))
-        .animation(.easeInOut, value: cornerRadius)
-        .padding(10)
-        .overlay {
-            Image(systemName: icon)
-                .foregroundColor(.white)
-                .font(.headline)
-                .fontWeight(.bold)
-                .frame(width: 60, height: 60)
-                .rotationEffect(.degrees(opened ? 45 : 0))
-                .animation(.easeInOut, value: opened)
-        }
-        .onTapGesture {
-            withAnimation {
-                opened.toggle()
+            .frame(width: size, height: size)
+            .background(backGroundColor)
+            .clipShape(.circle)
+            .rotationEffect(.degrees(opened ? rotationValue : 0))
+            .animation(.easeInOut, value: cornerRadius)
+            .padding(10)
+            .overlay {
+                Image(systemName: icon)
+                    .foregroundColor(.white)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .frame(width: 60, height: 60)
+                    .rotationEffect(.degrees(opened ? 45 : 0))
+                    .animation(.easeInOut, value: opened)
             }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                withAnimation {
-                    action?()
-                    startRotationUpdates()
-                }
-            }
-        }
-    }
-    
-    private func startRotationUpdates() {
-        var counter = 0
-        let maxWaves = 3
-        let totalRotations = maxWaves * 2
-
-        Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { timer in
-            if counter < totalRotations {
-                if counter % 2 == 0 {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        cornerRadius = 40
-                    }
-                } else {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        cornerRadius = 20
-                    }
-                }
-                rotationValue -= 20
-                counter += 1
-            } else {
-                withAnimation {
-                    rotationValue = 45.0
+            .onTapGesture {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.5)) {
                     opened.toggle()
-                    timer.invalidate()
+                    action?()
+                    liquidOffset = opened ? -15.0 : 0.0
                 }
             }
-        }
     }
 }

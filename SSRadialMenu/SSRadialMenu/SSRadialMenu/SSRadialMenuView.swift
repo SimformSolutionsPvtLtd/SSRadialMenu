@@ -18,7 +18,8 @@ struct SSRadialMenuView: View {
 // MARK: - Body view
 extension SSRadialMenuView {
     var body: some View {
-        content
+//        LiquidView()
+                content
     }
 }
 
@@ -109,5 +110,74 @@ extension SSRadialMenuView {
                 )
             }
         }
+    }
+}
+
+struct LiquidView: View {
+    @State var show = false
+    
+    var body: some View {
+        VStack {
+            Rectangle()
+                .mask(canvas)
+                .overlay {
+                    ZStack {
+                       
+                        Button(action: {
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.5)) {
+                                show.toggle()
+                            }
+                        }, label: {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 60, height: 60)
+                                
+                                Image(systemName: "plus").foregroundColor(.white)
+                            }
+                            .offset(x: -20, y: -30)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        })
+                    }
+                }
+        }
+        .background(Color.yellow)
+        
+    }
+    
+    var canvas: some View {
+        Canvas { content, size in
+            content.addFilter(.alphaThreshold(min: 0.4))
+            content.addFilter(.blur(radius: 5))
+            content.drawLayer { drawingContext in
+                let drawPoint = CGPoint(x: size.width - 50, y: size.height - 60)
+                for index in 1...3 {
+                    if let symbol = content.resolveSymbol(id: index) {
+                        drawingContext.draw(symbol, at: drawPoint)
+                    }
+                }
+            }
+        } symbols: {
+            Circle().fill(Color.blue).frame(width: 60, height: 60).tag(1)
+//            CanCircle(show: $show, yOffset: 90, sAnimation: 0.3, tag: 2)
+//            CanCircle(show: $show, yOffset: 180, sAnimation: 0.2, tag: 2)
+        }
+    }
+}
+
+
+struct CanCircle: View {
+    @Binding var show: Bool
+    var yOffset: CGFloat
+    var sAnimation: CGFloat
+    var tag: Int
+    var body: some View {
+        Circle()
+            .fill(Color.green) // Try a specific color
+            .frame(width: 60, height: 60)
+            .tag(tag)
+            .offset(y: show ? -yOffset : 0)
+            .animation(.spring(response: 1, dampingFraction: 0.8).delay(show ? sAnimation : 0), value: show)
+
     }
 }
