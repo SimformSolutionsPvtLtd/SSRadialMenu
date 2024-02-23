@@ -14,14 +14,14 @@ struct SSRadialMenuView: View {
     @State private var isSubmenuActivated = false
     @ObservedObject var viewModel = MenuViewModel()
     let colors: [Color] = [.cyan, .blue, .indigo]
-       
+    
 }
 
 // MARK: - Body view
 extension SSRadialMenuView {
     var body: some View {
         LiquidView()
-//        content
+        //        content
     }
 }
 
@@ -116,7 +116,9 @@ extension SSRadialMenuView {
 }
 
 struct LiquidView: View {
+    @StateObject private var viewModel = MenuViewModel()
     @State var show = false
+    @State var itemCount = 0
     
     var body: some View {
         VStack {
@@ -124,10 +126,11 @@ struct LiquidView: View {
                 .mask(canvas)
                 .overlay {
                     ZStack {
-                       
+                        
                         Button(action: {
                             withAnimation(.spring(response: 0.5, dampingFraction: 0.5)) {
-                                show.toggle()
+//                                show.toggle()
+                                startTimer()
                             }
                         }, label: {
                             ZStack {
@@ -164,12 +167,24 @@ struct LiquidView: View {
             CanCircle(show: $show, yOffset: 20, sAnimation: 0.3, tag: 2)
         }
     }
+    
+    func startTimer() {
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
+            if itemCount < viewModel.menus.count {
+                    show.toggle()
+                itemCount += 1
+            } else {
+                itemCount = 0
+                timer.invalidate()
+                show = false
+            }
+        }
+    }
 }
-
 
 struct CanCircle: View {
     @Binding var show: Bool
-    var yOffset: CGFloat
+    @State var yOffset: CGFloat
     var sAnimation: CGFloat
     var tag: Int
     var body: some View {
@@ -179,6 +194,5 @@ struct CanCircle: View {
             .tag(tag)
             .offset(y: show ? -yOffset : 0)
             .animation(.spring(response: 1, dampingFraction: 0.8).delay(show ? sAnimation : 0), value: show)
-
     }
 }
