@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct MenuItem {
+struct MenuItem: Identifiable {
     let id = UUID()
     let color: Color
     let icon: String

@@ -13,13 +13,15 @@ struct SSRadialMenuView: View {
     @State private var isActivated = false
     @State private var isSubmenuActivated = false
     @ObservedObject var viewModel = MenuViewModel()
+    let colors: [Color] = [.cyan, .blue, .indigo]
+       
 }
 
 // MARK: - Body view
 extension SSRadialMenuView {
     var body: some View {
-//        LiquidView()
-                content
+        LiquidView()
+//        content
     }
 }
 
@@ -159,8 +161,7 @@ struct LiquidView: View {
             }
         } symbols: {
             Circle().fill(Color.blue).frame(width: 60, height: 60).tag(1)
-//            CanCircle(show: $show, yOffset: 90, sAnimation: 0.3, tag: 2)
-//            CanCircle(show: $show, yOffset: 180, sAnimation: 0.2, tag: 2)
+            CanCircle(show: $show, yOffset: 20, sAnimation: 0.3, tag: 2)
         }
     }
 }
@@ -174,7 +175,7 @@ struct CanCircle: View {
     var body: some View {
         Circle()
             .fill(Color.green) // Try a specific color
-            .frame(width: 60, height: 60)
+            .frame(width: 40, height: 40)
             .tag(tag)
             .offset(y: show ? -yOffset : 0)
             .animation(.spring(response: 1, dampingFraction: 0.8).delay(show ? sAnimation : 0), value: show)
