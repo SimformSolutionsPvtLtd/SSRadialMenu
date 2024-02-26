@@ -14,13 +14,19 @@ struct SSRadialMenuView: View {
     @State private var isSubmenuActivated = false
     @ObservedObject var viewModel = MenuViewModel()
     let colors: [Color] = [.cyan, .blue, .indigo]
+    @State private var scale: CGFloat = 1
+    @State private var offsetX: CGFloat = 0
+    @State private var offsetY: CGFloat = 0
+
+    let animation = Animation.easeInOut(duration: 1).repeatForever(autoreverses: true)
     
 }
 
 // MARK: - Body view
 extension SSRadialMenuView {
     var body: some View {
-        LiquidView()
+        LiquidFluidMenuView()
+//        LiquidView()
         //        content
     }
 }
@@ -167,7 +173,7 @@ struct LiquidView: View {
             }
         } symbols: {
             Circle().fill(Color.clear).frame(width: 60, height: 60).tag(1)
-            CanCircle(show: $show, yOffset: CGFloat(20), rotationValue: rotationValue, sAnimation: 0.3, tag: 2)
+            CanCircle(show: $show, yOffset: CGFloat(15), rotationValue: rotationValue, sAnimation: 0.3, tag: 2)
                 .id(UUID())
         }
     }
@@ -179,23 +185,26 @@ struct LiquidView: View {
         
         Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
             timer in
-            show.toggle()
-            angleVal = 0.8
-            let angle = Angle(degrees: 90.0/Double(viewModel.menus.count - 1) * Double(angleVal))
-            
-            rotationValue = angle
-            
-              yOffset = 0
-             
-            if itemCount < viewModel.menus.count - 1{
-          
-                itemCount += 1
-            } else {
-                itemCount = 0
+            withAnimation(.easeInOut(duration: radius)) {
+                show.toggle()
+                angleVal = 0.8
+                let angle = Angle(degrees: 90.0/Double(viewModel.menus.count - 1) * Double(angleVal))
+                
+                rotationValue = angle
+                
                 yOffset = 0
-                timer.invalidate()
-                show = false
-                angleVal = 0
+                
+                if itemCount < viewModel.menus.count - 1{
+                    
+                    itemCount += 1
+                } else {
+                    itemCount = 0
+                    yOffset = 0
+                    rotationValue = Angle()
+                    timer.invalidate()
+                    show = false
+                    angleVal = 0
+                }
             }
         }
     }
@@ -219,3 +228,17 @@ struct CanCircle: View {
     }
 }
 
+
+
+struct StretchedCircle: Shape {
+  let scale: CGFloat
+  let offsetX: CGFloat
+  let offsetY: CGFloat
+
+  func path(in rect: CGRect) -> Path {
+    let center = CGPoint(x: rect.midX, y: rect.midY)
+    var path = Path()
+    path.addArc(center: center, radius: scale * rect.width / 2, startAngle: .zero, endAngle: .degrees(360), clockwise: false)
+      return path.offset(CGPoint(x: offsetX, y: offsetY)).path(in: rect)
+  }
+}

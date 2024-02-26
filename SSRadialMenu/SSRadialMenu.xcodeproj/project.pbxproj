@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		7D28060B2B2333E5000820B9 /* SSRadialMenuViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D28060A2B2333E5000820B9 /* SSRadialMenuViewModel.swift */; };
 		7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D28060D2B23341A000820B9 /* MenuItemModel.swift */; };
+		7D4755E42B8CA7B800C4F67A /* LiquidFluidMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D4755E32B8CA7B800C4F67A /* LiquidFluidMenuView.swift */; };
 		7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */; };
 		7D85930D2B21C6510078C68D /* RadialButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D85930C2B21C6510078C68D /* RadialButtonView.swift */; };
 		7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD9AD242B878A47008E7E8F /* MenuLayer.swift */; };
@@ -20,6 +21,7 @@
 /* Begin PBXFileReference section */
 		7D28060A2B2333E5000820B9 /* SSRadialMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuViewModel.swift; sourceTree = "<group>"; };
 		7D28060D2B23341A000820B9 /* MenuItemModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemModel.swift; sourceTree = "<group>"; };
+		7D4755E32B8CA7B800C4F67A /* LiquidFluidMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidFluidMenuView.swift; sourceTree = "<group>"; };
 		7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuView.swift; sourceTree = "<group>"; };
 		7D85930C2B21C6510078C68D /* RadialButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialButtonView.swift; sourceTree = "<group>"; };
 		7DD9AD242B878A47008E7E8F /* MenuLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuLayer.swift; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
 				BCBEB589297ED92F00C03B9C /* Assets.xcassets */,
 				BCBEB58B297ED92F00C03B9C /* SSRadialMenu.entitlements */,
 				BCBEB58C297ED92F00C03B9C /* Preview Content */,
+				7D4755E32B8CA7B800C4F67A /* LiquidFluidMenuView.swift */,
 			);
 			path = SSRadialMenu;
 			sourceTree = "<group>";
@@ -186,6 +189,7 @@
 				7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */,
 				7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */,
 				BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */,
+				7D4755E42B8CA7B800C4F67A /* LiquidFluidMenuView.swift in Sources */,
 				7D28060B2B2333E5000820B9 /* SSRadialMenuViewModel.swift in Sources */,
 				7D85930D2B21C6510078C68D /* RadialButtonView.swift in Sources */,
 				7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */,
