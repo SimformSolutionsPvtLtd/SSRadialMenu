@@ -118,6 +118,9 @@ extension SSRadialMenuView {
 struct LiquidView: View {
     @StateObject private var viewModel = MenuViewModel()
     @State var show = false
+    @State var rotationValue = Angle()
+    @State var yOffset = 20
+    @State var angleVal = 0.0
     @State var itemCount = 0
     
     var body: some View {
@@ -135,7 +138,7 @@ struct LiquidView: View {
                         }, label: {
                             ZStack {
                                 Circle()
-                                    .fill(Color.blue)
+                                    .fill(Color.black)
                                     .frame(width: 60, height: 60)
                                 
                                 Image(systemName: "plus").foregroundColor(.white)
@@ -163,20 +166,36 @@ struct LiquidView: View {
                 }
             }
         } symbols: {
-            Circle().fill(Color.blue).frame(width: 60, height: 60).tag(1)
-            CanCircle(show: $show, yOffset: 20, sAnimation: 0.3, tag: 2)
+            Circle().fill(Color.clear).frame(width: 60, height: 60).tag(1)
+            CanCircle(show: $show, yOffset: CGFloat(20), rotationValue: rotationValue, sAnimation: 0.3, tag: 2)
+                .id(UUID())
         }
     }
     
     func startTimer() {
-        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
-            if itemCount < viewModel.menus.count {
-                    show.toggle()
+        var radius: CGFloat {
+            return show ? 10 * 19 : 0
+        }
+        
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
+            timer in
+            show.toggle()
+            angleVal = 0.8
+            let angle = Angle(degrees: 90.0/Double(viewModel.menus.count - 1) * Double(angleVal))
+            
+            rotationValue = angle
+            
+              yOffset = 0
+             
+            if itemCount < viewModel.menus.count - 1{
+          
                 itemCount += 1
             } else {
                 itemCount = 0
+                yOffset = 0
                 timer.invalidate()
                 show = false
+                angleVal = 0
             }
         }
     }
@@ -185,6 +204,7 @@ struct LiquidView: View {
 struct CanCircle: View {
     @Binding var show: Bool
     @State var yOffset: CGFloat
+    @State var rotationValue: Angle
     var sAnimation: CGFloat
     var tag: Int
     var body: some View {
@@ -193,6 +213,9 @@ struct CanCircle: View {
             .frame(width: 40, height: 40)
             .tag(tag)
             .offset(y: show ? -yOffset : 0)
+            .rotationEffect(rotationValue, anchor: .top)
+            .transition(.opacity)
             .animation(.spring(response: 1, dampingFraction: 0.8).delay(show ? sAnimation : 0), value: show)
     }
 }
+
