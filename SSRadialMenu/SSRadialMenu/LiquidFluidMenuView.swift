@@ -13,10 +13,10 @@ struct LiquidFluidMenuView: View {
     
     
     @State var positions: [CGPoint] = [
-        CGPoint(x: -0, y: -0),
-        CGPoint(x: -0, y: -0),
-        CGPoint(x: -0, y: -0),
-        CGPoint(x: -0, y: -0)
+        CGPoint(x: -0, y: -20),
+        CGPoint(x: -0, y: -20),
+        CGPoint(x: -0, y: -20),
+        CGPoint(x: -0, y: -20)
     ]
     @State var frameSize: CGSize = .zero
 
@@ -29,8 +29,7 @@ struct LiquidFluidMenuView: View {
     
     var body: some View {
             VStack {
-                Image("IphoneWallpaper")
-                    .resizable()
+                Circle().fill(Color.blue)
                     .aspectRatio(contentMode: .fill)
                     .frame(maxWidth: 100)
                     .aspectRatio(0.75, contentMode: .fit)
@@ -54,7 +53,7 @@ struct LiquidFluidMenuView: View {
                             ForEach(positions.indices, id: \.self) { id in
                                 Circle()
                                     .frame(
-                                        width: id == 0 ? 100 - blurRadius/alphaThreshHold : 100/2
+                                        width: id == 0 ? 100 - blurRadius/alphaThreshHold : 25
                                     )
                                     .tag(id)
                                     .offset(
@@ -81,8 +80,8 @@ struct LiquidFluidMenuView: View {
     }
     
     func randomPositions(bounds: CGSize, ballSize: CGSize) -> CGPoint {
-        let xRange = ballSize.width / 2 ... bounds.width - bounds.width/2
-        let yRange = ballSize.height / 2 ... bounds.height - bounds.height/2
+        let xRange = ballSize.width / 8 ... bounds.width - bounds.width/8
+        let yRange = ballSize.height / 8 ... bounds.height - bounds.height/8
         
         let randomX = CGFloat.random(in: xRange)
         let randomY = CGFloat.random(in: yRange)
