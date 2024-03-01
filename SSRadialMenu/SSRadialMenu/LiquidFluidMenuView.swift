@@ -22,7 +22,7 @@ struct LiquidFluidMenuView: View {
 
     var blurRadius = 10.0
     var alphaThreshHold = 0.2
-    var ballCount = 5
+    var ballCount = 3
     
     let timer = Timer.publish(every: 2, on: .main, in: .common)
         .autoconnect().receive(on: RunLoop.main)
@@ -67,7 +67,7 @@ struct LiquidFluidMenuView: View {
                     }
             }
             .onReceive(timer, perform: { _ in
-                withAnimation(.easeInOut(duration: 7)) {
+                withAnimation(.easeInOut(duration: 4)) {
                     positions = positions.map({ _ in
                         randomPositions(bounds: frameSize, ballSize: .init(width: 100/2, height: 100/2))
                     })
@@ -80,17 +80,19 @@ struct LiquidFluidMenuView: View {
     }
     
     func randomPositions(bounds: CGSize, ballSize: CGSize) -> CGPoint {
-        let xRange = ballSize.width / 8 ... bounds.width - bounds.width/8
-        let yRange = ballSize.height / 8 ... bounds.height - bounds.height/8
+        let xRange = ballSize.width / 1.5 ... bounds.width - bounds.width/1.8
+        let yRange = ballSize.height / 0.8 ... bounds.height - bounds.height/8
         
+        print("\(ballSize.height / 0.8)...\(bounds.height - bounds.height/4)")
         let randomX = CGFloat.random(in: xRange)
         let randomY = CGFloat.random(in: yRange)
         
-        
+        print(randomX)
+        print("\(randomY) \n")
         let center = CGPoint(x: bounds.width/2, y: bounds.height/2)
         let offsetX = randomX - center.x
         let offsetY = randomY - center.y
-        print("offsetX : \(offsetX), offsetY : \(offsetY)")
+//        print("offsetX : \(offsetX), offsetY : \(offsetY)")
         
         return CGPoint(x: offsetX, y: offsetY)
     }

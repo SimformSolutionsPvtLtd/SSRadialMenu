@@ -25,9 +25,9 @@ struct SSRadialMenuView: View {
 // MARK: - Body view
 extension SSRadialMenuView {
     var body: some View {
-        LiquidFluidMenuView()
+//        LiquidFluidMenuView()
 //        LiquidView()
-        //        content
+                content
     }
 }
 
