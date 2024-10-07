@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-class MenuViewModel: ObservableObject {
+class SSRadialMenuViewModel: ObservableObject {
     @Published var menus: [MenuItem] = [
         MenuItem(
             color: .red,

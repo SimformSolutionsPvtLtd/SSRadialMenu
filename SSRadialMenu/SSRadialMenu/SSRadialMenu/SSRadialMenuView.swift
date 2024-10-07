@@ -10,19 +10,7 @@ import SwiftUI
 struct SSRadialMenuView: View {
     // MARK: - Variables
     @State var showButtons = false
-    @State private var isActivated = false
-    @State private var isSubmenuActivated = false
-    @ObservedObject var viewModel = MenuViewModel()
-    let colors: [Color] = [.cyan, .blue, .indigo]
-    @State private var scale: CGFloat = 1
-    @State private var offsetX: CGFloat = 0
-    @State private var offsetY: CGFloat = 0
-    @State var offsetSettings: CGSize = .zero
-    @State var offsetHome: CGSize = .zero
-    @State private var submenuVisible: [Bool] = Array(repeating: false, count: 4) // Number of
-
-    let animation = Animation.easeInOut(duration: 1).repeatForever(autoreverses: true)
-    
+    @ObservedObject var viewModel = SSRadialMenuViewModel()
 }
 
 // MARK: - Body view
@@ -47,17 +35,23 @@ extension SSRadialMenuView {
                 .mask {
                     Canvas { context, size in
                         context.addFilter(.alphaThreshold(min: 0.8, color: .black))
-                        context.addFilter(.blur(radius: 8))
+                        context.addFilter(.blur(radius: 2))
 
                         context.drawLayer { ctx in
                             for index in 1...viewModel.menus.count {
                                 if let resolvedView = context.resolveSymbol(id: index) {
-                                    ctx.draw(resolvedView, at: CGPoint(x: size.width / 2, y: size.height / 2))
+                                    ctx.draw(
+                                        resolvedView,
+                                        at: CGPoint(
+                                            x: size.width / 2,
+                                            y: size.height / 2
+                                        )
+                                    )
                                 }
                             }
                         }
                     } symbols: {
-                        Symbol(diameter: 100)
+                        Symbol(diameter: 80)
                             .tag(1)
                         ForEach(viewModel.menus.indices, id: \.self) { index in
                             Symbol(offset: viewModel.menus[index].offset)
@@ -91,7 +85,7 @@ extension SSRadialMenuView {
 }
 
 extension SSRadialMenuView {
-    private func Symbol(offset: CGSize = .zero, diameter: CGFloat = 75) -> some View {
+    private func Symbol(offset: CGSize = .zero, diameter: CGFloat = 60) -> some View {
         Circle()
             .frame(width: diameter, height: diameter)
             .offset(offset)
@@ -126,7 +120,7 @@ extension SSRadialMenuView {
                                viewModel.menus[menuIndex].offset = menu.isCollapsed ? .zero : circularOffset(
                                    index: menuIndex,
                                    total: viewModel.menus.count,
-                                   radius: 120
+                                   radius: 90
                                )
                            }
                        }
