@@ -40,22 +40,6 @@ class MenuViewModel: ObservableObject {
             menuView: AnyView(EmptyView()),
             selected: false,
             isCollapsed: true
-        ),
-        MenuItem(
-            color: .yellow,
-            icon: "ellipsis",
-            size: 60,
-            menuView: AnyView(EmptyView()),
-            selected: false,
-            isCollapsed: true
-        ),
-        MenuItem(
-            color: .yellow,
-            icon: "ellipsis",
-            size: 60,
-            menuView: AnyView(EmptyView()),
-            selected: false,
-            isCollapsed: true
         )
     ]
 }

@@ -47,7 +47,7 @@ extension SSRadialMenuView {
                 .mask {
                     Canvas { context, size in
                         context.addFilter(.alphaThreshold(min: 0.8, color: .black))
-                        context.addFilter(.blur(radius: 15))
+                        context.addFilter(.blur(radius: 8))
 
                         context.drawLayer { ctx in
                             for index in 1...viewModel.menus.count {
@@ -73,7 +73,7 @@ extension SSRadialMenuView {
 
                 ForEach(viewModel.menus.indices, id: \.self) { index in
                     ZStack {
-                        Image(systemName: "gear")
+                        Image(systemName: viewModel.menus[index].icon)
                             .resizable()
                             .frame(width: 28, height: 28)
                     }
@@ -116,29 +116,23 @@ extension SSRadialMenuView {
                     }
                 }
             }
-            withAnimation(
-                .interactiveSpring(response: 0.35, dampingFraction: 0.8, blendDuration: 0.1).speed(0.5)
-            ) {
-                viewModel.menus.forEach { menu in
-                    if let index = viewModel.menus.firstIndex(where: { $0.id == menu.id }) {
-                        viewModel.menus[index].offset = menu.isCollapsed ? .zero : circularOffset(
-                            index: index,
-                            total: viewModel.menus.count,
-                            radius: 120
-                        )
-                    }
-                }
-            }
+            for (index, menu) in viewModel.menus.enumerated() {
+                   if let menuIndex = viewModel.menus.firstIndex(where: { $0.id == menu.id }) {
+                       let delay = Double(index) * 0.1 // Adjust the delay multiplier as needed
+                       DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                           withAnimation(
+                               .interactiveSpring(response: 0.35, dampingFraction: 0.8, blendDuration: 0.1).speed(0.5)
+                           ) {
+                               viewModel.menus[menuIndex].offset = menu.isCollapsed ? .zero : circularOffset(
+                                   index: menuIndex,
+                                   total: viewModel.menus.count,
+                                   radius: 120
+                               )
+                           }
+                       }
+                   }
+               }
         }
-    }
-
-    func SettingsButton() -> some View {
-        ZStack {
-            Image(systemName: "gear")
-                .resizable()
-                .frame(width: 28, height: 28)
-        }
-        .frame(width: 65, height: 65)
     }
 
     func circularOffset(index: Int, total: Int, radius: CGFloat) -> CGSize {
