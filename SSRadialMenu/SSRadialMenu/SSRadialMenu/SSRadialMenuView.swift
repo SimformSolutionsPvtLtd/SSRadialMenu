@@ -251,6 +251,7 @@ struct LiquidMenuButtons: View {
     @State var offsetHome: CGSize = .zero
     @State private var isSettingsCollapsed: Bool = false
     @State private var isHomeVisible: Bool = false
+    @State private var submenuVisible: [Bool] = Array(repeating: false, count: 4) // Number of submenus
 
     // - Body -
     var body: some View {
@@ -272,20 +273,23 @@ extension LiquidMenuButtons {
 
     private func LiquidMenu() -> some View {
         ZStack {
+            // Background layer with effects
             Rectangle()
-                .fill(.linearGradient(colors: [.purple, .pink], startPoint: .top, endPoint: .bottom))
+                .fill(
+                    .linearGradient(colors: [.purple, .pink], startPoint: .top, endPoint: .bottom)
+                )
                 .mask {
                     Canvas { context, size in
                         // Adding Filters
                         context.addFilter(.alphaThreshold(min: 0.8, color: .black))
-                        context.addFilter(.blur(radius: 8))
+                        context.addFilter(.blur(radius: 15))
 
                         // Drawing Layers
                         context.drawLayer { ctx in
                             // Placing symbols
                             for index in [1, 2] {
                                 if let resolvedView = context.resolveSymbol(id: index) {
-                                    ctx.draw(resolvedView, at: CGPoint(x: size.width/2, y: size.height/2))
+                                    ctx.draw(resolvedView, at: CGPoint(x: size.width / 2, y: size.height / 2))
                                 }
                             }
                         }
@@ -301,17 +305,22 @@ extension LiquidMenuButtons {
                     }
                 }
 
-            CancelButton()
-                .blendMode(.softLight)
-                .rotationEffect(Angle(degrees: isSettingsCollapsed ? 90 : 45))
-            SettingsButton()
-                .offset(offsetSettings)
-                .blendMode(.softLight)
-                .opacity(isSettingsCollapsed ? 1 : 0)
-            HomeButton()
-                .offset(isHomeVisible ? offsetHome : .zero) // Show only if HomeButton is visible
-                .blendMode(.softLight)
-                .opacity(isHomeVisible ? 1 : 0)
+            // Child buttons layered above the blurred background
+            ZStack {
+                CancelButton()
+                    .blendMode(.softLight)
+                    .rotationEffect(Angle(degrees: isSettingsCollapsed ? 90 : 45))
+
+                SettingsButton()
+                    .offset(offsetSettings)
+                    .blendMode(.softLight)
+                    .opacity(isSettingsCollapsed ? 1 : 0)
+
+                HomeButton()
+                    .offset(isHomeVisible ? offsetHome : .zero)
+                    .blendMode(.softLight)
+                    .opacity(isHomeVisible ? 1 : 0)
+            }
         }
         .frame(width: 120, height: 500)
         .contentShape(Circle())
