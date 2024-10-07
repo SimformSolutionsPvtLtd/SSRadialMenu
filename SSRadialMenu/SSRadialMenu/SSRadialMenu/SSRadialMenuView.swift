@@ -35,7 +35,7 @@ extension SSRadialMenuView {
                 .mask {
                     Canvas { context, size in
                         context.addFilter(.alphaThreshold(min: 0.8, color: .black))
-                        context.addFilter(.blur(radius: 8))
+                        context.addFilter(.blur(radius: 10))
 
                         context.drawLayer { ctx in
                             for index in 1...viewModel.menus.count {
@@ -116,15 +116,18 @@ extension SSRadialMenuView {
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                         withAnimation(.interactiveSpring(response: 0.35, dampingFraction: 0.8, blendDuration: 0.1).speed(0.1)) {
-                            let jumpOffset: CGSize = CGSize(width: 0, height: -10)
+                            let initialJumpOffset: CGSize = CGSize(width: 0, height: -20) // Initial jump offset for bounce effect
                             let finalOffset = menu.isCollapsed ? .zero : circularOffset(
                                 index: menuIndex,
                                 total: viewModel.menus.count,
                                 radius: 90
                             )
-                            viewModel.menus[menuIndex].offset = jumpOffset
+
+                            // Start with an initial jump effect
+                            viewModel.menus[menuIndex].offset = initialJumpOffset
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                withAnimation(.easeOut(duration: 0.2)) {
+                                // Animate to the final position with a spring effect
+                                withAnimation(.interpolatingSpring(stiffness: 100, damping: 10)) {
                                     viewModel.menus[menuIndex].offset = finalOffset
                                 }
                             }
@@ -132,7 +135,6 @@ extension SSRadialMenuView {
                     }
                 }
             }
-
         }
     }
 
