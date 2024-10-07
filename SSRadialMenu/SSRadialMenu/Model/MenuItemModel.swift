@@ -14,4 +14,6 @@ struct MenuItem: Identifiable {
     let size: CGFloat
     let menuView: AnyView
     var selected: Bool
+    var isCollapsed: Bool
+    var offset: CGSize = .zero
 }

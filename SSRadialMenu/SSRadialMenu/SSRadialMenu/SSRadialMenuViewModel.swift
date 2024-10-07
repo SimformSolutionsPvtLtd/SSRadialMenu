@@ -14,52 +14,48 @@ class MenuViewModel: ObservableObject {
             icon: "menucard.fill",
             size: 60,
             menuView: AnyView(EmptyView()),
-            selected: false
+            selected: false,
+            isCollapsed: true
         ),
         MenuItem(
             color: .blue,
             icon: "ellipsis.bubble.fill", 
             size: 60,
             menuView: AnyView(EmptyView()),
-            selected: true
+            selected: true,
+            isCollapsed: true
         ),
         MenuItem(
             color: .yellow,
             icon: "ellipsis",
             size: 60,
             menuView: AnyView(EmptyView()),
-            selected: false
-        ),
-    ]
-    
-    @Published var subMenus: [MenuItem] = [
-        MenuItem(
-            color: .pink,
-            icon: "menucard.fill",
-            size: 60,
-            menuView: AnyView(EmptyView()),
-            selected: false
+            selected: false,
+            isCollapsed: true
         ),
         MenuItem(
-            color: .cyan,
-            icon: "ellipsis.bubble.fill", 
+            color: .yellow,
+            icon: "ellipsis",
             size: 60,
             menuView: AnyView(EmptyView()),
-            selected: true
+            selected: false,
+            isCollapsed: true
         ),
         MenuItem(
-            color: .green,
-            icon: "ellipsis", 
+            color: .yellow,
+            icon: "ellipsis",
             size: 60,
             menuView: AnyView(EmptyView()),
-            selected: false
+            selected: false,
+            isCollapsed: true
         ),
         MenuItem(
-            color: .gray,
-            icon: "ellipsis", 
+            color: .yellow,
+            icon: "ellipsis",
             size: 60,
             menuView: AnyView(EmptyView()),
-            selected: false
+            selected: false,
+            isCollapsed: true
         )
     ]
 }
