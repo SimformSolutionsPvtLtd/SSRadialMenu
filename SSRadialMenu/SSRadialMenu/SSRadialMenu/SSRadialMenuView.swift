@@ -35,7 +35,7 @@ extension SSRadialMenuView {
                 .mask {
                     Canvas { context, size in
                         context.addFilter(.alphaThreshold(min: 0.8, color: .black))
-                        context.addFilter(.blur(radius: 2))
+                        context.addFilter(.blur(radius: 5))
 
                         context.drawLayer { ctx in
                             for index in 1...viewModel.menus.count {
@@ -85,7 +85,7 @@ extension SSRadialMenuView {
 }
 
 extension SSRadialMenuView {
-    private func Symbol(offset: CGSize = .zero, diameter: CGFloat = 60) -> some View {
+    private func Symbol(offset: CGSize = .zero, diameter: CGFloat = 55) -> some View {
         Circle()
             .frame(width: diameter, height: diameter)
             .offset(offset)
@@ -111,21 +111,28 @@ extension SSRadialMenuView {
                 }
             }
             for (index, menu) in viewModel.menus.enumerated() {
-                   if let menuIndex = viewModel.menus.firstIndex(where: { $0.id == menu.id }) {
-                       let delay = Double(index) * 0.1 // Adjust the delay multiplier as needed
-                       DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                           withAnimation(
-                               .interactiveSpring(response: 0.35, dampingFraction: 0.8, blendDuration: 0.1).speed(0.5)
-                           ) {
-                               viewModel.menus[menuIndex].offset = menu.isCollapsed ? .zero : circularOffset(
-                                   index: menuIndex,
-                                   total: viewModel.menus.count,
-                                   radius: 90
-                               )
-                           }
-                       }
-                   }
-               }
+                if let menuIndex = viewModel.menus.firstIndex(where: { $0.id == menu.id }) {
+                    let delay = Double(index) * 0.2 // Adjust the delay multiplier as needed
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                        withAnimation(.interactiveSpring(response: 0.35, dampingFraction: 0.8, blendDuration: 0.1).speed(0.1)) {
+                            let jumpOffset: CGSize = CGSize(width: 0, height: -10)
+                            let finalOffset = menu.isCollapsed ? .zero : circularOffset(
+                                index: menuIndex,
+                                total: viewModel.menus.count,
+                                radius: 85
+                            )
+                            viewModel.menus[menuIndex].offset = jumpOffset
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    viewModel.menus[menuIndex].offset = finalOffset
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
         }
     }
 
