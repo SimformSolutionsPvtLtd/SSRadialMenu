@@ -35,7 +35,7 @@ extension SSRadialMenuView {
                 .mask {
                     Canvas { context, size in
                         context.addFilter(.alphaThreshold(min: 0.8, color: .black))
-                        context.addFilter(.blur(radius: 5))
+                        context.addFilter(.blur(radius: 8))
 
                         context.drawLayer { ctx in
                             for index in 1...viewModel.menus.count {
@@ -85,7 +85,7 @@ extension SSRadialMenuView {
 }
 
 extension SSRadialMenuView {
-    private func Symbol(offset: CGSize = .zero, diameter: CGFloat = 55) -> some View {
+    private func Symbol(offset: CGSize = .zero, diameter: CGFloat = 60) -> some View {
         Circle()
             .frame(width: diameter, height: diameter)
             .offset(offset)
@@ -120,11 +120,11 @@ extension SSRadialMenuView {
                             let finalOffset = menu.isCollapsed ? .zero : circularOffset(
                                 index: menuIndex,
                                 total: viewModel.menus.count,
-                                radius: 85
+                                radius: 90
                             )
                             viewModel.menus[menuIndex].offset = jumpOffset
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                withAnimation(.easeOut(duration: 0.3)) {
+                                withAnimation(.easeOut(duration: 0.2)) {
                                     viewModel.menus[menuIndex].offset = finalOffset
                                 }
                             }
