@@ -17,6 +17,11 @@ struct SSRadialMenuView: View {
     @State private var scale: CGFloat = 1
     @State private var offsetX: CGFloat = 0
     @State private var offsetY: CGFloat = 0
+    @State var offsetSettings: CGSize = .zero
+    @State var offsetHome: CGSize = .zero
+    @State private var isSettingsCollapsed: Bool = false
+    @State private var isHomeVisible: Bool = false
+    @State private var submenuVisible: [Bool] = Array(repeating: false, count: 4) // Number of
 
     let animation = Animation.easeInOut(duration: 1).repeatForever(autoreverses: true)
     
@@ -25,9 +30,7 @@ struct SSRadialMenuView: View {
 // MARK: - Body view
 extension SSRadialMenuView {
     var body: some View {
-//        LiquidFluidMenuView()
-//        LiquidView()
-                content
+        content
     }
 }
 
@@ -35,38 +38,43 @@ extension SSRadialMenuView {
 extension SSRadialMenuView {
     private var content: some View {
         ZStack {
-            RadialButtonView(
-                icon: "plus",
-                backGroundColor: .blue,
-                size: 60
-            ) {
-                isActivated.toggle()
-            }
-            .background{
-                menuItems(
-                    isOpened: isActivated,
-                    menuLayer: .first,
-                    menuItem: viewModel.menus,
-                    action: {
-                        isSubmenuActivated.toggle()
-                    }
+            Rectangle()
+                .fill(
+                    .linearGradient(colors: [.purple, .pink], startPoint: .top, endPoint: .bottom)
                 )
-                .background {
-                    menuItems(
-                        isOpened: isSubmenuActivated,
-                        menuLayer: .second,
-                        menuItem: viewModel.subMenus,
-                        action: { }
-                    )
+                .mask {
+                    Canvas { context, size in
+                        context.addFilter(.alphaThreshold(min: 0.8, color: .black))
+                        context.addFilter(.blur(radius: 15))
+
+                        context.drawLayer { ctx in
+                            for index in [1, 2] {
+                                if let resolvedView = context.resolveSymbol(id: index) {
+                                    ctx.draw(resolvedView, at: CGPoint(x: size.width / 2, y: size.height / 2))
+                                }
+                            }
+                        }
+                    } symbols: {
+                        Symbol(diameter: 120)
+                            .tag(1)
+                        Symbol(offset: offsetSettings)
+                            .tag(2)
+                    }
                 }
+
+            ZStack {
+                CancelButton()
+                    .blendMode(.softLight)
+                    .rotationEffect(Angle(degrees: isSettingsCollapsed ? 90 : 45))
+
+                SettingsButton()
+                    .offset(offsetSettings)
+                    .blendMode(.softLight)
+                    .opacity(isSettingsCollapsed ? 1 : 0)
             }
         }
-        .frame(
-            maxWidth: .infinity,
-            maxHeight: .infinity,
-            alignment: .bottomTrailing
-        )
-        .padding(.trailing, 20)
+        .frame(width: 120, height: 500)
+        .contentShape(Circle())
     }
 }
 
@@ -256,14 +264,14 @@ struct LiquidMenuButtons: View {
     // - Body -
     var body: some View {
         ZStack {
-            BackgroundView()
-            LiquidMenu()
+//            BackgroundView()
+//            LiquidMenu()
         }
     }
 }
 
 
-extension LiquidMenuButtons {
+extension SSRadialMenuView {
 
     private func BackgroundView() -> some View {
         Rectangle()
@@ -273,20 +281,16 @@ extension LiquidMenuButtons {
 
     private func LiquidMenu() -> some View {
         ZStack {
-            // Background layer with effects
             Rectangle()
                 .fill(
                     .linearGradient(colors: [.purple, .pink], startPoint: .top, endPoint: .bottom)
                 )
                 .mask {
                     Canvas { context, size in
-                        // Adding Filters
                         context.addFilter(.alphaThreshold(min: 0.8, color: .black))
                         context.addFilter(.blur(radius: 15))
 
-                        // Drawing Layers
                         context.drawLayer { ctx in
-                            // Placing symbols
                             for index in [1, 2] {
                                 if let resolvedView = context.resolveSymbol(id: index) {
                                     ctx.draw(resolvedView, at: CGPoint(x: size.width / 2, y: size.height / 2))
@@ -296,16 +300,11 @@ extension LiquidMenuButtons {
                     } symbols: {
                         Symbol(diameter: 120)
                             .tag(1)
-
                         Symbol(offset: offsetSettings)
                             .tag(2)
-
-                        Symbol(offset: offsetHome)
-                            .tag(3)
                     }
                 }
 
-            // Child buttons layered above the blurred background
             ZStack {
                 CancelButton()
                     .blendMode(.softLight)
@@ -315,30 +314,15 @@ extension LiquidMenuButtons {
                     .offset(offsetSettings)
                     .blendMode(.softLight)
                     .opacity(isSettingsCollapsed ? 1 : 0)
-
-                HomeButton()
-                    .offset(isHomeVisible ? offsetHome : .zero)
-                    .blendMode(.softLight)
-                    .opacity(isHomeVisible ? 1 : 0)
             }
         }
         .frame(width: 120, height: 500)
         .contentShape(Circle())
     }
-
     private func Symbol(offset: CGSize = .zero, diameter: CGFloat = 75) -> some View {
         Circle()
             .frame(width: diameter, height: diameter)
             .offset(offset)
-    }
-
-    func HomeButton() -> some View {
-        ZStack {
-            Image(systemName: "house")
-                .resizable()
-                .frame(width: 25, height: 25)
-        }
-        .frame(width: 65, height: 65)
     }
 
     func CancelButton() -> some View {
@@ -362,7 +346,7 @@ extension LiquidMenuButtons {
             }
         }
     }
-
+//
     func SettingsButton() -> some View {
         ZStack {
             Image(systemName: "gear")
