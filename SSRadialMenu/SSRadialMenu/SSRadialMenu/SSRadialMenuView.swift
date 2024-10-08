@@ -68,11 +68,68 @@ struct LiquidPeelAwayView: View {
     @State private var bounceAnimation: CGFloat = 1.0 // Bounce effect
 
     let menuItems: [MenuItem] = [
-        MenuItem(color: .blue, icon: "star", size: 40, menuView: AnyView(Text("Item 1")), selected: false, isCollapsed: true),
-        MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Text("Item 2")), selected: false, isCollapsed: true),
-        MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Text("Item 3")), selected: false, isCollapsed: true),
-        MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Text("Item 2")), selected: false, isCollapsed: true),
-        MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Text("Item 3")), selected: false, isCollapsed: true)
+        MenuItem(
+            color: .blue,
+            icon: "star",
+            size: 50,
+            menuView: AnyView(Image(systemName: "house.circle")),
+            selected: false,
+            isCollapsed: true
+        ),
+        MenuItem(
+            color: .green,
+            icon: "heart",
+            size: 50,
+            menuView:AnyView(Image(systemName: "house.circle")),
+            selected: false,
+            isCollapsed: true
+        ),
+        MenuItem(
+            color: .orange,
+            icon: "moon",
+            size: 50,
+            menuView: AnyView(Image(systemName: "house.circle")),
+            selected: false, isCollapsed: true
+        ),
+        MenuItem(
+            color: .green,
+            icon: "heart",
+            size: 50,
+            menuView: AnyView(Image(systemName: "house.circle")),
+            selected: false,
+            isCollapsed: true
+        ),
+        MenuItem(
+            color: .orange,
+            icon: "moon",
+            size: 50, 
+            menuView: AnyView(Image(systemName: "house.circle")),
+            selected: false, isCollapsed: true
+        ),
+        MenuItem(
+            color: .orange,
+            icon: "moon",
+            size: 50,
+            menuView: AnyView(Image(systemName: "house.circle")),
+            selected: false,
+            isCollapsed: true
+        ),
+        MenuItem(
+            color: .green,
+            icon: "heart",
+            size: 50,
+            menuView: AnyView(Image(systemName: "house.circle")),
+            selected: false,
+            isCollapsed: true
+        ),
+        MenuItem(
+            color: .orange,
+            icon: "moon",
+            size: 50,
+            menuView: AnyView(Image(systemName: "house.circle")),
+            selected: false,
+            isCollapsed: true
+        )
     ]
 
     init() {
@@ -83,19 +140,27 @@ struct LiquidPeelAwayView: View {
     var body: some View {
         ZStack {
             // Main circle with liquid peel effect
+
+
             Circle()
                 .fill(Color.red)
-                .frame(width: 60, height: 60)
-                .overlay(
+                .frame(width: 40 * bounceAnimation, height: 40 * bounceAnimation)
+                .offset(x: cos(currentPeelingAngle) * 8, y: sin(currentPeelingAngle) * 8)
+                .scaleEffect(isPeeling ? bounceAnimation : 1.0)
+                .overlay {
                     Circle()
                         .fill(Color.red)
-                        .frame(width: 35 * bounceAnimation, height: 35 * bounceAnimation)
-                        .offset(x: cos(currentPeelingAngle) * 8, y: sin(currentPeelingAngle) * 8) // Stretch towards the submenu angle
-                        .scaleEffect(isPeeling ? bounceAnimation : 1.0) // Bounce/stretch effect on peeling
-                        .animation(.easeInOut(duration: 0.3), value: isPeeling) // Smooth animation when peeling
-                )
-                .scaleEffect(isExpanded ? 1.1 : 1.0) // Scale effect on expansion
-                .animation(.easeInOut(duration: 0.3), value: isExpanded) // Animate scale change
+                        .frame(width: 60, height: 60)
+                        .overlay(
+                            Image(systemName: "plus") // Example image (SF Symbol)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 30, height: 30) // Adjust size to fit the circle
+                        )
+                        .scaleEffect(isExpanded ? 1.1 : 1.0)
+                        .animation(.easeInOut(duration: 0.3), value: isExpanded)
+                }
+                .animation(.easeInOut(duration: 0.3), value: isPeeling)
 
             // Radial menu for submenu items
             RadialMenu(items: menuItems, isExpanded: $isExpanded, menuItemsVisible: $menuItemsVisible, currentPeelingAngle: $currentPeelingAngle)
