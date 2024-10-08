@@ -4,57 +4,144 @@
 //
 //  Created by Rishita Panchal on 07/12/23.
 //
-
 import SwiftUI
 
-struct LiquidPeelAwayView: View {
-    @State private var isPeeling: Bool = false
-    @State private var rotationAngle: Double = 0
-    @State private var scale: CGFloat = 1.0
-    @State private var offsetY: CGFloat = 0
-    @State private var timer: Timer? = nil
+// Define the RadialMenu view
+struct RadialMenu: View {
+    let items: [MenuItem]
+    @Binding var isExpanded: Bool
+    @Binding var menuItemsVisible: [Bool] // Pass visibility state from parent
+    @Binding var currentPeelingAngle: Double // Track the current angle for peeling
+
+    @State private var selectedItem: MenuItem?
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(Color.red) // Changed to blue for contrast
-                .frame(width: 80 * scale, height:80 * scale)
-                .offset(y: isPeeling ? -20 + offsetY : 0) // Move the circle up to simulate peeling
-                .rotationEffect(.degrees(rotationAngle), anchor: .top) // Rotate for peeling effect
-                .scaleEffect(isPeeling ? 1.05 : 1.0) // Scale effect for fluidity
-                .animation(.easeInOut(duration: 0.3), value: isPeeling)
-
-            // Parent layer (red) that stays in place
-            Circle()
-                .fill(Color.red)
-                .frame(width: 120, height: 120)
-                .cornerRadius(20)
-                .border(.clear, width: 20)
-        }
-        .onTapGesture {
-            isPeeling.toggle()
-            if isPeeling {
-                offsetY = 0
-                timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-                    rotationAngle += 10
-                    // Add liquid-like bouncing effect
-                    offsetY = sin(Double(rotationAngle) * .pi / 180) * 5 // Oscillate slightly
-                    scale = 1 + 0.05 * sin(Double(rotationAngle) * .pi / 180) // Liquid scaling effect
+            if isExpanded {
+                ForEach(items.indices, id: \.self) { index in
+                    createMenuItem(items[index], at: index)
+                        .opacity(menuItemsVisible[index] ? 1 : 0) // Show or hide based on visibility state
+                        .animation(.easeInOut.delay(Double(index) * 0.1), value: menuItemsVisible[index]) // Delay based on index
+                        .onAppear {
+                            // Update peeling direction based on the current angle of the submenu
+                            let angle = (2 * .pi / CGFloat(items.count)) * CGFloat(index)
+                            currentPeelingAngle = angle
+                        }
                 }
-            } else {
-                // Stop the rotation and reset the peeling effect
-                timer?.invalidate()
-                timer = nil
-                rotationAngle = 0
-                offsetY = 0
-                scale = 1.0
+                .onAppear {
+                    for index in items.indices {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) {
+                            withAnimation {
+                                menuItemsVisible[index] = true
+                            }
+                        }
+                    }
+                }
             }
         }
     }
+
+    private func createMenuItem(_ item: MenuItem, at index: Int) -> some View {
+        let radius: CGFloat = 100 // Distance from center
+        let angle = (2 * .pi / CGFloat(items.count)) * CGFloat(index)
+        let x = radius * cos(angle)
+        let y = radius * sin(angle)
+
+        return item.menuView
+            .frame(width: item.size, height: item.size)
+            .background(item.color)
+            .cornerRadius(item.size / 2)
+            .offset(x: x, y: y)
+            .onTapGesture {
+                // Handle item tap, update state or call an action
+                selectedItem = item
+            }
+    }
 }
 
-struct LiquidPeelAwayView_Previews: PreviewProvider {
-    static var previews: some View {
-        LiquidPeelAwayView()
+struct LiquidPeelAwayView: View {
+    @State private var isPeeling: Bool = false
+    @State private var scale: CGFloat = 1.0
+    @State private var isExpanded: Bool = false // State to control the radial menu
+    @State private var menuItemsVisible: [Bool] // Visibility of each menu item
+    @State private var currentPeelingAngle: Double = 0 // Angle of peeling based on submenu position
+    @State private var bounceAnimation: CGFloat = 1.0 // Bounce effect
+
+    let menuItems: [MenuItem] = [
+        MenuItem(color: .blue, icon: "star", size: 40, menuView: AnyView(Text("Item 1")), selected: false, isCollapsed: true),
+        MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Text("Item 2")), selected: false, isCollapsed: true),
+        MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Text("Item 3")), selected: false, isCollapsed: true),
+        MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Text("Item 2")), selected: false, isCollapsed: true),
+        MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Text("Item 3")), selected: false, isCollapsed: true)
+    ]
+
+    init() {
+        // Initialize the visibility array based on menuItems count
+        _menuItemsVisible = State(initialValue: Array(repeating: false, count: menuItems.count))
+    }
+
+    var body: some View {
+        ZStack {
+            // Main circle with liquid peel effect
+            Circle()
+                .fill(Color.red)
+                .frame(width: 60, height: 60)
+                .overlay(
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 35 * bounceAnimation, height: 35 * bounceAnimation)
+                        .offset(x: cos(currentPeelingAngle) * 8, y: sin(currentPeelingAngle) * 8) // Stretch towards the submenu angle
+                        .scaleEffect(isPeeling ? bounceAnimation : 1.0) // Bounce/stretch effect on peeling
+                        .animation(.easeInOut(duration: 0.3), value: isPeeling) // Smooth animation when peeling
+                )
+                .scaleEffect(isExpanded ? 1.1 : 1.0) // Scale effect on expansion
+                .animation(.easeInOut(duration: 0.3), value: isExpanded) // Animate scale change
+
+            // Radial menu for submenu items
+            RadialMenu(items: menuItems, isExpanded: $isExpanded, menuItemsVisible: $menuItemsVisible, currentPeelingAngle: $currentPeelingAngle)
+                .frame(width: 120, height: 120) // Adjust based on your layout
+        }
+        .onTapGesture {
+            if !isExpanded {
+                // Start the peel effect and expand the menu
+                withAnimation {
+                    isPeeling = true
+                    isExpanded = true
+                }
+                // Peeling effect occurs as the menu items come out
+                startPeelingEffect()
+            } else {
+                // Collapse the menu and reset peel effect
+                withAnimation {
+                    isPeeling = false
+                    isExpanded = false
+                }
+                // Reset visibility and peeling when collapsing
+                resetPeelingEffect()
+                menuItemsVisible = Array(repeating: false, count: menuItems.count)
+            }
+        }
+    }
+
+    private func startPeelingEffect() {
+        // Start a subtle bouncing/stretch effect in sync with the menu items
+        for index in menuItems.indices {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.2) {
+                // Update the currentPeelingAngle to target the submenu item
+                let angle = (2 * .pi / CGFloat(menuItems.count)) * CGFloat(index)
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    currentPeelingAngle = angle
+                    bounceAnimation = 1.2 // Bounce out
+                }
+                withAnimation(.easeInOut(duration: 0.2).delay(0.3)) {
+                    bounceAnimation = 1.0 // Bounce back in
+                }
+            }
+        }
+    }
+
+    private func resetPeelingEffect() {
+        // Reset the bouncing/stretch effect when collapsing
+        bounceAnimation = 1.0
     }
 }
