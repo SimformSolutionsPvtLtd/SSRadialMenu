@@ -6,12 +6,11 @@
 //
 import SwiftUI
 
-// Define the RadialMenu view
 struct RadialMenu: View {
     let items: [MenuItem]
     @Binding var isExpanded: Bool
-    @Binding var menuItemsVisible: [Bool] // Pass visibility state from parent
-    @Binding var currentPeelingAngle: Double // Track the current angle for peeling
+    @Binding var menuItemsVisible: [Bool]
+    @Binding var currentPeelingAngle: Double
 
     @State private var selectedItem: MenuItem?
 
@@ -20,10 +19,10 @@ struct RadialMenu: View {
             if isExpanded {
                 ForEach(items.indices, id: \.self) { index in
                     createMenuItem(items[index], at: index)
-                        .opacity(menuItemsVisible[index] ? 1 : 0) // Show or hide based on visibility state
-                        .animation(.easeInOut.delay(Double(index) * 0.1), value: menuItemsVisible[index]) // Delay based on index
+                        .opacity(menuItemsVisible[index] ? 1 : 0)
+                        .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
+                        .animation(.easeInOut.delay(Double(index) * 0.1), value: menuItemsVisible[index])
                         .onAppear {
-                            // Update peeling direction based on the current angle of the submenu
                             let angle = (2 * .pi / CGFloat(items.count)) * CGFloat(index)
                             currentPeelingAngle = angle
                         }
@@ -42,7 +41,7 @@ struct RadialMenu: View {
     }
 
     private func createMenuItem(_ item: MenuItem, at index: Int) -> some View {
-        let radius: CGFloat = 100 // Distance from center
+        let radius: CGFloat = 100
         let angle = (2 * .pi / CGFloat(items.count)) * CGFloat(index)
         let x = radius * cos(angle)
         let y = radius * sin(angle)
@@ -51,9 +50,8 @@ struct RadialMenu: View {
             .frame(width: item.size, height: item.size)
             .background(item.color)
             .cornerRadius(item.size / 2)
-            .offset(x: x, y: y)
+            .offset(x: menuItemsVisible[index] ? x : 0, y: menuItemsVisible[index] ? y : 0)
             .onTapGesture {
-                // Handle item tap, update state or call an action
                 selectedItem = item
             }
     }
@@ -73,8 +71,6 @@ struct LiquidPeelAwayView: View {
         MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
         MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
         MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
-        MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
-        MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
         MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true)
     ]
 
@@ -92,10 +88,10 @@ struct LiquidPeelAwayView: View {
                 .overlay {
                     Circle()
                         .fill(Color.red)
-                        .frame(width: 31 * bounceAnimation, height: 31 * bounceAnimation)
+                        .frame(width: 33 * bounceAnimation, height: 33 * bounceAnimation)
                         .scaleEffect(isPeeling ? 1.5 : 1.0) // Scale effect for stretching
-                        .offset(x: cos(currentPeelingAngle) * 11, y: sin(currentPeelingAngle) * 11)
-                        .animation(.easeInOut(duration: 0.3).delay(0.1), value: isPeeling)
+                        .offset(x: cos(currentPeelingAngle) * 10, y: sin(currentPeelingAngle) * 10)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.5, blendDuration: 0.2).delay(0.1), value: isPeeling) // Bounce animation
                         .overlay {
                             if !isExpanded {
                                 Image(systemName: "plus")
