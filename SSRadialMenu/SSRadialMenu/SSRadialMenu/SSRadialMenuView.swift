@@ -66,7 +66,12 @@ struct RadialMenu: View {
             baseAngle = 0
             angleRange = 2 * .pi
         }
-        let angle = baseAngle + (angleRange / CGFloat(totalItems - 1)) * CGFloat(index)
+        let angle: CGFloat
+        if position == .center {
+            angle = (angleRange / CGFloat(totalItems)) * CGFloat(index)
+        } else {
+            angle = baseAngle + (angleRange / CGFloat(totalItems - 1)) * CGFloat(index)
+        }
         let x = radius * cos(angle)
         let y = radius * sin(angle)
         return (x, y)
