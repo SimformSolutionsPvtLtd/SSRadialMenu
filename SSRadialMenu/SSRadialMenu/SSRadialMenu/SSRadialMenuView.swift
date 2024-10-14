@@ -293,3 +293,63 @@ enum Position {
     }
 
 }
+
+import SwiftUI
+
+struct MetaBallView: View {
+    @State private var progress = 0.0
+    @State private var rotation: Double = 0.0 // State variable for rotation
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.black)
+                .blur(radius: 20.0)
+                .frame(width: 40.0, height: 40.0)
+                .offset(x: progress * 30.0) // Only this circle will move
+                .rotationEffect(.degrees(rotation)) // Apply rotation effect
+
+            Circle()
+                .fill(Color.black)
+                .blur(radius: 20.0)
+                .frame(width: 100.0, height: 100.0)
+                // The second circle is stationary, no offset applied
+        }
+        .frame(width: 200.0, height: 200.0)
+        .overlay(
+            Color(white: 0.5)
+                .blendMode(.colorBurn)
+        )
+        .overlay(
+            Color(white: 1.0)
+                .blendMode(.colorDodge)
+        )
+        .overlay(
+            LinearGradient(colors: [.purple, .red],
+                           startPoint: .leading,
+                           endPoint: .trailing)
+                .blendMode(.plusLighter)
+        )
+        .onAppear {
+            withAnimation(
+                .easeInOut(duration: 1.0)
+                .repeatForever(autoreverses: true)
+            ) {
+                progress = 1.0 // Animate the movement of the first circle
+            }
+
+            withAnimation(
+                .linear(duration: 2.0) // Set the duration for rotation
+                .repeatForever(autoreverses: false)
+            ) {
+                rotation = 360.0 // Complete rotation of the first circle
+            }
+        }
+    }
+}
+
+struct MetaBallView_Previews: PreviewProvider {
+    static var previews: some View {
+        MetaBallView()
+    }
+}
