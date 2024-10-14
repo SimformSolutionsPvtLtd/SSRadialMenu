@@ -18,7 +18,7 @@ struct RadialMenu: View {
         ZStack {
             if isExpanded {
                 ForEach(items.indices, id: \.self) { index in
-                    createMenuItem(items[index], at: index)
+                    createMenuItem(items[index], at: index, position: .topLeft)
                         .opacity(menuItemsVisible[index] ? 1 : 0)
                         .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
                         .animation(.easeInOut.delay(Double(index) * 0.1), value: menuItemsVisible[index])
@@ -40,26 +40,59 @@ struct RadialMenu: View {
         }
     }
 
-    private func createMenuItem(_ item: MenuItem, at index: Int) -> some View {
-        let radius: CGFloat = 100
-        let angle = (2 * .pi / CGFloat(items.count)) * CGFloat(index)
+
+    private func calculateOffset(radius: CGFloat, index: Int, totalItems: Int, position: Position) -> (CGFloat, CGFloat) {
+        let baseAngle: CGFloat
+        let angleRange: CGFloat
+        switch position {
+        case .topRight:
+            // fan out from 90° to 180°
+            baseAngle = .pi / 2
+            angleRange = .pi / 2
+        case .bottomRight:
+            // fan out from 180° to 270°
+            baseAngle = .pi
+            angleRange = .pi / 2
+        case .topLeft:
+            // fan out from 0° to 90°
+            baseAngle = 0
+            angleRange = .pi / 2
+        case .bottomLeft:
+            // fan out from 270° to 360°
+            baseAngle = 3 * .pi / 2
+            angleRange = .pi / 2
+        case .center:
+            // Fan out from the center
+            baseAngle = 0
+            angleRange = 2 * .pi
+        }
+        let angle = baseAngle + (angleRange / CGFloat(totalItems - 1)) * CGFloat(index)
         let x = radius * cos(angle)
         let y = radius * sin(angle)
+        return (x, y)
+    }
+
+
+    private func createMenuItem(_ item: MenuItem, at index: Int, position: Position) -> some View {
+        let radius: CGFloat = 100
+        let (x, y) = calculateOffset(radius: radius, index: index, totalItems: items.count, position: position)
 
         return item.menuView
             .frame(width: item.size, height: item.size)
             .background(item.color)
             .cornerRadius(item.size / 2)
             .offset(x: menuItemsVisible[index] ? x : 0, y: menuItemsVisible[index] ? y : 0)
+            .scaleEffect(menuItemsVisible[index] ? 1.2 : 0.0)
+            .animation(.easeOut(duration: 0.3).delay(Double(index) * 0.1), value: menuItemsVisible[index])
             .onTapGesture {
                 selectedItem = item
             }
     }
 }
 
+
 struct LiquidPeelAwayView: View {
     @State private var isPeeling: Bool = false
-    @State private var scale: CGFloat = 1.0
     @State private var isExpanded: Bool = false
     @State private var menuItemsVisible: [Bool]
     @State private var currentPeelingAngle: Double = 0
@@ -89,9 +122,9 @@ struct LiquidPeelAwayView: View {
                     Circle()
                         .fill(Color.red)
                         .frame(width: 33 * bounceAnimation, height: 33 * bounceAnimation)
-                        .scaleEffect(isPeeling ? 1.5 : 1.0) // Scale effect for stretching
+                        .scaleEffect(isPeeling ? 1.5 : 1.0)
                         .offset(x: cos(currentPeelingAngle) * 10, y: sin(currentPeelingAngle) * 10)
-                        .animation(.spring(response: 0.4, dampingFraction: 0.5, blendDuration: 0.2).delay(0.1), value: isPeeling) // Bounce animation
+                        .animation(.spring(response: 0.4, dampingFraction: 0.5, blendDuration: 0.2).delay(0.1), value: isPeeling)
                         .overlay {
                             if !isExpanded {
                                 Image(systemName: "plus")
@@ -112,17 +145,23 @@ struct LiquidPeelAwayView: View {
                             }
                         }
                 }
-                .scaleEffect(isPeeling ? 1.05 : 1.0) // Slight scale effect for the liquid illusion
+                .scaleEffect(isPeeling ? 1.05 : 1.0)
                 .overlay {
-                    Circle() // Create a second overlay for the liquid effect
+                    Circle()
                         .stroke(Color.red.opacity(0.4), lineWidth: 2)
                         .scaleEffect(isPeeling ? 1.2 : 1.0)
-                        .opacity(isPeeling ? 1 : 0) // Fade in when peeling
+                        .opacity(isPeeling ? 1 : 0)
                         .animation(.easeInOut(duration: 0.3).delay(0.1), value: isPeeling)
                 }
 
-            RadialMenu(items: menuItems, isExpanded: $isExpanded, menuItemsVisible: $menuItemsVisible, currentPeelingAngle: $currentPeelingAngle)
-                .frame(width: 120, height: 120)
+            RadialMenu(
+                items: menuItems,
+                isExpanded: $isExpanded,
+                menuItemsVisible: $menuItemsVisible,
+                currentPeelingAngle: $currentPeelingAngle
+            )
+
+            .frame(width: 120, height: 120)
         }
         .onTapGesture {
             if !isExpanded {
@@ -160,4 +199,8 @@ struct LiquidPeelAwayView: View {
     private func resetPeelingEffect() {
         bounceAnimation = 1.0
     }
+}
+
+enum Position {
+    case topRight, bottomRight, topLeft, bottomLeft, center
 }
