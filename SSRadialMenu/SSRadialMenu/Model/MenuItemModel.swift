@@ -16,4 +16,5 @@ struct MenuItem: Identifiable {
     var selected: Bool
     var isCollapsed: Bool
     var offset: CGSize = .zero
+    var subMenuItems: [MenuItem]? // New property for submenus
 }

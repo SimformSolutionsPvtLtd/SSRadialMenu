@@ -4,6 +4,7 @@
 //
 //  Created by Rishita Panchal on 07/12/23.
 //
+
 import SwiftUI
 
 struct RadialMenu: View {
@@ -13,7 +14,9 @@ struct RadialMenu: View {
     @Binding var menuItemsVisible: [Bool]
     @Binding var currentPeelingAngle: Double
     @State private var selectedItem: MenuItem?
-    
+    @State private var showSubMenu: Bool = false
+    @State private var subMenuItems: [MenuItem] = []
+
     var body: some View {
         ZStack {
             if isExpanded {
@@ -22,46 +25,55 @@ struct RadialMenu: View {
                         .opacity(menuItemsVisible[index] ? 1 : 0)
                         .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
                         .animation(.easeInOut.delay(Double(index) * 0.1), value: menuItemsVisible[index])
-                        .onAppear {
-                            let angle = (2 * .pi / CGFloat(items.count)) * CGFloat(index)
-                            currentPeelingAngle = angle
-                        }
                 }
-                .onAppear {
-                    for index in items.indices {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) {
-                            withAnimation {
-                                menuItemsVisible[index] = true
-                            }
-                        }
-                    }
+
+                if showSubMenu, let selectedItem = selectedItem, let subItems = selectedItem.subMenuItems {
+                    SubMenuView(subItems: subItems, position: position)
+                        .transition(.scale)
+                        .animation(.easeInOut, value: showSubMenu)
                 }
             }
         }
     }
 
+    private func createMenuItem(_ item: MenuItem, at index: Int, position: Position) -> some View {
+        let radius: CGFloat = 100
+        let (x, y) = calculateOffset(radius: radius, index: index, totalItems: items.count, position: position)
+
+        return item.menuView
+            .frame(width: item.size, height: item.size)
+            .background(item.color)
+            .cornerRadius(item.size / 2)
+            .offset(x: menuItemsVisible[index] ? x : 0, y: menuItemsVisible[index] ? y : 0)
+            .scaleEffect(menuItemsVisible[index] ? 1.2 : 0.0)
+            .onTapGesture {
+                if let subItems = item.subMenuItems {
+                    selectedItem = item
+                    showSubMenu = true
+                } else {
+                    selectedItem = item
+                    showSubMenu = false
+                }
+            }
+    }
 
     private func calculateOffset(radius: CGFloat, index: Int, totalItems: Int, position: Position) -> (CGFloat, CGFloat) {
         let baseAngle: CGFloat
         let angleRange: CGFloat
         switch position {
         case .topRight:
-            // fan out from 90° to 180°
             baseAngle = .pi / 2
             angleRange = .pi / 2
         case .bottomRight:
             baseAngle = 3 * .pi / 2
             angleRange = -.pi / 2
         case .topLeft:
-            // fan out from 0° to 90°
             baseAngle = 0
             angleRange = .pi / 2
         case .bottomLeft:
-            // fan out from 270° to 360°
             baseAngle = 3 * .pi / 2
             angleRange = .pi / 2
         case .center:
-            // Fan out from the center
             baseAngle = 0
             angleRange = 2 * .pi
         }
@@ -75,25 +87,70 @@ struct RadialMenu: View {
         let y = radius * sin(angle)
         return (x, y)
     }
+}
 
+// Define SubMenuView to display submenu items
+struct SubMenuView: View {
+    let subItems: [MenuItem]
+    let position: Position
 
-    private func createMenuItem(_ item: MenuItem, at index: Int, position: Position) -> some View {
-        let radius: CGFloat = 100
-        let (x, y) = calculateOffset(radius: radius, index: index, totalItems: items.count, position: position)
+    var body: some View {
+        ForEach(subItems.indices, id: \.self) { index in
+            createSubMenuItem(subItems[index], at: index)
+        }
+    }
+
+    private func createSubMenuItem(_ item: MenuItem, at index: Int) -> some View {
+        let radius: CGFloat = 200 // Adjust the radius as needed
+        let (x, y) = calculateOffset(radius: radius, index: index, totalItems: subItems.count, position: position)
 
         return item.menuView
             .frame(width: item.size, height: item.size)
             .background(item.color)
             .cornerRadius(item.size / 2)
-            .offset(x: menuItemsVisible[index] ? x : 0, y: menuItemsVisible[index] ? y : 0)
-            .scaleEffect(menuItemsVisible[index] ? 1.2 : 0.0)
-            .animation(.easeOut(duration: 0.3).delay(Double(index) * 0.1), value: menuItemsVisible[index])
-            .onTapGesture {
-                selectedItem = item
-            }
+            .offset(x: x , y: y)
+    }
+
+    private func calculateSubMenuOffset(radius: CGFloat, index: Int) -> (CGFloat, CGFloat) {
+        let angle = (2 * .pi / CGFloat(subItems.count)) * CGFloat(index)
+        let x = radius * cos(angle)
+        let y = radius * sin(angle)
+        return (x, y)
+    }
+
+
+
+    private func calculateOffset(radius: CGFloat, index: Int, totalItems: Int, position: Position) -> (CGFloat, CGFloat) {
+        let baseAngle: CGFloat
+        let angleRange: CGFloat
+        switch position {
+        case .topRight:
+            baseAngle = .pi / 2
+            angleRange = .pi / 2
+        case .bottomRight:
+            baseAngle = 3 * .pi / 2
+            angleRange = -.pi / 2
+        case .topLeft:
+            baseAngle = 0
+            angleRange = .pi / 2
+        case .bottomLeft:
+            baseAngle = 3 * .pi / 2
+            angleRange = .pi / 2
+        case .center:
+            baseAngle = 0
+            angleRange = 2 * .pi
+        }
+        let angle: CGFloat
+        if position == .center {
+            angle = (angleRange / CGFloat(totalItems)) * CGFloat(index)
+        } else {
+            angle = baseAngle + (angleRange / CGFloat(totalItems - 1)) * CGFloat(index)
+        }
+        let x = radius * cos(angle)
+        let y = radius * sin(angle)
+        return (x, y)
     }
 }
-
 
 struct LiquidPeelAwayView: View {
     let position: Position
@@ -104,16 +161,23 @@ struct LiquidPeelAwayView: View {
     @State private var bounceAnimation: CGFloat = 1.0
 
     let menuItems: [MenuItem] = [
-        MenuItem(color: .blue, icon: "star", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
-        MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
-        MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true)
+        MenuItem(color: .blue, icon: "star", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true, subMenuItems: [
+            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 40, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
+            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 40, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
+            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 40, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
+            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 40, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
+            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 40, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
+            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 40, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true)
+        ]),
+        MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
+        MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil)
     ]
 
     init(position: Position) {
         self.position = position
         _menuItemsVisible = State(initialValue: Array(repeating: false, count: menuItems.count))
     }
-    
+
     var body: some View {
         ZStack {
             Circle()
@@ -167,43 +231,31 @@ struct LiquidPeelAwayView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.floatingButtonAlignment)
         .padding(16)
-
         .onTapGesture {
             if !isExpanded {
                 withAnimation {
                     isPeeling = true
                     isExpanded = true
                 }
-                startPeelingEffect()
+                startPeelAnimation()
             } else {
                 withAnimation {
-                    isPeeling = false
                     isExpanded = false
                 }
-                resetPeelingEffect()
-                menuItemsVisible = Array(repeating: false, count: menuItems.count)
             }
         }
     }
 
-
-    private func startPeelingEffect() {
-        for index in menuItems.indices {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.2) {
-                let angle = (2 * .pi / CGFloat(menuItems.count)) * CGFloat(index)
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    currentPeelingAngle = angle
-                    bounceAnimation = 1.2
-                }
-                withAnimation(.easeInOut(duration: 0.2).delay(0.3)) {
-                    bounceAnimation = 1.0
-                }
+    private func startPeelAnimation() {
+        // Start peeling animation logic
+        for index in 0..<menuItems.count {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) {
+                menuItemsVisible[index] = true
             }
         }
-    }
-
-    private func resetPeelingEffect() {
-        bounceAnimation = 1.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            isPeeling = false
+        }
     }
 }
 
