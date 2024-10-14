@@ -142,10 +142,10 @@ struct LiquidPeelAwayView: View {
 
     let menuItems: [MenuItem] = [
         MenuItem(color: .blue, icon: "star", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true, subMenuItems: [
-            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
-            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
-            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
-            MenuItem(color: .blue.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true)
+            MenuItem(color: .yellow.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
+            MenuItem(color: .green.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
+            MenuItem(color: .red.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
+            MenuItem(color: .purple.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true)
         ]),
         MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
         MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil)
@@ -158,10 +158,13 @@ struct LiquidPeelAwayView: View {
 
     var body: some View {
         ZStack {
+            // Main menu with stretch effect
             Circle()
                 .fill(Color.red)
-                .frame(width: 60, height: 60)
-                .scaleEffect(isExpanded ? 1.1 : 1.0)
+                .frame(width: isExpanded ? 90 : 60, height: 60)  // Stretch horizontally when expanded
+                .scaleEffect(isPeeling ? 1.3 : (isExpanded ? 1.2 : 1.0))  // Stretch scaling effect
+                .blur(radius: isPeeling ? 2 : 0)  // Blur to add a liquid feel
+                .animation(.spring(response: 0.4, dampingFraction: 0.6, blendDuration: 0.2), value: isPeeling)
                 .shadow(color: Color.black.opacity(0.5), radius: 4, x: 0, y: 3)
                 .overlay {
                     Circle()
@@ -171,6 +174,7 @@ struct LiquidPeelAwayView: View {
                         .offset(x: cos(currentPeelingAngle) * 10, y: sin(currentPeelingAngle) * 10)
                         .animation(.spring(response: 0.4, dampingFraction: 0.5, blendDuration: 0.2).delay(0.1), value: isPeeling)
                         .overlay {
+                            // Icon inside the button
                             if !isExpanded {
                                 Image(systemName: "plus")
                                     .resizable()
@@ -190,7 +194,6 @@ struct LiquidPeelAwayView: View {
                             }
                         }
                 }
-                .scaleEffect(isPeeling ? 1.05 : 1.0)
                 .overlay {
                     Circle()
                         .stroke(Color.red.opacity(0.4), lineWidth: 2)
@@ -199,6 +202,7 @@ struct LiquidPeelAwayView: View {
                         .animation(.easeInOut(duration: 0.3).delay(0.1), value: isPeeling)
                 }
 
+            // Radial menu containing subitems
             RadialMenu(
                 items: menuItems, position: position,
                 isExpanded: $isExpanded,
@@ -237,6 +241,7 @@ struct LiquidPeelAwayView: View {
     }
 }
 
+
 enum Position {
     case topRight, bottomRight, topLeft, bottomLeft, center
 
@@ -254,8 +259,6 @@ enum Position {
             .center
         }
     }
-
-
 
     func calculateOffset(radius: CGFloat, index: Int, totalItems: Int) -> (CGFloat, CGFloat) {
         let baseAngle: CGFloat
