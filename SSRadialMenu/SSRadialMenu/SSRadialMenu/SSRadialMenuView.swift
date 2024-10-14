@@ -8,17 +8,17 @@ import SwiftUI
 
 struct RadialMenu: View {
     let items: [MenuItem]
+    let position: Position
     @Binding var isExpanded: Bool
     @Binding var menuItemsVisible: [Bool]
     @Binding var currentPeelingAngle: Double
-
     @State private var selectedItem: MenuItem?
-
+    
     var body: some View {
         ZStack {
             if isExpanded {
                 ForEach(items.indices, id: \.self) { index in
-                    createMenuItem(items[index], at: index, position: .topLeft)
+                    createMenuItem(items[index], at: index, position: position)
                         .opacity(menuItemsVisible[index] ? 1 : 0)
                         .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
                         .animation(.easeInOut.delay(Double(index) * 0.1), value: menuItemsVisible[index])
@@ -92,6 +92,7 @@ struct RadialMenu: View {
 
 
 struct LiquidPeelAwayView: View {
+    let position: Position
     @State private var isPeeling: Bool = false
     @State private var isExpanded: Bool = false
     @State private var menuItemsVisible: [Bool]
@@ -101,16 +102,14 @@ struct LiquidPeelAwayView: View {
     let menuItems: [MenuItem] = [
         MenuItem(color: .blue, icon: "star", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
         MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
-        MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
-        MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
-        MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true),
         MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true)
     ]
 
-    init() {
+    init(position: Position) {
+        self.position = position
         _menuItemsVisible = State(initialValue: Array(repeating: false, count: menuItems.count))
     }
-
+    
     var body: some View {
         ZStack {
             Circle()
@@ -155,14 +154,16 @@ struct LiquidPeelAwayView: View {
                 }
 
             RadialMenu(
-                items: menuItems,
+                items: menuItems, position: position,
                 isExpanded: $isExpanded,
                 menuItemsVisible: $menuItemsVisible,
                 currentPeelingAngle: $currentPeelingAngle
             )
-
             .frame(width: 120, height: 120)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.floatingButtonAlignment)
+        .padding(16)
+
         .onTapGesture {
             if !isExpanded {
                 withAnimation {
@@ -180,6 +181,7 @@ struct LiquidPeelAwayView: View {
             }
         }
     }
+
 
     private func startPeelingEffect() {
         for index in menuItems.indices {
@@ -203,4 +205,19 @@ struct LiquidPeelAwayView: View {
 
 enum Position {
     case topRight, bottomRight, topLeft, bottomLeft, center
+
+    var floatingButtonAlignment: Alignment {
+        switch self {
+        case .topRight:
+            .topTrailing
+        case .bottomRight:
+            .bottomTrailing
+        case .topLeft:
+            .topLeading
+        case .bottomLeft:
+            .bottomLeading
+        case .center:
+            .center
+        }
+    }
 }
