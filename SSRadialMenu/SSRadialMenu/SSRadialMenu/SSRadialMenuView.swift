@@ -294,11 +294,16 @@ enum Position {
 
 }
 
+
 import SwiftUI
 
-struct MetaBallView: View {
-    @State private var progress = 0.0
-    @State private var rotation: Double = 0.0 // State variable for rotation
+struct RandomBounceView: View {
+    @State private var xOffset: CGFloat = 0.0
+    @State private var yOffset: CGFloat = 0.0
+    @State private var animationDuration: Double = 1.0
+    var position: Position
+    var radius: CGFloat = 35.0
+    var totalItems: Int = 5 
 
     var body: some View {
         ZStack {
@@ -306,14 +311,15 @@ struct MetaBallView: View {
                 .fill(Color.black)
                 .blur(radius: 20.0)
                 .frame(width: 40.0, height: 40.0)
-                .offset(x: progress * 30.0) // Only this circle will move
-                .rotationEffect(.degrees(rotation)) // Apply rotation effect
+                .offset(x: xOffset, y: yOffset)
+                .onAppear {
+                    startBouncing()
+                }
 
             Circle()
                 .fill(Color.black)
                 .blur(radius: 20.0)
-                .frame(width: 100.0, height: 100.0)
-                // The second circle is stationary, no offset applied
+                .frame(width: 80.0, height: 80.0)
         }
         .frame(width: 200.0, height: 200.0)
         .overlay(
@@ -325,31 +331,53 @@ struct MetaBallView: View {
                 .blendMode(.colorDodge)
         )
         .overlay(
-            LinearGradient(colors: [.purple, .red],
+            LinearGradient(colors: [.red, .brown],
                            startPoint: .leading,
                            endPoint: .trailing)
                 .blendMode(.plusLighter)
         )
-        .onAppear {
-            withAnimation(
-                .easeInOut(duration: 1.0)
-                .repeatForever(autoreverses: true)
-            ) {
-                progress = 1.0 // Animate the movement of the first circle
-            }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(16)
+    }
 
-            withAnimation(
-                .linear(duration: 2.0) // Set the duration for rotation
-                .repeatForever(autoreverses: false)
-            ) {
-                rotation = 360.0 // Complete rotation of the first circle
-            }
+    private func startBouncing() {
+        var directions: [(CGFloat, CGFloat)] = []
+
+        // Calculate directions dynamically based on totalItems
+        for index in 0..<totalItems {
+            let offset = position.calculateOffset(radius: radius, index: index, totalItems: totalItems)
+            directions.append(offset)
+        }
+
+        // Choose a random direction
+        let randomDirection = directions.randomElement() ?? (0.0, 0.0)
+
+        // Set the offsets
+        xOffset = randomDirection.0
+        yOffset = randomDirection.1
+
+        // Start the animation
+        withAnimation(Animation.spring(response: 0.6, dampingFraction: 0.5, blendDuration: 0)) {
+            xOffset = 0 // Return to center
+            yOffset = 0 // Return to center
+        }
+
+        // Call startBouncing again after the duration of the animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+            startBouncing()
         }
     }
 }
 
-struct MetaBallView_Previews: PreviewProvider {
-    static var previews: some View {
-        MetaBallView()
+struct ContentView: View {
+    var body: some View {
+        RandomBounceView(position: .topRight) // Specify the position you want to use
     }
 }
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
+}
+
