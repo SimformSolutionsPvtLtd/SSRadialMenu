@@ -50,9 +50,8 @@ struct RadialMenu: View {
             baseAngle = .pi / 2
             angleRange = .pi / 2
         case .bottomRight:
-            // fan out from 180° to 270°
-            baseAngle = .pi
-            angleRange = .pi / 2
+            baseAngle = 3 * .pi / 2
+            angleRange = -.pi / 2
         case .topLeft:
             // fan out from 0° to 90°
             baseAngle = 0
