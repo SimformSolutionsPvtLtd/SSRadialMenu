@@ -158,51 +158,7 @@ struct LiquidPeelAwayView: View {
 
     var body: some View {
         ZStack {
-            // Main menu with stretch effect
-            Circle()
-                .fill(Color.red)
-                .frame(width: isExpanded ? 90 : 60, height: 60)  // Stretch horizontally when expanded
-                .scaleEffect(isPeeling ? 1.3 : (isExpanded ? 1.2 : 1.0))  // Stretch scaling effect
-                .blur(radius: isPeeling ? 2 : 0)  // Blur to add a liquid feel
-                .animation(.spring(response: 0.4, dampingFraction: 0.6, blendDuration: 0.2), value: isPeeling)
-                .shadow(color: Color.black.opacity(0.5), radius: 4, x: 0, y: 3)
-                .overlay {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 33 * bounceAnimation, height: 33 * bounceAnimation)
-                        .scaleEffect(isPeeling ? 1.5 : 1.0)
-                        .offset(x: cos(currentPeelingAngle) * 10, y: sin(currentPeelingAngle) * 10)
-                        .animation(.spring(response: 0.4, dampingFraction: 0.5, blendDuration: 0.2).delay(0.1), value: isPeeling)
-                        .overlay {
-                            // Icon inside the button
-                            if !isExpanded {
-                                Image(systemName: "plus")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 25, height: 25)
-                                    .transition(.scale)
-                                    .animation(.easeInOut(duration: 0.3), value: isExpanded)
-                            }
-
-                            if isExpanded {
-                                Image(systemName: "xmark")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 25, height: 25)
-                                    .transition(.scale)
-                                    .animation(.easeInOut(duration: 0.3), value: isExpanded)
-                            }
-                        }
-                }
-                .overlay {
-                    Circle()
-                        .stroke(Color.red.opacity(0.4), lineWidth: 2)
-                        .scaleEffect(isPeeling ? 1.2 : 1.0)
-                        .opacity(isPeeling ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.3).delay(0.1), value: isPeeling)
-                }
-
-            // Radial menu containing subitems
+            RandomBounceView(position: position)
             RadialMenu(
                 items: menuItems, position: position,
                 isExpanded: $isExpanded,
@@ -223,6 +179,7 @@ struct LiquidPeelAwayView: View {
             } else {
                 withAnimation {
                     isExpanded = false
+                    menuItemsVisible = Array(repeating: false, count: menuItemsVisible.count)
                 }
             }
         }
@@ -336,8 +293,6 @@ struct RandomBounceView: View {
                            endPoint: .trailing)
                 .blendMode(.plusLighter)
         )
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(16)
     }
 
     private func startBouncing() {
@@ -368,16 +323,3 @@ struct RandomBounceView: View {
         }
     }
 }
-
-struct ContentView: View {
-    var body: some View {
-        RandomBounceView(position: .topRight) // Specify the position you want to use
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
-}
-
