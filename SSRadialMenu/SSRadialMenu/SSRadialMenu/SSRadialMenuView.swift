@@ -257,7 +257,7 @@ import SwiftUI
 struct RandomBounceView: View {
     @State private var xOffset: CGFloat = 0.0
     @State private var yOffset: CGFloat = 0.0
-    @State private var animationDuration: Double = 1.0
+    @State private var animationDuration: Double = 0.5
     var position: Position
     var radius: CGFloat = 35.0
     var totalItems: Int = 5 
@@ -295,6 +295,8 @@ struct RandomBounceView: View {
         )
     }
 
+    @State private var currentDirectionIndex: Int = 0 // Declare at the top level of your view
+
     private func startBouncing() {
         var directions: [(CGFloat, CGFloat)] = []
 
@@ -304,17 +306,20 @@ struct RandomBounceView: View {
             directions.append(offset)
         }
 
-        // Choose a random direction
-        let randomDirection = directions.randomElement() ?? (0.0, 0.0)
+        // Pick the next direction in a sequential manner
+        let nextDirection = directions[currentDirectionIndex]
 
-        // Set the offsets
-        xOffset = randomDirection.0
-        yOffset = randomDirection.1
+        // Update the index to loop back to the start if we've reached the end of the array
+        currentDirectionIndex = (currentDirectionIndex + 1) % directions.count
 
-        // Start the animation
+        // Set the offsets to the next direction
+        xOffset = nextDirection.0
+        yOffset = nextDirection.1
+
+        // Start the bouncing animation
         withAnimation(Animation.spring(response: 0.6, dampingFraction: 0.5, blendDuration: 0)) {
-            xOffset = 0 // Return to center
-            yOffset = 0 // Return to center
+            xOffset = 0
+            yOffset = 0
         }
 
         // Call startBouncing again after the duration of the animation
@@ -322,4 +327,5 @@ struct RandomBounceView: View {
             startBouncing()
         }
     }
+
 }
