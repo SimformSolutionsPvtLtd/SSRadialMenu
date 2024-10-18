@@ -138,7 +138,12 @@ struct LiquidPeelAwayView: View {
     @State private var isExpanded: Bool = false
     @State private var menuItemsVisible: [Bool]
     @State private var currentPeelingAngle: Double = 0
+    @State private var xOffset: CGFloat = 0.0
+    @State private var yOffset: CGFloat = 0.0
+    @State private var animationDuration: Double = 0.5
+    var radius: CGFloat = 35.0
     @State private var bounceAnimation: CGFloat = 1.0
+    @State private var isBouncing = false
 
     let menuItems: [MenuItem] = [
         MenuItem(color: .blue, icon: "star", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true, subMenuItems: [
@@ -158,7 +163,33 @@ struct LiquidPeelAwayView: View {
 
     var body: some View {
         ZStack {
-            RandomBounceView(position: position)
+            ZStack {
+                Circle()
+                    .fill(Color.black)
+                    .blur(radius: 20.0)
+                    .frame(width: 40.0, height: 40.0)
+                    .offset(x: xOffset, y: yOffset)
+
+                Circle()
+                    .fill(Color.black)
+                    .blur(radius: 20.0)
+                    .frame(width: 80.0, height: 80.0)
+            }
+            .frame(width: 200.0, height: 200.0)
+            .overlay(
+                Color(white: 0.5)
+                    .blendMode(.colorBurn)
+            )
+            .overlay(
+                Color(white: 1.0)
+                    .blendMode(.colorDodge)
+            )
+            .overlay(
+                LinearGradient(colors: [.red, .brown],
+                               startPoint: .leading,
+                               endPoint: .trailing)
+                    .blendMode(.plusLighter)
+            )
             RadialMenu(
                 items: menuItems, position: position,
                 isExpanded: $isExpanded,
@@ -174,13 +205,39 @@ struct LiquidPeelAwayView: View {
                 withAnimation {
                     isPeeling = true
                     isExpanded = true
+                    isBouncing = true
                 }
+                startBouncing()
                 startPeelAnimation()
             } else {
                 withAnimation {
                     isExpanded = false
+                    isBouncing = false
                     menuItemsVisible = Array(repeating: false, count: menuItemsVisible.count)
                 }
+            }
+        }
+    }
+
+    @State private var currentDirectionIndex: Int = 0
+
+    private func startBouncing() {
+        var directions: [(CGFloat, CGFloat)] = []
+        for index in 0..<menuItems.count {
+            let offset = position.calculateOffset(radius: radius, index: index, totalItems: menuItems.count)
+            directions.append(offset)
+        }
+        let nextDirection = directions[currentDirectionIndex]
+        currentDirectionIndex = (currentDirectionIndex + 1) % directions.count
+        xOffset = nextDirection.0
+        yOffset = nextDirection.1
+        withAnimation(Animation.spring(response: 0.6, dampingFraction: 0.5, blendDuration: 0)) {
+            xOffset = 0
+            yOffset = 0
+        }
+        if isBouncing {
+            DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+                startBouncing()
             }
         }
     }
@@ -247,85 +304,6 @@ enum Position {
         let x = radius * cos(angle)
         let y = radius * sin(angle)
         return (x, y)
-    }
-
-}
-
-
-import SwiftUI
-
-struct RandomBounceView: View {
-    @State private var xOffset: CGFloat = 0.0
-    @State private var yOffset: CGFloat = 0.0
-    @State private var animationDuration: Double = 0.5
-    var position: Position
-    var radius: CGFloat = 35.0
-    var totalItems: Int = 5 
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(Color.black)
-                .blur(radius: 20.0)
-                .frame(width: 40.0, height: 40.0)
-                .offset(x: xOffset, y: yOffset)
-                .onAppear {
-                    startBouncing()
-                }
-
-            Circle()
-                .fill(Color.black)
-                .blur(radius: 20.0)
-                .frame(width: 80.0, height: 80.0)
-        }
-        .frame(width: 200.0, height: 200.0)
-        .overlay(
-            Color(white: 0.5)
-                .blendMode(.colorBurn)
-        )
-        .overlay(
-            Color(white: 1.0)
-                .blendMode(.colorDodge)
-        )
-        .overlay(
-            LinearGradient(colors: [.red, .brown],
-                           startPoint: .leading,
-                           endPoint: .trailing)
-                .blendMode(.plusLighter)
-        )
-    }
-
-    @State private var currentDirectionIndex: Int = 0 // Declare at the top level of your view
-
-    private func startBouncing() {
-        var directions: [(CGFloat, CGFloat)] = []
-
-        // Calculate directions dynamically based on totalItems
-        for index in 0..<totalItems {
-            let offset = position.calculateOffset(radius: radius, index: index, totalItems: totalItems)
-            directions.append(offset)
-        }
-
-        // Pick the next direction in a sequential manner
-        let nextDirection = directions[currentDirectionIndex]
-
-        // Update the index to loop back to the start if we've reached the end of the array
-        currentDirectionIndex = (currentDirectionIndex + 1) % directions.count
-
-        // Set the offsets to the next direction
-        xOffset = nextDirection.0
-        yOffset = nextDirection.1
-
-        // Start the bouncing animation
-        withAnimation(Animation.spring(response: 0.6, dampingFraction: 0.5, blendDuration: 0)) {
-            xOffset = 0
-            yOffset = 0
-        }
-
-        // Call startBouncing again after the duration of the animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
-            startBouncing()
-        }
     }
 
 }
