@@ -12,7 +12,7 @@ struct SSRadialMenuApp: App {
     var body: some Scene {
         WindowGroup {
 //            RandomBounceView(position: .bottomLeft)
-            LiquidPeelAwayView(position: .bottomRight)
+            LiquidPeelAwayView(position: .topRight)
         }
     }
 }

@@ -142,8 +142,10 @@ struct LiquidPeelAwayView: View {
     @State private var yOffset: CGFloat = 0.0
     @State private var animationDuration: Double = 0.5
     var radius: CGFloat = 35.0
-    @State private var bounceAnimation: CGFloat = 1.0
     @State private var isBouncing = false
+
+    @State private var currentDirectionIndex: Int = 0
+
 
     let menuItems: [MenuItem] = [
         MenuItem(color: .blue, icon: "star", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true, subMenuItems: [
@@ -166,9 +168,10 @@ struct LiquidPeelAwayView: View {
             ZStack {
                 Circle()
                     .fill(Color.black)
-                    .blur(radius: 20.0)
-                    .frame(width: 40.0, height: 40.0)
+                    .blur(radius: 18.0)
+                    .frame(width: 35.0, height: 35.0)
                     .offset(x: xOffset, y: yOffset)
+                
 
                 Circle()
                     .fill(Color.black)
@@ -176,6 +179,8 @@ struct LiquidPeelAwayView: View {
                     .frame(width: 80.0, height: 80.0)
             }
             .frame(width: 200.0, height: 200.0)
+            .shadow(color: Color.black.opacity(0.5), radius: 10, x: 0, y: 4)
+
             .overlay(
                 Color(white: 0.5)
                     .blendMode(.colorBurn)
@@ -185,11 +190,12 @@ struct LiquidPeelAwayView: View {
                     .blendMode(.colorDodge)
             )
             .overlay(
-                LinearGradient(colors: [.red, .brown],
+                LinearGradient(colors: [.red, .purple],
                                startPoint: .leading,
                                endPoint: .trailing)
                     .blendMode(.plusLighter)
             )
+            
             RadialMenu(
                 items: menuItems, position: position,
                 isExpanded: $isExpanded,
@@ -207,6 +213,7 @@ struct LiquidPeelAwayView: View {
                     isExpanded = true
                     isBouncing = true
                 }
+                currentDirectionIndex = .zero
                 startBouncing()
                 startPeelAnimation()
             } else {
@@ -219,8 +226,6 @@ struct LiquidPeelAwayView: View {
         }
     }
 
-    @State private var currentDirectionIndex: Int = 0
-
     private func startBouncing() {
         var directions: [(CGFloat, CGFloat)] = []
         for index in 0..<menuItems.count {
@@ -231,7 +236,7 @@ struct LiquidPeelAwayView: View {
         currentDirectionIndex = (currentDirectionIndex + 1) % directions.count
         xOffset = nextDirection.0
         yOffset = nextDirection.1
-        withAnimation(Animation.spring(response: 0.6, dampingFraction: 0.5, blendDuration: 0)) {
+        withAnimation(Animation.spring(response: 0.3, dampingFraction: 0.5, blendDuration: 0)) {
             xOffset = 0
             yOffset = 0
         }
@@ -305,5 +310,4 @@ enum Position {
         let y = radius * sin(angle)
         return (x, y)
     }
-
 }
