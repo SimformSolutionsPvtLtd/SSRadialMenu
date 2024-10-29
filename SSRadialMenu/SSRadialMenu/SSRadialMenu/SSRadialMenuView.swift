@@ -193,9 +193,15 @@ struct LiquidPeelAwayView: View {
                 LinearGradient(colors: [.red, .purple],
                                startPoint: .leading,
                                endPoint: .trailing)
-                    .blendMode(.plusLighter)
+                .blendMode(.plusLighter)
             )
-            
+            // Add the "plus" icon at the center
+            Image(systemName: "plus")
+                .resizable()
+                .frame(width: 30, height: 30)
+                .foregroundColor(.white)
+                .shadow(color: Color.black.opacity(0.5), radius: 3, x: 0, y: 3)
+
             RadialMenu(
                 items: menuItems, position: position,
                 isExpanded: $isExpanded,
@@ -236,10 +242,13 @@ struct LiquidPeelAwayView: View {
         currentDirectionIndex = (currentDirectionIndex + 1) % directions.count
         xOffset = nextDirection.0
         yOffset = nextDirection.1
-        withAnimation(Animation.spring(response: 0.3, dampingFraction: 0.5, blendDuration: 0)) {
+
+        // Adjust the spring animation for smoother bouncing
+        withAnimation(Animation.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0.2)) {
             xOffset = 0
             yOffset = 0
         }
+
         if isBouncing {
             DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
                 startBouncing()
