@@ -195,12 +195,7 @@ struct LiquidPeelAwayView: View {
                                endPoint: .trailing)
                 .blendMode(.plusLighter)
             )
-            // Add the "plus" icon at the center
-            Image(systemName: "plus")
-                .resizable()
-                .frame(width: 30, height: 30)
-                .foregroundColor(.white)
-                .shadow(color: Color.black.opacity(0.5), radius: 3, x: 0, y: 3)
+            PlusToCrossView(isCross: $isExpanded)
 
             RadialMenu(
                 items: menuItems, position: position,
@@ -318,5 +313,19 @@ enum Position {
         let x = radius * cos(angle)
         let y = radius * sin(angle)
         return (x, y)
+    }
+}
+
+struct PlusToCrossView: View {
+    @Binding var isCross: Bool
+
+    var body: some View {
+        Image(systemName: "plus")
+            .resizable()
+            .frame(width: 30, height: 30)
+            .foregroundColor(.white)
+            .shadow(color: Color.black.opacity(0.5), radius: 3, x: 0, y: 3)
+            .rotationEffect(.degrees(isCross ? 45 : 0)) // Rotate by 45 degrees to create "cross"
+            .animation(.easeInOut(duration: 0.3), value: isCross) // Smooth transition
     }
 }
