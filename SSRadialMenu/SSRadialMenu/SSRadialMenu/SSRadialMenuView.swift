@@ -27,7 +27,7 @@ struct RadialMenu: View {
                     createMenuItem(items[index], at: index, position: position)
                         .opacity(menuItemsVisible[index] ? 1 : 0)
                         .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
-                        .animation(.easeInOut.delay(Double(index) * 0.1), value: menuItemsVisible[index])
+                        .animation(.easeInOut.delay(Double(index) * 0.2), value: menuItemsVisible[index])
                         .onAppear {
                             // Check visibility when the item appears
 //                            checkAllItemsVisible()
@@ -139,6 +139,7 @@ struct SubMenuView: View {
     }
 }
 
+
 struct LiquidPeelAwayView: View {
     let position: Position
     @State private var isPeeling: Bool = false
@@ -149,10 +150,13 @@ struct LiquidPeelAwayView: View {
     @State private var yOffset: CGFloat = 0.0
     @State private var animationDuration: Double = 0.5
     var radius: CGFloat = 35.0
+    @State private var scaleEffect: CGFloat = 1.0
     @State private var isBouncing = false
-
     @State private var currentDirectionIndex: Int = 0
 
+    // Shadow properties
+    @State private var shadowRadius: CGFloat = 10
+    @State private var shadowYOffset: CGFloat = 5
 
     let menuItems: [MenuItem] = [
         MenuItem(color: .blue, icon: "star", size: 50, menuView: AnyView(Image(systemName: "house.circle")), selected: false, isCollapsed: true, subMenuItems: [
@@ -178,27 +182,27 @@ struct LiquidPeelAwayView: View {
                     .blur(radius: 18.0)
                     .frame(width: 35.0, height: 35.0)
                     .offset(x: xOffset, y: yOffset)
-
+                    .scaleEffect(scaleEffect)
+                    .shadow(color: Color.black.opacity(0.5), radius: shadowRadius, x: 0, y: shadowYOffset) // Apply animated shadow
                 Circle()
                     .fill(Color.black)
                     .blur(radius: 20.0)
                     .frame(width: 80.0, height: 80.0)
+                    .shadow(color: Color.black.opacity(0.5), radius: shadowRadius, x: 0, y: shadowYOffset) // Apply shadow to the larger circle
             }
             .frame(width: 200.0, height: 200.0)
             .shadow(color: Color.black.opacity(0.5), radius: 10, x: 0, y: 4)
 
             .overlay(
-                Color(white: 0.5)
+                Color(white: 0.5).opacity(0.6)
                     .blendMode(.colorBurn)
             )
             .overlay(
-                Color(white: 1.0)
+                Color(white: 1.0).opacity(0.7)
                     .blendMode(.colorDodge)
             )
             .overlay(
-                LinearGradient(colors: [.red, .purple],
-                               startPoint: .leading,
-                               endPoint: .trailing)
+                Color.pink.opacity(0.8)
                 .blendMode(.plusLighter)
             )
             PlusToCrossView(isCross: $isExpanded)
@@ -242,29 +246,42 @@ struct LiquidPeelAwayView: View {
             let offset = position.calculateOffset(radius: radius, index: index, totalItems: menuItems.count)
             directions.append(offset)
         }
+
         let nextDirection = directions[currentDirectionIndex]
         currentDirectionIndex = (currentDirectionIndex + 1) % directions.count
         xOffset = nextDirection.0
         yOffset = nextDirection.1
 
-        withAnimation(Animation.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.5)) {
-            xOffset = 0
-            yOffset = 0
+        print("xOffset: \(xOffset), yOffset: \(yOffset)")
+
+        withAnimation(Animation.interactiveSpring(response: 0.3, dampingFraction: 0.3, blendDuration: 0)) {
+            self.xOffset = 0
+            self.yOffset = 0
+            self.scaleEffect = 1.1 // Slightly scale up for bounce effect
+            self.shadowRadius = 15 // Increase shadow radius during bounce
+            self.shadowYOffset = 10 // Increase shadow offset during bounce
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(Animation.interactiveSpring(response: 0.3, dampingFraction: 0.3, blendDuration: 0)) {
+                self.scaleEffect = 1.0 // Return to normal size
+                self.shadowRadius = 10 // Reset shadow radius
+                self.shadowYOffset = 5 // Reset shadow offset
+            }
         }
 
         if isBouncing {
-            DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
-                startBouncing()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.startBouncing()
             }
         }
     }
 
     private func startPeelAnimation() {
         for index in 0..<menuItems.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.2) {
                 menuItemsVisible[index] = true
                 print(menuItemsVisible)
-
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
