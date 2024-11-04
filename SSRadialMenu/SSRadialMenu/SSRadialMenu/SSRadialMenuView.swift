@@ -178,7 +178,6 @@ struct LiquidPeelAwayView: View {
                     .blur(radius: 18.0)
                     .frame(width: 35.0, height: 35.0)
                     .offset(x: xOffset, y: yOffset)
-                
 
                 Circle()
                     .fill(Color.black)
@@ -248,8 +247,7 @@ struct LiquidPeelAwayView: View {
         xOffset = nextDirection.0
         yOffset = nextDirection.1
 
-        // Adjust the spring animation for smoother bouncing
-        withAnimation(Animation.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0.2)) {
+        withAnimation(Animation.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.5)) {
             xOffset = 0
             yOffset = 0
         }
@@ -262,14 +260,18 @@ struct LiquidPeelAwayView: View {
     }
 
     private func startPeelAnimation() {
-        // Start peeling animation logic
         for index in 0..<menuItems.count {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) {
                 menuItemsVisible[index] = true
+                print(menuItemsVisible)
+
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            isPeeling = false
+            if menuItemsVisible.allSatisfy({ $0 }) {
+                isPeeling = false
+                isBouncing = false
+            }
         }
     }
 }
