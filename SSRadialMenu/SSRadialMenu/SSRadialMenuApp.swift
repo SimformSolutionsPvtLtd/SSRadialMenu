@@ -11,7 +11,6 @@ import SwiftUI
 struct SSRadialMenuApp: App {
     var body: some Scene {
         WindowGroup {
-//            RandomBounceView(position: .bottomLeft)
             LiquidPeelAwayView(position: .topRight)
         }
     }

@@ -17,6 +17,9 @@ struct RadialMenu: View {
     @State private var showSubMenu: Bool = false
     @State private var subMenuItems: [MenuItem] = []
 
+    // Completion handler to be called when all items are visible
+    var onAllItemsDisplayed: (() -> Void)?
+
     var body: some View {
         ZStack {
             if isExpanded {
@@ -25,6 +28,10 @@ struct RadialMenu: View {
                         .opacity(menuItemsVisible[index] ? 1 : 0)
                         .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
                         .animation(.easeInOut.delay(Double(index) * 0.1), value: menuItemsVisible[index])
+                        .onAppear {
+                            // Check visibility when the item appears
+//                            checkAllItemsVisible()
+                        }
                 }
 
                 if showSubMenu, let selectedItem = selectedItem, let subItems = selectedItem.subMenuItems {
@@ -201,7 +208,10 @@ struct LiquidPeelAwayView: View {
                 items: menuItems, position: position,
                 isExpanded: $isExpanded,
                 menuItemsVisible: $menuItemsVisible,
-                currentPeelingAngle: $currentPeelingAngle
+                currentPeelingAngle: $currentPeelingAngle,
+                onAllItemsDisplayed: {
+                    print("Hey all displayed")
+                }
             )
             .frame(width: 120, height: 120)
         }
@@ -261,71 +271,5 @@ struct LiquidPeelAwayView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             isPeeling = false
         }
-    }
-}
-
-
-enum Position {
-    case topRight, bottomRight, topLeft, bottomLeft, center
-
-    var floatingButtonAlignment: Alignment {
-        switch self {
-        case .topRight:
-            .topTrailing
-        case .bottomRight:
-            .bottomTrailing
-        case .topLeft:
-            .topLeading
-        case .bottomLeft:
-            .bottomLeading
-        case .center:
-            .center
-        }
-    }
-
-    func calculateOffset(radius: CGFloat, index: Int, totalItems: Int) -> (CGFloat, CGFloat) {
-        let baseAngle: CGFloat
-        let angleRange: CGFloat
-        switch self {
-        case .topRight:
-            baseAngle = .pi / 2
-            angleRange = .pi / 2
-        case .bottomRight:
-            baseAngle = 3 * .pi / 2
-            angleRange = -.pi / 2
-        case .topLeft:
-            baseAngle = 0
-            angleRange = .pi / 2
-        case .bottomLeft:
-            baseAngle = 3 * .pi / 2
-            angleRange = .pi / 2
-        case .center:
-            baseAngle = 0
-            angleRange = 2 * .pi
-        }
-
-        let angle: CGFloat
-        if self == .center {
-            angle = (angleRange / CGFloat(totalItems)) * CGFloat(index)
-        } else {
-            angle = baseAngle + (angleRange / CGFloat(totalItems - 1)) * CGFloat(index)
-        }
-        let x = radius * cos(angle)
-        let y = radius * sin(angle)
-        return (x, y)
-    }
-}
-
-struct PlusToCrossView: View {
-    @Binding var isCross: Bool
-
-    var body: some View {
-        Image(systemName: "plus")
-            .resizable()
-            .frame(width: 30, height: 30)
-            .foregroundColor(.white)
-            .shadow(color: Color.black.opacity(0.5), radius: 3, x: 0, y: 3)
-            .rotationEffect(.degrees(isCross ? 45 : 0)) // Rotate by 45 degrees to create "cross"
-            .animation(.easeInOut(duration: 0.3), value: isCross) // Smooth transition
     }
 }

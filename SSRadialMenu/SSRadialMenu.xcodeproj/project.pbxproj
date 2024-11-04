@@ -13,6 +13,8 @@
 		7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */; };
 		7D85930D2B21C6510078C68D /* RadialButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D85930C2B21C6510078C68D /* RadialButtonView.swift */; };
 		7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD9AD242B878A47008E7E8F /* MenuLayer.swift */; };
+		7DF38E7A2CD8D9B100C91782 /* RadialMenuPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */; };
+		7DF38E7C2CD8D9E400C91782 /* PlusToCrossView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */; };
 		BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */; };
 		BCBEB58A297ED92F00C03B9C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB589297ED92F00C03B9C /* Assets.xcassets */; };
 		BCBEB58E297ED92F00C03B9C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB58D297ED92F00C03B9C /* Preview Assets.xcassets */; };
@@ -25,6 +27,8 @@
 		7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuView.swift; sourceTree = "<group>"; };
 		7D85930C2B21C6510078C68D /* RadialButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialButtonView.swift; sourceTree = "<group>"; };
 		7DD9AD242B878A47008E7E8F /* MenuLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuLayer.swift; sourceTree = "<group>"; };
+		7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialMenuPosition.swift; sourceTree = "<group>"; };
+		7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlusToCrossView.swift; sourceTree = "<group>"; };
 		BCBEB582297ED92E00C03B9C /* SSRadialMenu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SSRadialMenu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuApp.swift; sourceTree = "<group>"; };
 		BCBEB589297ED92F00C03B9C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -64,6 +68,7 @@
 			isa = PBXGroup;
 			children = (
 				7D85930C2B21C6510078C68D /* RadialButtonView.swift */,
+				7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */,
 			);
 			path = CommonView;
 			sourceTree = "<group>";
@@ -72,6 +77,7 @@
 			isa = PBXGroup;
 			children = (
 				7DD9AD242B878A47008E7E8F /* MenuLayer.swift */,
+				7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */,
 			);
 			path = Enum;
 			sourceTree = "<group>";
@@ -188,10 +194,12 @@
 			files = (
 				7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */,
 				7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */,
+				7DF38E7A2CD8D9B100C91782 /* RadialMenuPosition.swift in Sources */,
 				BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */,
 				7D4755E42B8CA7B800C4F67A /* LiquidFluidMenuView.swift in Sources */,
 				7D28060B2B2333E5000820B9 /* SSRadialMenuViewModel.swift in Sources */,
 				7D85930D2B21C6510078C68D /* RadialButtonView.swift in Sources */,
+				7DF38E7C2CD8D9E400C91782 /* PlusToCrossView.swift in Sources */,
 				7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
