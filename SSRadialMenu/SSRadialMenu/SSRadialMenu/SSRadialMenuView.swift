@@ -17,7 +17,6 @@ struct RadialMenu: View {
     @State private var showSubMenu: Bool = false
     @State private var subMenuItems: [MenuItem] = []
 
-    // Completion handler to be called when all items are visible
     var onAllItemsDisplayed: (() -> Void)?
 
     var body: some View {
@@ -28,10 +27,6 @@ struct RadialMenu: View {
                         .opacity(menuItemsVisible[index] ? 1 : 0)
                         .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
                         .animation(.easeInOut.delay(Double(index) * 0.2), value: menuItemsVisible[index])
-                        .onAppear {
-                            // Check visibility when the item appears
-//                            checkAllItemsVisible()
-                        }
                 }
 
                 if showSubMenu, let selectedItem = selectedItem, let subItems = selectedItem.subMenuItems {
@@ -231,11 +226,15 @@ struct LiquidPeelAwayView: View {
                 startBouncing()
                 startPeelAnimation()
             } else {
-                withAnimation {
-                    isExpanded = false
-                    isBouncing = false
-                    menuItemsVisible = Array(repeating: false, count: menuItemsVisible.count)
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(menuItems.count) * 0.2) {
+                    withAnimation {
+                        isExpanded = false
+                        isBouncing = true
+                        isPeeling = true
+                    }
                 }
+                collapseMenuItems()
             }
         }
     }
@@ -257,16 +256,16 @@ struct LiquidPeelAwayView: View {
         withAnimation(Animation.interactiveSpring(response: 0.3, dampingFraction: 0.3, blendDuration: 0)) {
             self.xOffset = 0
             self.yOffset = 0
-            self.scaleEffect = 1.1 // Slightly scale up for bounce effect
-            self.shadowRadius = 15 // Increase shadow radius during bounce
-            self.shadowYOffset = 10 // Increase shadow offset during bounce
+            self.scaleEffect = 1.1
+            self.shadowRadius = 15
+            self.shadowYOffset = 10
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(Animation.interactiveSpring(response: 0.3, dampingFraction: 0.3, blendDuration: 0)) {
-                self.scaleEffect = 1.0 // Return to normal size
-                self.shadowRadius = 10 // Reset shadow radius
-                self.shadowYOffset = 5 // Reset shadow offset
+                self.scaleEffect = 1.0
+                self.shadowRadius = 10
+                self.shadowYOffset = 5
             }
         }
 
@@ -291,4 +290,44 @@ struct LiquidPeelAwayView: View {
             }
         }
     }
+    private func collapseMenuItems() {
+        // Create an array of offsets for the bouncing effect
+        var bounceDirections: [(CGFloat, CGFloat)] = []
+        for index in 0..<menuItems.count {
+            let offset = position.calculateOffset(radius: radius, index: index, totalItems: menuItems.count)
+            bounceDirections.append(offset)
+        }
+
+        // Iterate through the menu items and collapse them
+        for index in menuItems.indices {
+            // Use a delay based on the index for staggered collapse
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.25) { // Slightly increased the delay for smoother stagger
+                // Set the offsets for bouncing effect
+                let nextDirection = bounceDirections[index]
+                xOffset = nextDirection.0
+                yOffset = nextDirection.1
+
+                // Perform the bounce animation
+                withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.5, blendDuration: 0)) {
+                    // Reset offsets for the bouncing effect
+                    self.xOffset = 0
+                    self.yOffset = 0
+                }
+
+                // Delay for a smooth collapse after bounce
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Delay before collapsing to show the bounce effect
+                    withAnimation(Animation.easeInOut(duration: 0.4)) { // Smooth collapse animation
+                        menuItemsVisible[index] = false
+                    }
+                }
+            }
+        }
+
+        // Reset isPeeling and isBouncing states after all items are collapsed
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(menuItems.count) * 0.25 + 0.6) { // Adjusted total time to accommodate delays
+            isPeeling = false
+            isBouncing = false
+        }
+    }
+
 }
