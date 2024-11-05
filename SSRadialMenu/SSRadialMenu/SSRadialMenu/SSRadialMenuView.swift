@@ -241,11 +241,13 @@ struct LiquidPeelAwayView: View {
         }
 
         for index in menuItems.indices {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * (0.3 / 6)) {
-                menuItemsVisible[index] = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * (0.4 / 6)) {
+                withAnimation(.interactiveSpring) {
+                    menuItemsVisible[index] = true
+                }
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.3) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.4) {
                 let nextDirection = directions[index]
                 xOffset = nextDirection.0
                 yOffset = nextDirection.1
