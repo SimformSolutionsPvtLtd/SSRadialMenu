@@ -161,6 +161,8 @@ struct LiquidPeelAwayView: View {
             MenuItem(color: .purple.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true)
         ]),
         MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
+        MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
+        MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
         MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil)
     ]
 
@@ -175,30 +177,26 @@ struct LiquidPeelAwayView: View {
                 Circle()
                     .fill(Color.black)
                     .blur(radius: 18.0)
-                    .frame(width: 35.0, height: 35.0)
+                    .frame(width: 35.0, height: 50.0)
                     .offset(x: xOffset, y: yOffset)
                     .scaleEffect(scaleEffect)
-                    .shadow(color: Color.black.opacity(0.5), radius: shadowRadius, x: 0, y: shadowYOffset) // Apply animated shadow
                 Circle()
                     .fill(Color.black)
                     .blur(radius: 20.0)
-                    .frame(width: 80.0, height: 80.0)
-                    .shadow(color: Color.black.opacity(0.5), radius: shadowRadius, x: 0, y: shadowYOffset) // Apply shadow to the larger circle
+                    .frame(width: 80.0, height: 100.0)
             }
             .frame(width: 200.0, height: 200.0)
-            .shadow(color: Color.black.opacity(0.5), radius: 10, x: 0, y: 4)
-
             .overlay(
-                Color(white: 0.5).opacity(0.6)
+                Color(white: 0.5).opacity(0.8)
                     .blendMode(.colorBurn)
             )
             .overlay(
-                Color(white: 1.0).opacity(0.7)
+                Color(white: 1.0).opacity(0.8)
                     .blendMode(.colorDodge)
             )
             .overlay(
-                Color.pink.opacity(0.8)
-                .blendMode(.plusLighter)
+                Color.blue.opacity(0.8)
+                    .blendMode(.plusLighter)
             )
             PlusToCrossView(isCross: $isExpanded)
 
@@ -243,32 +241,38 @@ struct LiquidPeelAwayView: View {
             let offset = position.calculateOffset(radius: radius, index: index, totalItems: menuItems.count)
             directions.append(offset)
         }
+
         for index in menuItems.indices {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * (0.3 / 6)) {
                 menuItemsVisible[index] = true
             }
+
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.3) {
                 let nextDirection = directions[index]
                 xOffset = nextDirection.0
                 yOffset = nextDirection.1
-                withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.7, blendDuration: 0)) {
+
+                // First bounce animation for water drop effect
+                withAnimation(Animation.interactiveSpring(response: 0.4, dampingFraction: 0.3, blendDuration: 0)) {
                     self.xOffset = 0
                     self.yOffset = 0
-                    self.scaleEffect = 1.1
+                    self.scaleEffect = 0.8 // More reduction for the droplet effect
                     self.shadowRadius = 15
                     self.shadowYOffset = 10
                 }
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.7, blendDuration: 0)) {
+                // Second bounce animation after a short delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // Adjusted delay for fluidity
+                    withAnimation(Animation.interactiveSpring(response: 0.4, dampingFraction: 0.3, blendDuration: 0)) {
                         self.scaleEffect = 1.0
                         self.shadowRadius = 10
                         self.shadowYOffset = 5
                     }
                 }
 
+                // Final state check
                 if index == menuItems.count - 1 {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         if menuItemsVisible.allSatisfy({ $0 }) {
                             isPeeling = false
                             isBouncing = false
