@@ -85,7 +85,7 @@ struct SubMenuView: View {
                         y: subMenuItemsOffsets[index].1
                     ) // Offset for animation
                     .animation(
-                        .easeOut(duration: 0.2).delay(Double(index) * 0.05), // Fast and sharp ease-out animation
+                        .easeOut(duration: 0.2).delay(Double(index) * 0.05),
                         value: subMenuItemsVisible[index]
                     )
             }
@@ -160,8 +160,6 @@ struct LiquidPeelAwayView: View {
             MenuItem(color: .red.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
             MenuItem(color: .purple.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true)
         ]),
-        MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
-        MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
         MenuItem(color: .green, icon: "heart", size: 50, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
         MenuItem(color: .orange, icon: "moon", size: 50, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil)
     ]
