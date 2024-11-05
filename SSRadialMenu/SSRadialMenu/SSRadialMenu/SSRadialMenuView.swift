@@ -177,13 +177,13 @@ struct LiquidPeelAwayView: View {
                 Circle()
                     .fill(Color.black)
                     .blur(radius: 18.0)
-                    .frame(width: 35.0, height: 50.0)
+                    .frame(width: 45.0, height: 55.0)
                     .offset(x: xOffset, y: yOffset)
                     .scaleEffect(scaleEffect)
                 Circle()
                     .fill(Color.black)
                     .blur(radius: 20.0)
-                    .frame(width: 80.0, height: 100.0)
+                    .frame(width: 90.0, height: 110.0)
             }
             .frame(width: 200.0, height: 200.0)
             .overlay(
@@ -199,7 +199,6 @@ struct LiquidPeelAwayView: View {
                     .blendMode(.plusLighter)
             )
             PlusToCrossView(isCross: $isExpanded)
-
             RadialMenu(
                 items: menuItems, position: position,
                 isExpanded: $isExpanded,
@@ -212,7 +211,6 @@ struct LiquidPeelAwayView: View {
             .frame(width: 120, height: 120)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.floatingButtonAlignment)
-        .padding(16)
         .onTapGesture {
             if !isExpanded {
                 withAnimation {
