@@ -50,47 +50,15 @@ struct RadialMenu: View {
     private func createMenuItem(_ item: MenuItem, at index: Int, position: Position) -> some View {
         let radius: CGFloat = 100
         let (x, y) = position.calculateOffset(radius: radius, index: index, totalItems: items.count)
-        return
-            ZStack {
-                Circle()
-                    .fill(Color.black)
-                    .blur(radius: 18.0)
-                    .frame(width: 35, height: 45)
-                    .offset(x: xOffset, y: yOffset)
-                    .scaleEffect(scaleEffect)
-                Circle()
-                    .fill(Color.black)
-                    .blur(radius: 20.0)
-                    .frame(width: 70, height: 90)
+        return MenuItemView(item: item, x: x, y: y, selectedItem: $selectedItem, menuItemsVisible: menuItemsVisible, index: index, onTap: {
+            selectedItem = item
+            startBounceAndPeelAnimation(item: item)
+            if let subItems = item.subMenuItems, !subItems.isEmpty {
+                showSubMenu = true
+            } else {
+                showSubMenu = false
             }
-            .overlay(
-                Color(white: 0.5).opacity(0.8)
-                    .blendMode(.colorBurn)
-                    .allowsHitTesting(false)
-            )
-            .overlay(
-                Color(white: 1.0).opacity(0.8)
-                    .blendMode(.colorDodge)
-                    .allowsHitTesting(false)
-            )
-            .overlay(
-                item.color.opacity(0.8)
-                    .blendMode(.plusLighter)
-                    .allowsHitTesting(false)
-            )
-            .cornerRadius(item.size / 2)
-            .offset(x: menuItemsVisible[index] ? x : 0, y: menuItemsVisible[index] ? y : 0)
-            .scaleEffect(menuItemsVisible[index] ? 1.2 : 0.0)
-            .onTapGesture {
-                startBounceAndPeelAnimation(item: item)
-                if let subItems = item.subMenuItems, !subItems.isEmpty {
-                    selectedItem = item
-                    showSubMenu = true
-                } else {
-                    selectedItem = item
-                    showSubMenu = false
-                }
-            }
+        }, xOffset: $xOffset, yOffset: $yOffset)
     }
 
     private func startBounceAndPeelAnimation(item: MenuItem?) {
@@ -141,6 +109,74 @@ struct RadialMenu: View {
                 }
             }
             isBouncing = true
+        }
+    }
+}
+
+struct MenuItemView: View {
+    var item: MenuItem
+    var x: CGFloat
+    var y: CGFloat
+    @Binding var selectedItem: MenuItem?
+    var menuItemsVisible: [Bool]
+    var index: Int
+    var onTap: (() -> Void)
+
+    @Binding var xOffset: CGFloat
+    @Binding var yOffset: CGFloat
+    @State var scaleEffect: CGFloat = 1.0
+
+    var radius: CGFloat = 100
+
+    var body: some View {
+        ZStack {
+            // Selected item view
+            if let selectedItem, selectedItem.id == item.id {
+                Circle()
+                    .fill(Color.black)
+                    .blur(radius: 18.0)
+                    .frame(width: 35, height: 45)
+                    .offset(x: selectedItem.id == item.id ? xOffset : 0, y: selectedItem.id == item.id ? yOffset : 0)
+                    .scaleEffect(selectedItem.id == item.id ? scaleEffect : 1.0)
+                    .onAppear {
+                        print("SelectedItem : \(selectedItem.id) , \(item.id) -> \(selectedItem.id == item.id)")
+                    }
+            } else {
+                Circle()
+                    .fill(Color.black)
+                    .blur(radius: 18.0)
+                    .frame(width: 35, height: 45)
+                    .onAppear {
+                        print("Hey : SelectedItem : \(selectedItem?.id) , \(item.id)")
+                    }
+            }
+
+            // Menu item overlay
+            Circle()
+                .fill(Color.black)
+                .blur(radius: 20.0)
+                .frame(width: 70, height: 90)
+        }
+        .overlay(
+            Color(white: 0.5).opacity(0.8)
+                .blendMode(.colorBurn)
+                .allowsHitTesting(false)
+        )
+        .overlay(
+            Color(white: 1.0).opacity(0.8)
+                .blendMode(.colorDodge)
+                .allowsHitTesting(false)
+        )
+        .overlay(
+            item.color.opacity(0.8)
+                .blendMode(.plusLighter)
+                .allowsHitTesting(false)
+        )
+        .cornerRadius(item.size / 2)
+        .offset(x: menuItemsVisible[index] ? x : 0, y: menuItemsVisible[index] ? y : 0)
+        .scaleEffect(menuItemsVisible[index] ? 1.2 : 0.0)
+        .onTapGesture {
+            onTap()
         }
     }
 }

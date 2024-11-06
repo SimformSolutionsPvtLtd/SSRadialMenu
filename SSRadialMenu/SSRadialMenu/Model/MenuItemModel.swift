@@ -7,7 +7,11 @@
 
 import SwiftUI
 
-struct MenuItem: Identifiable {
+struct MenuItem: Identifiable, Equatable {
+    static func == (lhs: MenuItem, rhs: MenuItem) -> Bool {
+        true
+    }
+    
     let id = UUID()
     let color: Color
     let icon: String
