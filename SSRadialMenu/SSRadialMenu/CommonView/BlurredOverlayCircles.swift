@@ -15,6 +15,10 @@ struct BlurredOverlayCircles: View {
     var frameHeight: CGFloat = 55
     var color: Color = .blue
 
+    // Optional external frame size parameters
+    var externalFrameWidth: CGFloat? = nil
+    var externalFrameHeight: CGFloat? = nil
+
     var body: some View {
         ZStack {
             Circle()
@@ -28,7 +32,8 @@ struct BlurredOverlayCircles: View {
                 .blur(radius: 20.0)
                 .frame(width: frameWidth * 2, height: frameHeight * 2)
         }
-        .frame(width: 200.0, height: 200.0)
+        // Apply external frame only if provided
+        .applyExternalFrame(width: externalFrameWidth, height: externalFrameHeight)
         .overlay(
             Color(white: 0.5).opacity(0.8)
                 .blendMode(.colorBurn)
@@ -40,9 +45,22 @@ struct BlurredOverlayCircles: View {
                 .allowsHitTesting(false)
         )
         .overlay(
-                color.opacity(0.8)
+            color.opacity(0.8)
                 .blendMode(.plusLighter)
                 .allowsHitTesting(false)
         )
+    }
+}
+
+// Custom modifier to apply the external frame size if provided
+extension View {
+    func applyExternalFrame(width: CGFloat?, height: CGFloat?) -> some View {
+        Group {
+            if let width = width, let height = height {
+                self.frame(width: width, height: height)
+            } else {
+                self
+            }
+        }
     }
 }

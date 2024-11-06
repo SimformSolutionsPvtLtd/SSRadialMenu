@@ -43,7 +43,7 @@ struct LiquidPeelAwayView: View {
 
     var body: some View {
         ZStack {
-            BlurredOverlayCircles(xOffset: $xOffset, yOffset: $yOffset, scaleEffect: $scaleEffect, color: Color.blue)
+            BlurredOverlayCircles(xOffset: $xOffset, yOffset: $yOffset, scaleEffect: $scaleEffect, color: Color.blue, externalFrameWidth: 200, externalFrameHeight: 200)
             PlusToCrossView(isCross: $isExpanded)
             RadialMenu(
                 items: menuItems,
