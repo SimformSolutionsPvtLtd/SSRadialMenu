@@ -38,8 +38,8 @@ struct RadialMenu: View {
                         .animation(.easeInOut.delay(Double(index) * 0.2), value: menuItemsVisible[index])
                 }
 
-                if showSubMenu, let selectedItem = selectedItem, let subItems = selectedItem.subMenuItems {
-                    SubMenuView(subItems: subItems, position: position)
+                if let selectedItem, let subItems = selectedItem.subMenuItems {
+                    SubMenuView(subItems: subItems, position: position, isExpand: $showSubMenu)
                         .transition(.scale)
                         .animation(.easeInOut, value: showSubMenu)
                 }

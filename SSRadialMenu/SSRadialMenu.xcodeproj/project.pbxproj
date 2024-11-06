@@ -14,7 +14,6 @@
 		7D76F96F2CDB4C8400A125BE /* LiquidPeelAwayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D76F96E2CDB4C8400A125BE /* LiquidPeelAwayView.swift */; };
 		7D76F9712CDB51F400A125BE /* SubMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D76F9702CDB51F400A125BE /* SubMenuView.swift */; };
 		7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */; };
-		7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD9AD242B878A47008E7E8F /* MenuLayer.swift */; };
 		7DF38E7A2CD8D9B100C91782 /* RadialMenuPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */; };
 		7DF38E7C2CD8D9E400C91782 /* PlusToCrossView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */; };
 		BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */; };
@@ -30,7 +29,6 @@
 		7D76F96E2CDB4C8400A125BE /* LiquidPeelAwayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidPeelAwayView.swift; sourceTree = "<group>"; };
 		7D76F9702CDB51F400A125BE /* SubMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubMenuView.swift; sourceTree = "<group>"; };
 		7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuView.swift; sourceTree = "<group>"; };
-		7DD9AD242B878A47008E7E8F /* MenuLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuLayer.swift; sourceTree = "<group>"; };
 		7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialMenuPosition.swift; sourceTree = "<group>"; };
 		7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlusToCrossView.swift; sourceTree = "<group>"; };
 		BCBEB582297ED92E00C03B9C /* SSRadialMenu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SSRadialMenu.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -82,7 +80,6 @@
 		7DD9AD232B878A3C008E7E8F /* Enum */ = {
 			isa = PBXGroup;
 			children = (
-				7DD9AD242B878A47008E7E8F /* MenuLayer.swift */,
 				7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */,
 			);
 			path = Enum;
@@ -198,7 +195,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */,
 				7D76F9712CDB51F400A125BE /* SubMenuView.swift in Sources */,
 				7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */,
 				7D76F96F2CDB4C8400A125BE /* LiquidPeelAwayView.swift in Sources */,

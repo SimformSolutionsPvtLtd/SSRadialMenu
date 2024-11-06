@@ -10,13 +10,14 @@ import SwiftUI
 struct SubMenuView: View {
     let subItems: [MenuItem]
     let position: Position
+    @Binding var isExpand: Bool
     @State private var subMenuItemsVisible: [Bool]
     @State private var subMenuItemsOffsets: [(CGFloat, CGFloat)]
-    @State private var isCollapsed: Bool = false // Track if the menu is collapsed or expanded
 
-    init(subItems: [MenuItem], position: Position) {
+    init(subItems: [MenuItem], position: Position, isExpand: Binding<Bool>) {
         self.subItems = subItems
         self.position = position
+        self._isExpand = isExpand
         self._subMenuItemsVisible = State(initialValue: Array(repeating: false, count: subItems.count))
         self._subMenuItemsOffsets = State(initialValue: Array(repeating: (0, 0), count: subItems.count))
     }
@@ -32,18 +33,19 @@ struct SubMenuView: View {
                         y: subMenuItemsOffsets[index].1
                     ) // Offset for animation
                     .animation(
-                        .easeOut(duration: 0.3).delay(Double(index) * 0.05), // Adjusted for smoother stagger
+                        .easeOut(duration: 0.3).delay(Double(index) * 0.05),
                         value: subMenuItemsVisible[index]
                     )
             }
         }
         .onAppear {
             // Start the staggered animation for each sub-menu item
-            startSubMenuAnimation()
+            if isExpand {
+                startSubMenuAnimation()
+            }
         }
-        .onChange(of: isCollapsed) { _ in
-            // Trigger the collapse or expansion animation when the state changes
-            if isCollapsed {
+        .onChange(of: isExpand) { newValue in
+            if newValue {
                 collapseSubMenu()
             } else {
                 startSubMenuAnimation()
@@ -82,10 +84,26 @@ struct SubMenuView: View {
     }
 
     private func collapseSubMenu() {
-        for index in 0..<subItems.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
-                subMenuItemsVisible[index] = false // Hide the items
-                subMenuItemsOffsets[index] = (0, 0) // Reset offset to initial position
+        for index in (0..<subItems.count).reversed() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.01) {
+                withAnimation(.easeIn(duration: 0.9)) {
+                    subMenuItemsVisible[index] = false
+                }
+                if index > 0 {
+                    let previousOffset = subMenuItemsOffsets[index - 1]
+                    let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count)
+                    subMenuItemsOffsets[index] = previousOffset
+                    withAnimation(.easeIn(duration: 0.9)) {
+                        subMenuItemsOffsets[index] = newOffset
+                    }
+                } else {
+                    // First item should go directly to its final position
+                    subMenuItemsOffsets[index] = position.calculateOffset(
+                        radius: 200,
+                        index: index,
+                        totalItems: subItems.count
+                    )
+                }
             }
         }
     }
