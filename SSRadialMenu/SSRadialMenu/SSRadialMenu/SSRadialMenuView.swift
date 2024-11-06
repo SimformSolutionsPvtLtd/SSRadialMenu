@@ -54,7 +54,7 @@ struct RadialMenu: View {
             selectedItem = item
             startBounceAndPeelAnimation(item: item)
             if let subItems = item.subMenuItems, !subItems.isEmpty {
-                showSubMenu = true
+                showSubMenu.toggle()
             } else {
                 showSubMenu = false
             }
@@ -62,15 +62,15 @@ struct RadialMenu: View {
     }
 
     private func startBounceAndPeelAnimation(item: MenuItem?) {
-        subMenuItemsVisible = Array(repeating: false, count: item?.subMenuItems?.count ?? .zero)
+        subMenuItemsVisible = Array(repeating: false, count: 1)
         var directions: [(CGFloat, CGFloat)] = []
         if let item, let subMenuItems = item.subMenuItems {
-            for index in 0..<subMenuItems.count {
+            for index in 0..<1 {
                 let offset = position.calculateOffset(radius: radius, index: index, totalItems: subMenuItems.count)
                 directions.append(offset)
             }
 
-            for index in subMenuItems.indices {
+            for index in 0..<1{
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * (0.4 / 6)) {
                     withAnimation(.interactiveSpring) {
                         subMenuItemsVisible[index] = true
@@ -83,7 +83,7 @@ struct RadialMenu: View {
                     yOffset = nextDirection.1
 
                     print("xoffset: \(xOffset) - yOffset: \(yOffset)")
-                    withAnimation(Animation.interactiveSpring(response: 0.4, dampingFraction: 0.3, blendDuration: 0)) {
+                    withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.6, blendDuration: 0)) {
                         self.xOffset = 0
                         self.yOffset = 0
                         self.scaleEffect = 0.8
@@ -92,7 +92,7 @@ struct RadialMenu: View {
                     }
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // Adjusted delay for fluidity
-                        withAnimation(Animation.interactiveSpring(response: 0.4, dampingFraction: 0.3, blendDuration: 0)) {
+                        withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.6, blendDuration: 0)) {
                             self.scaleEffect = 1.0
                             self.shadowRadius = 10
                             self.shadowYOffset = 5
@@ -135,7 +135,7 @@ struct MenuItemView: View {
                 Circle()
                     .fill(Color.black)
                     .blur(radius: 18.0)
-                    .frame(width: 35, height: 45)
+                    .frame(width: 25, height: 35)
                     .offset(x: selectedItem.id == item.id ? xOffset : 0, y: selectedItem.id == item.id ? yOffset : 0)
                     .scaleEffect(selectedItem.id == item.id ? scaleEffect : 1.0)
                     .onAppear {
@@ -145,7 +145,7 @@ struct MenuItemView: View {
                 Circle()
                     .fill(Color.black)
                     .blur(radius: 18.0)
-                    .frame(width: 35, height: 45)
+                    .frame(width: 30, height: 40)
                     .onAppear {
                         print("Hey : SelectedItem : \(selectedItem?.id) , \(item.id)")
                     }
@@ -156,6 +156,9 @@ struct MenuItemView: View {
                 .fill(Color.black)
                 .blur(radius: 20.0)
                 .frame(width: 70, height: 90)
+
+            item.menuView
+                .foregroundColor(.blue)
         }
         .overlay(
             Color(white: 0.5).opacity(0.8)

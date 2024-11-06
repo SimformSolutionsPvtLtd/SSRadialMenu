@@ -12,6 +12,7 @@ struct SubMenuView: View {
     let position: Position
     @State private var subMenuItemsVisible: [Bool]
     @State private var subMenuItemsOffsets: [(CGFloat, CGFloat)]
+    @State private var isCollapsed: Bool = false // Track if the menu is collapsed or expanded
 
     init(subItems: [MenuItem], position: Position) {
         self.subItems = subItems
@@ -31,7 +32,7 @@ struct SubMenuView: View {
                         y: subMenuItemsOffsets[index].1
                     ) // Offset for animation
                     .animation(
-                        .easeOut(duration: 0.2).delay(Double(index) * 0.05),
+                        .easeOut(duration: 0.3).delay(Double(index) * 0.05), // Adjusted for smoother stagger
                         value: subMenuItemsVisible[index]
                     )
             }
@@ -39,6 +40,14 @@ struct SubMenuView: View {
         .onAppear {
             // Start the staggered animation for each sub-menu item
             startSubMenuAnimation()
+        }
+        .onChange(of: isCollapsed) { _ in
+            // Trigger the collapse or expansion animation when the state changes
+            if isCollapsed {
+                collapseSubMenu()
+            } else {
+                startSubMenuAnimation()
+            }
         }
     }
 
@@ -51,29 +60,32 @@ struct SubMenuView: View {
 
     private func startSubMenuAnimation() {
         for index in 0..<subItems.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) { // Quick staggered timing
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
                 subMenuItemsVisible[index] = true
-
-                // Calculate the offset for the current item, moving from the previous item's offset
                 if index > 0 {
                     let previousOffset = subMenuItemsOffsets[index - 1]
                     let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count)
-
-                    // Initially, set the offset to the previous item's position
                     subMenuItemsOffsets[index] = previousOffset
-
-                    // Animate the offset to the final calculated position with a quick ease-out effect
-                    withAnimation(.easeOut(duration: 0.2)) {
+                    withAnimation(.easeOut(duration: 0.3)) {
                         subMenuItemsOffsets[index] = newOffset
                     }
                 } else {
-                    // First item should go to its final position directly
+                    // First item should go directly to its final position
                     subMenuItemsOffsets[index] = position.calculateOffset(
                         radius: 200,
                         index: index,
                         totalItems: subItems.count
                     )
                 }
+            }
+        }
+    }
+
+    private func collapseSubMenu() {
+        for index in 0..<subItems.count {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
+                subMenuItemsVisible[index] = false // Hide the items
+                subMenuItemsOffsets[index] = (0, 0) // Reset offset to initial position
             }
         }
     }
