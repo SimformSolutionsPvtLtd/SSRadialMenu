@@ -11,19 +11,22 @@ struct BlurredOverlayCircles: View {
     @Binding var xOffset: CGFloat
     @Binding var yOffset: CGFloat
     @Binding var scaleEffect: CGFloat
-    var color: Color
+    var frameWidth: CGFloat = 45
+    var frameHeight: CGFloat = 55
+    var color: Color = .blue
+
     var body: some View {
         ZStack {
             Circle()
                 .fill(Color.black)
                 .blur(radius: 18.0)
-                .frame(width: 45.0, height: 55.0)
+                .frame(width: frameWidth, height: frameHeight)
                 .offset(x: xOffset, y: yOffset)
                 .scaleEffect(scaleEffect)
             Circle()
                 .fill(Color.black)
                 .blur(radius: 20.0)
-                .frame(width: 90.0, height: 110.0)
+                .frame(width: frameWidth * 2, height: frameHeight * 2)
         }
         .frame(width: 200.0, height: 200.0)
         .overlay(
