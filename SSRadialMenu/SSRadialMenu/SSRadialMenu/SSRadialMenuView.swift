@@ -59,6 +59,11 @@ struct RadialMenu: View {
                 showSubMenu = false
             }
         }, xOffset: $xOffset, yOffset: $yOffset)
+        .onDisappear {
+            if showSubMenu {
+                showSubMenu = false
+            }
+        }
     }
 
     private func startBounceAndPeelAnimation(item: MenuItem?) {
@@ -83,7 +88,7 @@ struct RadialMenu: View {
                     yOffset = nextDirection.1
 
                     print("xoffset: \(xOffset) - yOffset: \(yOffset)")
-                    withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.6, blendDuration: 0)) {
+                    withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.4, blendDuration: 0)) {
                         self.xOffset = 0
                         self.yOffset = 0
                         self.scaleEffect = 0.8
@@ -92,7 +97,7 @@ struct RadialMenu: View {
                     }
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // Adjusted delay for fluidity
-                        withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.6, blendDuration: 0)) {
+                        withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.5, blendDuration: 0)) {
                             self.scaleEffect = 1.0
                             self.shadowRadius = 10
                             self.shadowYOffset = 5
@@ -135,7 +140,7 @@ struct MenuItemView: View {
                 Circle()
                     .fill(Color.black)
                     .blur(radius: 18.0)
-                    .frame(width: 25, height: 35)
+                    .frame(width: 30, height: 40)
                     .offset(x: selectedItem.id == item.id ? xOffset : 0, y: selectedItem.id == item.id ? yOffset : 0)
                     .scaleEffect(selectedItem.id == item.id ? scaleEffect : 1.0)
                     .onAppear {
