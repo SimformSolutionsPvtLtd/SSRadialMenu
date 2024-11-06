@@ -10,8 +10,10 @@
 		7D28060B2B2333E5000820B9 /* SSRadialMenuViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D28060A2B2333E5000820B9 /* SSRadialMenuViewModel.swift */; };
 		7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D28060D2B23341A000820B9 /* MenuItemModel.swift */; };
 		7D4755E42B8CA7B800C4F67A /* LiquidFluidMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D4755E32B8CA7B800C4F67A /* LiquidFluidMenuView.swift */; };
+		7D76F96D2CDB4BC500A125BE /* BlurredOverlayCircles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D76F96C2CDB4BC500A125BE /* BlurredOverlayCircles.swift */; };
+		7D76F96F2CDB4C8400A125BE /* LiquidPeelAwayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D76F96E2CDB4C8400A125BE /* LiquidPeelAwayView.swift */; };
+		7D76F9712CDB51F400A125BE /* SubMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D76F9702CDB51F400A125BE /* SubMenuView.swift */; };
 		7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */; };
-		7D85930D2B21C6510078C68D /* RadialButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D85930C2B21C6510078C68D /* RadialButtonView.swift */; };
 		7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD9AD242B878A47008E7E8F /* MenuLayer.swift */; };
 		7DF38E7A2CD8D9B100C91782 /* RadialMenuPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */; };
 		7DF38E7C2CD8D9E400C91782 /* PlusToCrossView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */; };
@@ -24,8 +26,10 @@
 		7D28060A2B2333E5000820B9 /* SSRadialMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuViewModel.swift; sourceTree = "<group>"; };
 		7D28060D2B23341A000820B9 /* MenuItemModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemModel.swift; sourceTree = "<group>"; };
 		7D4755E32B8CA7B800C4F67A /* LiquidFluidMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidFluidMenuView.swift; sourceTree = "<group>"; };
+		7D76F96C2CDB4BC500A125BE /* BlurredOverlayCircles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurredOverlayCircles.swift; sourceTree = "<group>"; };
+		7D76F96E2CDB4C8400A125BE /* LiquidPeelAwayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidPeelAwayView.swift; sourceTree = "<group>"; };
+		7D76F9702CDB51F400A125BE /* SubMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubMenuView.swift; sourceTree = "<group>"; };
 		7D8593092B21C1FB0078C68D /* SSRadialMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuView.swift; sourceTree = "<group>"; };
-		7D85930C2B21C6510078C68D /* RadialButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialButtonView.swift; sourceTree = "<group>"; };
 		7DD9AD242B878A47008E7E8F /* MenuLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuLayer.swift; sourceTree = "<group>"; };
 		7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialMenuPosition.swift; sourceTree = "<group>"; };
 		7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlusToCrossView.swift; sourceTree = "<group>"; };
@@ -67,8 +71,10 @@
 		7D85930B2B21C6450078C68D /* CommonView */ = {
 			isa = PBXGroup;
 			children = (
-				7D85930C2B21C6510078C68D /* RadialButtonView.swift */,
 				7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */,
+				7D76F96C2CDB4BC500A125BE /* BlurredOverlayCircles.swift */,
+				7D76F96E2CDB4C8400A125BE /* LiquidPeelAwayView.swift */,
+				7D76F9702CDB51F400A125BE /* SubMenuView.swift */,
 			);
 			path = CommonView;
 			sourceTree = "<group>";
@@ -193,12 +199,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				7DD9AD252B878A47008E7E8F /* MenuLayer.swift in Sources */,
+				7D76F9712CDB51F400A125BE /* SubMenuView.swift in Sources */,
 				7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */,
+				7D76F96F2CDB4C8400A125BE /* LiquidPeelAwayView.swift in Sources */,
 				7DF38E7A2CD8D9B100C91782 /* RadialMenuPosition.swift in Sources */,
+				7D76F96D2CDB4BC500A125BE /* BlurredOverlayCircles.swift in Sources */,
 				BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */,
 				7D4755E42B8CA7B800C4F67A /* LiquidFluidMenuView.swift in Sources */,
 				7D28060B2B2333E5000820B9 /* SSRadialMenuViewModel.swift in Sources */,
-				7D85930D2B21C6510078C68D /* RadialButtonView.swift in Sources */,
 				7DF38E7C2CD8D9E400C91782 /* PlusToCrossView.swift in Sources */,
 				7D85930A2B21C1FB0078C68D /* SSRadialMenuView.swift in Sources */,
 			);
