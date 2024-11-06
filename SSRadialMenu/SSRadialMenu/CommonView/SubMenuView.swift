@@ -62,13 +62,14 @@ struct SubMenuView: View {
 
     private func startSubMenuAnimation() {
         for index in 0..<subItems.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.03) { // Reduced delay for faster expansion
                 subMenuItemsVisible[index] = true
                 if index > 0 {
                     let previousOffset = subMenuItemsOffsets[index - 1]
                     let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count)
                     subMenuItemsOffsets[index] = previousOffset
-                    withAnimation(.easeOut(duration: 0.3)) {
+
+                    withAnimation(.easeOut(duration: 0.2)) { // Reduced duration for faster animation
                         subMenuItemsOffsets[index] = newOffset
                     }
                 } else {
@@ -85,16 +86,15 @@ struct SubMenuView: View {
 
     private func collapseSubMenu() {
         for index in (0..<subItems.count).reversed() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.01) {
-                withAnimation(.easeIn(duration: 0.9)) {
-                    subMenuItemsVisible[index] = false
-                }
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(subItems.count - 1 - index) * 0.05) { // Further reduce the delay
+                // Animate the offset change before hiding the item
                 if index > 0 {
                     let previousOffset = subMenuItemsOffsets[index - 1]
                     let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count)
-                    subMenuItemsOffsets[index] = previousOffset
-                    withAnimation(.easeIn(duration: 0.9)) {
-                        subMenuItemsOffsets[index] = newOffset
+                    subMenuItemsOffsets[index] = newOffset
+
+                    withAnimation(.easeOut(duration: 0.7).speed(2.5)) { // Reduce duration and increase speed
+                        subMenuItemsOffsets[index] = previousOffset
                     }
                 } else {
                     // First item should go directly to its final position
@@ -104,7 +104,13 @@ struct SubMenuView: View {
                         totalItems: subItems.count
                     )
                 }
+
+                // Delay hiding the item until after the animation completes, starting from the last item
+                withAnimation(.easeOut(duration: 0.7).delay(0.7).speed(2.5)) { // Faster hiding with less delay
+                    subMenuItemsVisible[index] = false
+                }
             }
         }
     }
+
 }
