@@ -20,18 +20,19 @@ struct SubMenuView: View {
         self._isExpand = isExpand
         self._subMenuItemsVisible = State(initialValue: Array(repeating: false, count: subItems.count))
         self._subMenuItemsOffsets = State(initialValue: Array(repeating: (0, 0), count: subItems.count))
+
     }
 
     var body: some View {
         ZStack {
             ForEach(subItems.indices, id: \.self) { index in
                 createSubMenuItem(subItems[index], at: index)
-                    .opacity(subMenuItemsVisible[index] ? 1 : 0) // Animate opacity
-                    .scaleEffect(subMenuItemsVisible[index] ? 1.0 : 0.0) // Animate scale
+                    .opacity(subMenuItemsVisible[index] ? 1 : 0)
+                    .scaleEffect(subMenuItemsVisible[index] ? 1.0 : 0.0)
                     .offset(
                         x: subMenuItemsOffsets[index].0,
                         y: subMenuItemsOffsets[index].1
-                    ) // Offset for animation
+                    )
                     .animation(
                         .easeOut(duration: 0.3).delay(Double(index) * 0.05),
                         value: subMenuItemsVisible[index]
@@ -41,10 +42,12 @@ struct SubMenuView: View {
         .onAppear {
             // Start the staggered animation for each sub-menu item
             if isExpand {
+          
                 startSubMenuAnimation()
             }
         }
         .onChange(of: isExpand) { newValue in
+            print(isExpand)
             if newValue {
                 collapseSubMenu()
             } else {
@@ -83,7 +86,6 @@ struct SubMenuView: View {
             }
         }
     }
-
     private func collapseSubMenu() {
         for index in (0..<subItems.count).reversed() {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(subItems.count - 1 - index) * 0.05) { // Further reduce the delay
@@ -97,12 +99,14 @@ struct SubMenuView: View {
                         subMenuItemsOffsets[index] = previousOffset
                     }
                 } else {
-                    // First item should go directly to its final position
-                    subMenuItemsOffsets[index] = position.calculateOffset(
-                        radius: 200,
-                        index: index,
-                        totalItems: subItems.count
-                    )
+                    // For the first item, move it to the parent position
+                    let parentOffset = position.calculateOffset(radius: 0, index: index, totalItems: subItems.count) // Move it to the parent position
+                    subMenuItemsOffsets[index] = parentOffset
+
+                    // Animate this offset change back to the parent position
+                    withAnimation(.easeOut(duration: 0.7).speed(2.5)) {
+                        subMenuItemsOffsets[index] = parentOffset
+                    }
                 }
 
                 // Delay hiding the item until after the animation completes, starting from the last item
