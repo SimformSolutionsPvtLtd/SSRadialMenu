@@ -86,8 +86,6 @@ struct RadialMenu: View {
                     let nextDirection = directions[index]
                     xOffset = nextDirection.0
                     yOffset = nextDirection.1
-
-                    print("xoffset: \(xOffset) - yOffset: \(yOffset)")
                     withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.4, blendDuration: 0)) {
                         self.xOffset = 0
                         self.yOffset = 0

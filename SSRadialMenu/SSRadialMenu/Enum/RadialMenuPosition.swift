@@ -30,6 +30,8 @@ enum Position {
         let angleRange: CGFloat
         let isFullCircle = totalItems > 4
 
+        let extraSpacingFactor: CGFloat = 1.1 // Adjust this factor to increase spacing
+
         switch self {
         case .topRight:
             baseAngle = 3 * .pi / 2
@@ -48,8 +50,8 @@ enum Position {
             angleRange = 2 * .pi
         }
 
-        // Calculate angle per item
-        let angle = baseAngle + (angleRange / CGFloat(isFullCircle ? totalItems : totalItems - 1)) * CGFloat(index) 
+        // Adjust angle per item with extra spacing
+        let angle = baseAngle + (angleRange * extraSpacingFactor / CGFloat(isFullCircle ? totalItems : totalItems - 1)) * CGFloat(index)
         let x = radius * cos(angle)
         let y = radius * sin(angle)
         return (x, y)

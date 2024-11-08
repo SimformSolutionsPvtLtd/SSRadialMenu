@@ -22,16 +22,15 @@ struct BlurredOverlayCircles: View {
 
     var body: some View {
         ZStack {
-            // Base circle with initial blur
             Circle()
-                .fill(Color.yellow)
-                .blur(radius: 18.0)
+                .fill(Color.red)
+                .blur(radius: 8.0)
                 .frame(width: frameWidth, height: frameHeight)
                 .offset(x: xOffset, y: yOffset)
                 .scaleEffect(scaleEffect)
             Circle()
-                .fill(Color.yellow)
-                .blur(radius: 20.0)
+                .fill(Color.red)
+                .blur(radius: 10.0)
                 .frame(width: frameWidth * 2, height: frameHeight * 2)
                 .overlay(
                     Color(white: 0.5).opacity(0.8)
@@ -46,13 +45,12 @@ struct BlurredOverlayCircles: View {
                         .blendMode(.colorDodge)
                         .allowsHitTesting(false)
                         .clipShape(Circle())
-                        .scaleEffect(2) // scales the circle to twice its size
-
+                        .scaleEffect(2)
                 )
-
-
         }
-
+        .overlay {
+            PlusToCrossView(isCross: $isExpanded)
+        }
         .applyExternalFrame(width: externalFrameWidth, height: externalFrameHeight)
     }
 
