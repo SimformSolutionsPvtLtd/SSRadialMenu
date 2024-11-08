@@ -4,7 +4,6 @@
 //
 //  Created by Rishita Panchal on 06/11/24.
 //
-
 import SwiftUI
 
 struct BlurredOverlayCircles: View {
@@ -25,36 +24,36 @@ struct BlurredOverlayCircles: View {
         ZStack {
             // Base circle with initial blur
             Circle()
-                .fill(Color.black)
+                .fill(Color.yellow)
                 .blur(radius: 18.0)
                 .frame(width: frameWidth, height: frameHeight)
                 .offset(x: xOffset, y: yOffset)
                 .scaleEffect(scaleEffect)
             Circle()
-                .fill(Color.black)
+                .fill(Color.yellow)
                 .blur(radius: 20.0)
                 .frame(width: frameWidth * 2, height: frameHeight * 2)
+                .overlay(
+                    Color(white: 0.5).opacity(0.8)
+                        .blendMode(.colorBurn)
+                        .allowsHitTesting(false)
+                        .clipShape(Circle())
+                        .scaleEffect(2) // scales the circle to twice its size
+
+                )
+                .overlay(
+                    Color(white: 1.0).opacity(0.8)
+                        .blendMode(.colorDodge)
+                        .allowsHitTesting(false)
+                        .clipShape(Circle())
+                        .scaleEffect(2) // scales the circle to twice its size
+
+                )
+
+
         }
-        .mask(
-            Circle()
-                .frame(width: frameWidth * 3, height: frameHeight * 3)
-        )
+
         .applyExternalFrame(width: externalFrameWidth, height: externalFrameHeight)
-        .overlay(
-            Color(white: 0.5).opacity(0.8)
-                .blendMode(.colorBurn)
-                .allowsHitTesting(false)
-        )
-        .overlay(
-            Color(white: 1.0).opacity(0.8)
-                .blendMode(.colorDodge)
-                .allowsHitTesting(false)
-        )
-        .overlay(
-            color.opacity(0.8)
-                .blendMode(.plusLighter)
-                .allowsHitTesting(false)
-        )
     }
 
 }

@@ -49,7 +49,7 @@ enum Position {
         }
 
         // Calculate angle per item
-        let angle = baseAngle + (angleRange / CGFloat(isFullCircle ? totalItems : totalItems - 1)) * CGFloat(index)
+        let angle = baseAngle + (angleRange / CGFloat(isFullCircle ? totalItems : totalItems - 1)) * CGFloat(index) 
         let x = radius * cos(angle)
         let y = radius * sin(angle)
         return (x, y)

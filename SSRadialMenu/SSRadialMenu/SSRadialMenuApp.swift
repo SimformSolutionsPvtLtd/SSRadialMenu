@@ -22,8 +22,8 @@ struct SSRadialMenuApp: App {
     ]
     var body: some Scene {
         WindowGroup {
-            //            LiquidPeelAwayView(position: .bottomRight)
-            CircleView(items: $items)
+                        LiquidPeelAwayView(position: .bottomRight)
+//            CircleView(items: $items)
         }
     }
 }

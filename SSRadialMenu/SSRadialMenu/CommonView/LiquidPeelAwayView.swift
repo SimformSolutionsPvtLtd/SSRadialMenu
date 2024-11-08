@@ -49,7 +49,8 @@ struct LiquidPeelAwayView: View {
 
     var body: some View {
         ZStack {
-            BlurredOverlayCircles(isExpanded: $isExpanded, xOffset: $xOffset, yOffset: $yOffset, scaleEffect: $scaleEffect, color: Color.blue, externalFrameWidth: 200, externalFrameHeight: 200)
+            BlurredOverlayCircles(isExpanded: $isExpanded, xOffset: $xOffset, yOffset: $yOffset, scaleEffect: $scaleEffect, color: Color.blue, externalFrameWidth: 100, externalFrameHeight: 100)
+//                .zIndex(5)
 
             RadialMenu(
                 items: menuItems,
@@ -57,7 +58,6 @@ struct LiquidPeelAwayView: View {
                 isExpanded: $isExpanded,
                 menuItemsVisible: $menuItemsVisible,
                 currentPeelingAngle: $currentPeelingAngle)
-            .frame(width: 120, height: 120)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.floatingButtonAlignment)
         .onTapGesture {
