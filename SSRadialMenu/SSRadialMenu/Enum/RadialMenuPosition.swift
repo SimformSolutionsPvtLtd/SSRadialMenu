@@ -28,30 +28,28 @@ enum Position {
     func calculateOffset(radius: CGFloat, index: Int, totalItems: Int) -> (CGFloat, CGFloat) {
         let baseAngle: CGFloat
         let angleRange: CGFloat
+        let isFullCircle = totalItems > 4
+
         switch self {
         case .topRight:
-            baseAngle = .pi / 2
-            angleRange = .pi / 2
+            baseAngle = 3 * .pi / 2
+            angleRange = isFullCircle ? -2 * .pi : -.pi / 2
         case .bottomRight:
             baseAngle = 3 * .pi / 2
-            angleRange = -.pi / 2
+            angleRange = isFullCircle ? -2 * .pi : -.pi / 2
         case .topLeft:
             baseAngle = 0
-            angleRange = .pi / 2
+            angleRange = isFullCircle ? 2 * .pi : .pi / 2
         case .bottomLeft:
             baseAngle = 3 * .pi / 2
-            angleRange = .pi / 2
+            angleRange = isFullCircle ? 2 * .pi : .pi / 2
         case .center:
             baseAngle = 0
             angleRange = 2 * .pi
         }
 
-        let angle: CGFloat
-        if self == .center {
-            angle = (angleRange / CGFloat(totalItems)) * CGFloat(index)
-        } else {
-            angle = baseAngle + (angleRange / CGFloat(totalItems - 1)) * CGFloat(index)
-        }
+        // Calculate angle per item
+        let angle = baseAngle + (angleRange / CGFloat(isFullCircle ? totalItems : totalItems - 1)) * CGFloat(index)
         let x = radius * cos(angle)
         let y = radius * sin(angle)
         return (x, y)

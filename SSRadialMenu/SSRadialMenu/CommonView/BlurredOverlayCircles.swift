@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct BlurredOverlayCircles: View {
+    @Binding var isExpanded: Bool
     @Binding var xOffset: CGFloat
     @Binding var yOffset: CGFloat
     @Binding var scaleEffect: CGFloat
@@ -19,8 +20,10 @@ struct BlurredOverlayCircles: View {
     var externalFrameWidth: CGFloat? = nil
     var externalFrameHeight: CGFloat? = nil
 
+
     var body: some View {
         ZStack {
+            // Base circle with initial blur
             Circle()
                 .fill(Color.black)
                 .blur(radius: 18.0)
@@ -32,7 +35,10 @@ struct BlurredOverlayCircles: View {
                 .blur(radius: 20.0)
                 .frame(width: frameWidth * 2, height: frameHeight * 2)
         }
-        // Apply external frame only if provided
+        .mask(
+            Circle()
+                .frame(width: frameWidth * 3, height: frameHeight * 3)
+        )
         .applyExternalFrame(width: externalFrameWidth, height: externalFrameHeight)
         .overlay(
             Color(white: 0.5).opacity(0.8)
@@ -50,14 +56,14 @@ struct BlurredOverlayCircles: View {
                 .allowsHitTesting(false)
         )
     }
+
 }
 
-// Custom modifier to apply the external frame size if provided
 extension View {
     func applyExternalFrame(width: CGFloat?, height: CGFloat?) -> some View {
         Group {
             if let width = width, let height = height {
-                self.frame(width: width, height: height)
+                self.frame(width: width, height: height, alignment: .bottomTrailing)
             } else {
                 self
             }
