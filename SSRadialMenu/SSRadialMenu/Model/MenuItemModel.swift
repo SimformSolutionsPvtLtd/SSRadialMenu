@@ -7,11 +7,7 @@
 
 import SwiftUI
 
-struct MenuItem: Identifiable, Equatable {
-    static func == (lhs: MenuItem, rhs: MenuItem) -> Bool {
-        true
-    }
-    
+struct MenuItem: Identifiable{
     let id = UUID()
     let color: Color
     let icon: String
@@ -21,4 +17,5 @@ struct MenuItem: Identifiable, Equatable {
     var isCollapsed: Bool
     var offset: CGSize = .zero
     var subMenuItems: [MenuItem]?
+    var angle: CGFloat = .zero
 }
