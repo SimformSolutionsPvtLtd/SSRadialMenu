@@ -18,11 +18,12 @@ struct RadialMenu: View {
     @State private var selectedItem: MenuItem?
     @State private var showSubMenu: Bool = false
     @State private var scaleEffect: CGFloat = 1.0
+    @State private var dragOffset: CGSize = .zero
+    @State private var rotationAngle: Double = 0.0 // Track rotation
 
     @State private var isBouncing = false
     @State private var currentDirectionIndex: Int = 0
 
-    // Shadow properties
     var radius: CGFloat = 35.0
     @State private var shadowRadius: CGFloat = 10
     @State private var shadowYOffset: CGFloat = 5
@@ -35,6 +36,7 @@ struct RadialMenu: View {
                     createMenuItem(items[index], at: index, position: position)
                         .opacity(menuItemsVisible[index] ? 1 : 0)
                         .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
+                        .rotationEffect(.degrees(rotationAngle))  // Apply rotation to each item
                         .animation(.easeInOut.delay(Double(index) * 0.2), value: menuItemsVisible[index])
                 }
 
@@ -45,11 +47,25 @@ struct RadialMenu: View {
                 }
             }
         }
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    dragOffset = value.translation
+                    let angle = atan2(dragOffset.height, dragOffset.width)
+                    rotationAngle = angle * 180 / .pi  // Convert to degrees
+                    currentPeelingAngle = rotationAngle // Keep angle in sync
+                }
+                .onEnded { value in
+                    withAnimation {
+                        dragOffset = .zero
+                    }
+                }
+        )
     }
 
     private func createMenuItem(_ item: MenuItem, at index: Int, position: Position) -> some View {
         let radius: CGFloat = 100
-        let (x, y) = position.calculateOffset(radius: radius, index: index, totalItems: items.count) ?? (0,0)
+        let (x, y) = position.calculateOffset(radius: radius, index: index, totalItems: items.count) ?? (0, 0)
         return MenuItemView(item: item, isExpanded: $isExpanded, x: .constant(x), y: .constant(y), selectedItem: $selectedItem, menuItemsVisible: menuItemsVisible, index: index, onTap: {
             selectedItem = item
             startBounceAndPeelAnimation(item: item)
@@ -75,7 +91,7 @@ struct RadialMenu: View {
                 directions.append(offset)
             }
 
-            for index in 0..<1{
+            for index in 0..<1 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * (0.4 / 6)) {
                     withAnimation(.interactiveSpring) {
                         subMenuItemsVisible[index] = true
@@ -94,7 +110,7 @@ struct RadialMenu: View {
                         self.shadowYOffset = 10
                     }
 
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // Adjusted delay for fluidity
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.5, blendDuration: 0)) {
                             self.scaleEffect = 1.0
                             self.shadowRadius = 10

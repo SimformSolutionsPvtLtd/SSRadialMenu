@@ -60,6 +60,7 @@ struct LiquidPeelAwayView: View {
                 isExpanded: $isExpanded,
                 menuItemsVisible: $menuItemsVisible,
                 currentPeelingAngle: $currentPeelingAngle)
+            .rotationEffect(.degrees(currentPeelingAngle), anchor: .center) // Adjust rotation anchor
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.floatingButtonAlignment)
         .onTapGesture {
@@ -88,6 +89,7 @@ struct LiquidPeelAwayView: View {
         var directions: [(CGFloat, CGFloat)] = []
         var previousOffSet: [(CGFloat, CGFloat)] = [(0.0, 0.0)]
 
+        // Calculate offsets for each menu item
         for index in 0..<menuItems.count {
             if let offset = position.calculateOffset(radius: radius, index: index, totalItems: menuItems.count) {
                 directions.append(offset)
@@ -97,6 +99,18 @@ struct LiquidPeelAwayView: View {
             }
         }
 
+        // Convert the currentPeelingAngle to radians
+        let rotationAngle = currentPeelingAngle * (.pi / 180)  // Convert degrees to radians
+        let rotationTransform = CGAffineTransform(rotationAngle: rotationAngle)
+
+        // Apply the rotation transform to each direction
+        directions = directions.map { direction in
+            let point = CGPoint(x: direction.0, y: direction.1)
+            let rotatedPoint = point.applying(rotationTransform)
+            return (rotatedPoint.x, rotatedPoint.y)
+        }
+
+        // Start the bounce and peel animation
         for index in menuItems.indices {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * (0.4 / 6)) {
                 withAnimation(.interactiveSpring) {
@@ -140,6 +154,7 @@ struct LiquidPeelAwayView: View {
         isBouncing = true
     }
 
+
     private func collapseMenuItems() {
         // Create an array of offsets for the bouncing effect
         var bounceDirections: [(CGFloat, CGFloat)] = []
@@ -150,6 +165,17 @@ struct LiquidPeelAwayView: View {
                 print("Offset is nil for item at index \(index)")
                 bounceDirections.append((0.0, 0.0))
             }
+        }
+
+        // Convert the currentPeelingAngle to radians
+        let rotationAngle = currentPeelingAngle * (.pi / 180)  // Convert degrees to radians
+        let rotationTransform = CGAffineTransform(rotationAngle: rotationAngle)
+
+        // Apply the rotation transform to each direction
+        bounceDirections = bounceDirections.map { direction in
+            let point = CGPoint(x: direction.0, y: direction.1)
+            let rotatedPoint = point.applying(rotationTransform)
+            return (rotatedPoint.x, rotatedPoint.y)
         }
 
         for index in menuItems.indices {
