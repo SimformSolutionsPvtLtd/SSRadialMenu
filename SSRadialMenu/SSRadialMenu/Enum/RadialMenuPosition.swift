@@ -25,7 +25,7 @@ enum Position {
         }
     }
   
-    func calculateOffset(radius: CGFloat, index: Int, totalItems: Int, previousOffsets: [(CGFloat, CGFloat)]? = nil, overlapThreshold: CGFloat = 20) -> (CGFloat, CGFloat)? {
+    func calculateOffset(radius: CGFloat, index: Int, totalItems: Int, overlapThreshold: CGFloat = 20) -> (CGFloat, CGFloat)? {
         let baseAngle: CGFloat
         let angleRange: CGFloat
         let isFullCircle = totalItems > 4

@@ -25,7 +25,7 @@ struct MenuItemView: View {
 
     var body: some View {
         ZStack {
-            BlurredOverlayCircles(isExpanded: $isExpanded, xOffset: $xOffset, yOffset: $y, scaleEffect: .constant(0.1), frameWidth: 30, frameHeight: 35)
+            BlurredOverlayCircles(isExpanded: $isExpanded, xOffset: $xOffset, yOffset: $y, scaleEffect: .constant(0.1), currentPeelingAngle: .constant(.zero), frameWidth: 30, frameHeight: 35, color: item.color)
             item.menuView
                 .foregroundColor(.blue)
         }

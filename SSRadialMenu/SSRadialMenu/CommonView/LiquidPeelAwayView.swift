@@ -32,7 +32,7 @@ struct LiquidPeelAwayView: View {
             MenuItem(color: .red.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true),
             MenuItem(color: .purple.opacity(0.7), icon: "star.fill", size: 50, menuView: AnyView(Image(systemName: "star.fill")), selected: false, isCollapsed: true)
         ]),
-        MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
+        MenuItem(color: .red, icon: "heart", size: 40, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
         MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
         MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
         MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
@@ -52,7 +52,7 @@ struct LiquidPeelAwayView: View {
 
     var body: some View {
         ZStack {
-            BlurredOverlayCircles(isExpanded: $isExpanded, xOffset: $xOffset, yOffset: $yOffset, scaleEffect: $scaleEffect, color: Color.blue, isMainMenu: true, externalFrameWidth: 100, externalFrameHeight: 100)
+            BlurredOverlayCircles(isExpanded: $isExpanded, xOffset: $xOffset, yOffset: $yOffset, scaleEffect: $scaleEffect, currentPeelingAngle: $currentPeelingAngle, color: Color.blue, isMainMenu: true, externalFrameWidth: 100, externalFrameHeight: 100)
 
             RadialMenu(
                 items: menuItems,
@@ -61,6 +61,9 @@ struct LiquidPeelAwayView: View {
                 menuItemsVisible: $menuItemsVisible,
                 currentPeelingAngle: $currentPeelingAngle)
             .rotationEffect(.degrees(currentPeelingAngle), anchor: .center) // Adjust rotation anchor
+            .onChange(of: currentPeelingAngle) { newValue in
+                print("Current peel angle changed : \(newValue)")
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.floatingButtonAlignment)
         .onTapGesture {
@@ -84,10 +87,8 @@ struct LiquidPeelAwayView: View {
             }
         }
     }
-
     private func startBounceAndPeelAnimation() {
         var directions: [(CGFloat, CGFloat)] = []
-        var previousOffSet: [(CGFloat, CGFloat)] = [(0.0, 0.0)]
 
         // Calculate offsets for each menu item
         for index in 0..<menuItems.count {
@@ -98,18 +99,6 @@ struct LiquidPeelAwayView: View {
                 directions.append((0.0, 0.0))
             }
         }
-
-        // Convert the currentPeelingAngle to radians
-        let rotationAngle = currentPeelingAngle * (.pi / 180)  // Convert degrees to radians
-        let rotationTransform = CGAffineTransform(rotationAngle: rotationAngle)
-
-        // Apply the rotation transform to each direction
-        directions = directions.map { direction in
-            let point = CGPoint(x: direction.0, y: direction.1)
-            let rotatedPoint = point.applying(rotationTransform)
-            return (rotatedPoint.x, rotatedPoint.y)
-        }
-
         // Start the bounce and peel animation
         for index in menuItems.indices {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * (0.4 / 6)) {
