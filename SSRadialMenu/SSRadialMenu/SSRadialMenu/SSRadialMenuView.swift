@@ -37,7 +37,7 @@ struct RadialMenu: View {
                         .opacity(menuItemsVisible[index] ? 1 : 0)
                         .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
                         .animation(.easeInOut.delay(Double(index) * 0.2), value: menuItemsVisible[index])
-                    
+
                 }
 
                 if let selectedItem, let subItems = selectedItem.subMenuItems {
@@ -50,15 +50,13 @@ struct RadialMenu: View {
         .gesture(
                 DragGesture()
                     .onChanged { value in
-                        // Update drag offset and calculate new angle based on drag
-                        dragOffset = value.translation
-                        let angle = atan2(dragOffset.height, dragOffset.width)
-                        currentPeelingAngle = angle * 180 / .pi  // Convert to degrees
-                        print(dragOffset)
-                        print("Current peeling value from SSRadialMenu : \(currentPeelingAngle)")
+                        if items.count > 4 {
+                            dragOffset = value.translation
+                            let angle = atan2(dragOffset.height, dragOffset.width)
+                            currentPeelingAngle = angle * 180 / .pi  // Convert to degrees
+                        }
                     }
                     .onEnded { value in
-                        // Optionally reset or apply snapping to nearest position after drag ends
                         withAnimation {
                             dragOffset = .zero
                         }
