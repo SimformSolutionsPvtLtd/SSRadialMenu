@@ -49,7 +49,7 @@ struct RadialMenu: View {
 
     private func createMenuItem(_ item: MenuItem, at index: Int, position: Position) -> some View {
         let radius: CGFloat = 100
-        let (x, y) = position.calculateOffset(radius: radius, index: index, totalItems: items.count)
+        let (x, y) = position.calculateOffset(radius: radius, index: index, totalItems: items.count) ?? (0,0)
         return MenuItemView(item: item, x: x, y: y, selectedItem: $selectedItem, menuItemsVisible: menuItemsVisible, index: index, onTap: {
             selectedItem = item
             startBounceAndPeelAnimation(item: item)
@@ -71,7 +71,7 @@ struct RadialMenu: View {
         var directions: [(CGFloat, CGFloat)] = []
         if let item, let subMenuItems = item.subMenuItems {
             for index in 0..<1 {
-                let offset = position.calculateOffset(radius: radius, index: index, totalItems: subMenuItems.count)
+                guard let offset = position.calculateOffset(radius: radius, index: index, totalItems: subMenuItems.count) else { return }
                 directions.append(offset)
             }
 

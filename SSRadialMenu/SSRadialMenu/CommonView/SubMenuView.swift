@@ -69,19 +69,20 @@ struct SubMenuView: View {
                 subMenuItemsVisible[index] = true
                 if index > 0 {
                     let previousOffset = subMenuItemsOffsets[index - 1]
-                    let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count)
+                    guard let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count) else { return }
                     subMenuItemsOffsets[index] = previousOffset
 
                     withAnimation(.easeOut(duration: 0.2)) { // Reduced duration for faster animation
                         subMenuItemsOffsets[index] = newOffset
                     }
                 } else {
-                    // First item should go directly to its final position
-                    subMenuItemsOffsets[index] = position.calculateOffset(
+                    guard let subMenuItemOffset = position.calculateOffset(
                         radius: 200,
                         index: index,
                         totalItems: subItems.count
-                    )
+                    ) else { return }
+                    // First item should go directly to its final position
+                    subMenuItemsOffsets[index] = subMenuItemOffset
                 }
             }
         }
@@ -92,7 +93,7 @@ struct SubMenuView: View {
                 // Animate the offset change before hiding the item
                 if index > 0 {
                     let previousOffset = subMenuItemsOffsets[index - 1]
-                    let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count)
+                    guard let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count) else { return }
                     subMenuItemsOffsets[index] = newOffset
 
                     withAnimation(.easeOut(duration: 0.7).speed(2.5)) { // Reduce duration and increase speed
@@ -100,7 +101,7 @@ struct SubMenuView: View {
                     }
                 } else {
                     // For the first item, move it to the parent position
-                    let parentOffset = position.calculateOffset(radius: 0, index: index, totalItems: subItems.count) // Move it to the parent position
+                    guard let parentOffset = position.calculateOffset(radius: 0, index: index, totalItems: subItems.count) else { return }// Move it to the parent position
                     subMenuItemsOffsets[index] = parentOffset
 
                     // Animate this offset change back to the parent position

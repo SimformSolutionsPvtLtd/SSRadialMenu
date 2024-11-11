@@ -15,10 +15,8 @@ struct BlurredOverlayCircles: View {
     var frameHeight: CGFloat = 55
     var color: Color = .blue
 
-    // Optional external frame size parameters
     var externalFrameWidth: CGFloat? = nil
     var externalFrameHeight: CGFloat? = nil
-
 
     var body: some View {
         ZStack {

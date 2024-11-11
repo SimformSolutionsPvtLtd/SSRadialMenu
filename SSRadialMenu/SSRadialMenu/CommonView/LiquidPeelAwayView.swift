@@ -39,7 +39,10 @@ struct LiquidPeelAwayView: View {
         MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
         MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
         MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
-        MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil)
+        MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
+        MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
+        MenuItem(color: .orange, icon: "moon", size: 40, menuView: AnyView(Image(systemName: "moon.fill")), selected: false, isCollapsed: true, subMenuItems: nil),
+        MenuItem(color: .green, icon: "heart", size: 40, menuView: AnyView(Image(systemName: "heart.fill")), selected: false, isCollapsed: true, subMenuItems: nil)
     ]
 
     init(position: Position) {
@@ -84,9 +87,15 @@ struct LiquidPeelAwayView: View {
 
     private func startBounceAndPeelAnimation() {
         var directions: [(CGFloat, CGFloat)] = []
+        var previousOffSet: [(CGFloat, CGFloat)] = [(0.0, 0.0)]
+
         for index in 0..<menuItems.count {
-            let offset = position.calculateOffset(radius: radius, index: index, totalItems: menuItems.count)
-            directions.append(offset)
+            if let offset = position.calculateOffset(radius: radius, index: index, totalItems: menuItems.count) {
+                directions.append(offset)
+            } else {
+                print("Offset is nil for item at index \(index)")
+                directions.append((0.0, 0.0))
+            }
         }
 
         for index in menuItems.indices {
@@ -136,8 +145,12 @@ struct LiquidPeelAwayView: View {
         // Create an array of offsets for the bouncing effect
         var bounceDirections: [(CGFloat, CGFloat)] = []
         for index in 0..<menuItems.count {
-            let offset = position.calculateOffset(radius: radius, index: index, totalItems: menuItems.count)
-            bounceDirections.append(offset)
+            if let offset = position.calculateOffset(radius: radius, index: index, totalItems: menuItems.count) {
+                bounceDirections.append(offset)
+            } else {
+                print("Offset is nil for item at index \(index)")
+                bounceDirections.append((0.0, 0.0))
+            }
         }
 
         for index in menuItems.indices {

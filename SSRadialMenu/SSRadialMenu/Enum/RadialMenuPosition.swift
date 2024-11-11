@@ -13,25 +13,41 @@ enum Position {
     var floatingButtonAlignment: Alignment {
         switch self {
         case .topRight:
-            .topTrailing
+                .topTrailing
         case .bottomRight:
-            .bottomTrailing
+                .bottomTrailing
         case .topLeft:
-            .topLeading
+                .topLeading
         case .bottomLeft:
-            .bottomLeading
+                .bottomLeading
         case .center:
-            .center
+                .center
         }
     }
-
-    func calculateOffset(radius: CGFloat, index: Int, totalItems: Int) -> (CGFloat, CGFloat) {
+  
+    func calculateOffset(radius: CGFloat, index: Int, totalItems: Int, previousOffsets: [(CGFloat, CGFloat)]? = nil, overlapThreshold: CGFloat = 20) -> (CGFloat, CGFloat)? {
         let baseAngle: CGFloat
         let angleRange: CGFloat
         let isFullCircle = totalItems > 4
 
-        let extraSpacingFactor: CGFloat = 1.1 // Adjust this factor to increase spacing
+        // Define extra spacing factor for increased distance between items
+        let extraSpacingFactor: CGFloat = 1.0
 
+        // Calculate minimum required radius to prevent overlap
+        let minRequiredRadius = calculateMinRadiusForItems(totalItems, overlapThreshold: overlapThreshold)
+
+        // If the radius is too small, calculate how many items can fit within it
+        if radius < minRequiredRadius {
+            let maxItemsThatFit = Int(2 * .pi / (overlapThreshold / radius))      
+            if index >= maxItemsThatFit {
+                return nil
+            }
+
+            // Print the maximum number of items that can fit within the available radius
+            print("Displaying item \(index + 1) out of \(totalItems). Maximum possible items: \(maxItemsThatFit).")
+        }
+
+        // Define base angle and angle range for each case (quadrant)
         switch self {
         case .topRight:
             baseAngle = 3 * .pi / 2
@@ -50,10 +66,27 @@ enum Position {
             angleRange = 2 * .pi
         }
 
-        // Adjust angle per item with extra spacing
-        let angle = baseAngle + (angleRange * extraSpacingFactor / CGFloat(isFullCircle ? totalItems : totalItems - 1)) * CGFloat(index)
+        // Adjust angle step to prevent overlap by dividing the angle range based on total items
+        let adjustedAngleRange = angleRange * extraSpacingFactor / CGFloat(totalItems)
+        let angle = baseAngle + adjustedAngleRange * CGFloat(index)
+
+        // Calculate x and y positions based on the radius and angle
         let x = radius * cos(angle)
         let y = radius * sin(angle)
+
+        // Print x and y positions for debugging
+//        print("x: \(x), y: \(y)")
+
+        
         return (x, y)
     }
+
+    // Helper function to calculate minimum required radius for a given number of items
+    func calculateMinRadiusForItems(_ totalItems: Int, overlapThreshold: CGFloat) -> CGFloat {
+        // Calculate the minimum radius based on overlap threshold and item spacing
+        let anglePerItem = 2 * .pi / CGFloat(totalItems)
+        let requiredRadius = (overlapThreshold / tan(anglePerItem / 2)) // Adjust based on angle spacing
+        return requiredRadius
+    }
+
 }
