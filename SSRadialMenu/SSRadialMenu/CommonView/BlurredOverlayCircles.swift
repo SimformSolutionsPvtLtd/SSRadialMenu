@@ -14,7 +14,7 @@ struct BlurredOverlayCircles: View {
     var frameWidth: CGFloat = 45
     var frameHeight: CGFloat = 55
     var color: Color = .blue
-
+    var isMainMenu = false
     var externalFrameWidth: CGFloat? = nil
     var externalFrameHeight: CGFloat? = nil
 
@@ -47,7 +47,9 @@ struct BlurredOverlayCircles: View {
                 )
         }
         .overlay {
-            PlusToCrossView(isCross: $isExpanded)
+            if isMainMenu {
+                PlusToCrossView(isCross: $isExpanded)
+            }
         }
         .applyExternalFrame(width: externalFrameWidth, height: externalFrameHeight)
     }
