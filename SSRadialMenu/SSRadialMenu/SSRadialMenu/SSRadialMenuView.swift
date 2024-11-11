@@ -54,6 +54,7 @@ struct RadialMenu: View {
                             dragOffset = value.translation
                             let angle = atan2(dragOffset.height, dragOffset.width)
                             currentPeelingAngle = angle * 180 / .pi  // Convert to degrees
+                            print(currentPeelingAngle)
                         }
                     }
                     .onEnded { value in

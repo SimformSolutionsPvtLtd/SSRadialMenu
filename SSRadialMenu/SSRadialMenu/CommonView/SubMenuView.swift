@@ -46,8 +46,7 @@ struct SubMenuView: View {
                 startSubMenuAnimation()
             }
         }
-        .onChange(of: isExpand) { newValue in
-            print(isExpand)
+        .onChange(of: isExpand) { _, newValue in
             if newValue {
                 collapseSubMenu()
             } else {

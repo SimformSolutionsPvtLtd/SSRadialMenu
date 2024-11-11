@@ -56,8 +56,10 @@ struct LiquidPeelAwayView: View {
                 menuItemsVisible: $menuItemsVisible,
                 currentPeelingAngle: $currentPeelingAngle)
             .rotationEffect(.degrees(currentPeelingAngle), anchor: .center) // Adjust rotation anchor
-            .onChange(of: currentPeelingAngle) { newValue in
-                print("Current peel angle changed : \(newValue)")
+            .onChange(of: isExpanded) { _, newVal in
+                if !newVal {
+                    currentPeelingAngle = 0
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.floatingButtonAlignment)
