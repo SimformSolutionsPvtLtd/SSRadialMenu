@@ -25,7 +25,7 @@ enum Position {
         }
     }
   
-    func calculateOffset(radius: CGFloat, index: Int, totalItems: Int, overlapThreshold: CGFloat = 20) -> (CGFloat, CGFloat)? {
+    func calculateOffset(radius: CGFloat, index: Int, totalItems: Int, peelingAngle: CGFloat = .zero, overlapThreshold: CGFloat = 20) -> (CGFloat, CGFloat)? {
         let baseAngle: CGFloat
         let angleRange: CGFloat
         let isFullCircle = totalItems > 4
@@ -48,19 +48,19 @@ enum Position {
         // Define base angle and angle range for each quadrant
         switch self {
         case .topRight:
-            baseAngle = 3 * .pi / 2
+            baseAngle = 3 * .pi / 2 + peelingAngle  // Adjust by peeling angle
             angleRange = isFullCircle ? -2 * .pi : -.pi / 2
         case .bottomRight:
-            baseAngle = 3 * .pi / 2
+            baseAngle = 3 * .pi / 2 + peelingAngle
             angleRange = isFullCircle ? -2 * .pi : -.pi / 2
         case .topLeft:
-            baseAngle = 0
+            baseAngle = 0 + peelingAngle
             angleRange = isFullCircle ? 2 * .pi : .pi / 2
         case .bottomLeft:
-            baseAngle = 3 * .pi / 2
+            baseAngle = 3 * .pi / 2 + peelingAngle
             angleRange = isFullCircle ? 2 * .pi : .pi / 2
         case .center:
-            baseAngle = 0
+            baseAngle = 0 + peelingAngle
             angleRange = 2 * .pi
         }
 
@@ -82,4 +82,5 @@ enum Position {
         let requiredRadius = overlapThreshold / tan(anglePerItem / 2)
         return requiredRadius
     }
+
 }

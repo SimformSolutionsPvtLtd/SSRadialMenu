@@ -6,7 +6,6 @@
 //
 import SwiftUI
 
-
 struct BlurredOverlayCircles: View {
     @Binding var isExpanded: Bool
     @Binding var xOffset: CGFloat

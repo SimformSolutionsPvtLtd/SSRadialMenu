@@ -37,6 +37,25 @@ struct RadialMenu: View {
                         .opacity(menuItemsVisible[index] ? 1 : 0)
                         .scaleEffect(menuItemsVisible[index] ? 1.0 : 0.0)
                         .animation(.easeInOut.delay(Double(index) * 0.2), value: menuItemsVisible[index])
+                        .rotationEffect(.degrees(currentPeelingAngle), anchor: .center) // Adjust rotation anchor
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+//                                    if !showSubMenu {
+                                        if items.count > 4 {
+                                            dragOffset = value.translation
+                                            let angle = atan2(dragOffset.height, dragOffset.width)
+                                            currentPeelingAngle = angle * 180 / .pi  // Convert to degrees
+                                            print(currentPeelingAngle)
+//                                        }
+                                    }
+                                }
+                                .onEnded { value in
+                                    withAnimation {
+                                        dragOffset = .zero
+                                    }
+                                }
+                        )
 
                 }
 
@@ -44,25 +63,10 @@ struct RadialMenu: View {
                     SubMenuView(subItems: subItems, position: position, isExpand: $showSubMenu)
                         .transition(.scale)
                         .animation(.easeInOut, value: showSubMenu)
+                        .rotationEffect(.degrees(currentPeelingAngle), anchor: .center) // Adjust rotation anchor
                 }
             }
         }
-        .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        if items.count > 4 {
-                            dragOffset = value.translation
-                            let angle = atan2(dragOffset.height, dragOffset.width)
-                            currentPeelingAngle = angle * 180 / .pi  // Convert to degrees
-                            print(currentPeelingAngle)
-                        }
-                    }
-                    .onEnded { value in
-                        withAnimation {
-                            dragOffset = .zero
-                        }
-                    }
-            )
     }
 
     private func createMenuItem(_ item: MenuItem, at index: Int, position: Position) -> some View {
