@@ -13,6 +13,7 @@ struct RadialMenu: View {
     @Binding var isExpanded: Bool
     @Binding var menuItemsVisible: [Bool]
     @Binding var currentPeelingAngle: Double
+    @State var subSubMenuPeelingAngle = 0.0
     @State private var xOffset: CGFloat = 0.0
     @State private var yOffset: CGFloat = 0.0
     @State private var selectedItem: MenuItem?
@@ -41,13 +42,13 @@ struct RadialMenu: View {
                         .gesture(
                             DragGesture()
                                 .onChanged { value in
-//                                    if !showSubMenu {
+                                    if !showSubMenu {
                                         if items.count > 4 {
                                             dragOffset = value.translation
                                             let angle = atan2(dragOffset.height, dragOffset.width)
                                             currentPeelingAngle = angle * 180 / .pi  // Convert to degrees
                                             print(currentPeelingAngle)
-//                                        }
+                                        }
                                     }
                                 }
                                 .onEnded { value in
@@ -63,7 +64,23 @@ struct RadialMenu: View {
                     SubMenuView(subItems: subItems, position: position, isExpand: $showSubMenu)
                         .transition(.scale)
                         .animation(.easeInOut, value: showSubMenu)
-                        .rotationEffect(.degrees(currentPeelingAngle), anchor: .center) // Adjust rotation anchor
+                        .rotationEffect(.degrees(subSubMenuPeelingAngle), anchor: .center)
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    if items.count > 4 {
+                                        dragOffset = value.translation
+                                        let angle = atan2(dragOffset.height, dragOffset.width)
+                                        subSubMenuPeelingAngle = angle * 180 / .pi  // Convert to degrees
+                                        print(subSubMenuPeelingAngle)
+                                    }
+                                }
+                                .onEnded { value in
+                                    withAnimation {
+                                        dragOffset = .zero
+                                    }
+                                }
+                        )
                 }
             }
         }
@@ -73,12 +90,14 @@ struct RadialMenu: View {
         let radius: CGFloat = 100
         let (x, y) = position.calculateOffset(radius: radius, index: index, totalItems: items.count) ?? (0,0)
         return MenuItemView(item: item, isExpanded: $isExpanded, x: .constant(x), y: .constant(y), selectedItem: $selectedItem, menuItemsVisible: menuItemsVisible, index: index, onTap: {
+            subSubMenuPeelingAngle = currentPeelingAngle
             selectedItem = item
             startBounceAndPeelAnimation(item: item)
             if let subItems = item.subMenuItems, !subItems.isEmpty {
                 showSubMenu.toggle()
             } else {
                 showSubMenu = false
+                subSubMenuPeelingAngle = currentPeelingAngle
             }
         }, xOffset: $xOffset, yOffset: $yOffset)
         .onDisappear {
