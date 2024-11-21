@@ -42,7 +42,6 @@ enum Position {
             if index >= maxItemsThatFit {
                 return nil
             }
-//            print("Displaying item \(index + 1) out of \(totalItems). Maximum possible items: \(maxItemsThatFit).")
         }
 
         // Define base angle and angle range for each quadrant

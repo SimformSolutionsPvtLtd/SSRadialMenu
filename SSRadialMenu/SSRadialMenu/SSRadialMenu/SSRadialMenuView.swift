@@ -102,16 +102,17 @@ struct RadialMenu: View {
                 subSubMenuPeelingAngle = currentPeelingAngle
                 selectedItem = item
                 if let subItems = item.subMenuItems, !subItems.isEmpty {
-                    showSubMenu.toggle()
+                    showSubMenu = !showSubMenu
                 } else {
                     showSubMenu = false
                     subSubMenuPeelingAngle = currentPeelingAngle
                 }
+                print(showSubMenu)
             },
             xOffset: $xOffset,
             yOffset: $yOffset
         )
-        .modifier(ShadowModifier(isSelected: selectedItem?.id == item.id && showSubMenu))// Apply shadow based on selection
+        .modifier(ShadowModifier(isSelected: selectedItem?.id == item.id && showSubMenu))
         .onDisappear {
             if showSubMenu {
                 showSubMenu = false
