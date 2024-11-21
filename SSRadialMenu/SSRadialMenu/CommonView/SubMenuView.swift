@@ -42,7 +42,7 @@ struct SubMenuView: View {
         .onAppear {
             // Start the staggered animation for each sub-menu item
             if isExpand {
-
+          
                 startSubMenuAnimation()
             }
         }
@@ -64,65 +64,65 @@ struct SubMenuView: View {
 
     private func startSubMenuAnimation() {
         for index in 0..<subItems.count {
-            // Reduce the delay to speed up the animation sequence
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) { // Reduced delay for faster sequential animation
-                withAnimation(.easeOut(duration: 0.3)) { // Reduced duration for quicker transitions
-                    subMenuItemsVisible[index] = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.03) { // Reduced delay for faster expansion
+                subMenuItemsVisible[index] = true
+                if index > 0 {
+                    let previousOffset = subMenuItemsOffsets[index - 1]
+                    guard let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count) else { return }
+                    subMenuItemsOffsets[index] = previousOffset
 
-                    // Start from the previous item's position
-                    if index > 0 {
-                        let previousOffset = subMenuItemsOffsets[index - 1]
-                        subMenuItemsOffsets[index] = previousOffset
+                    withAnimation(.easeOut(duration: 0.2)) { // Reduced duration for faster animation
+                        subMenuItemsOffsets[index] = newOffset
                     }
-
-                    // Calculate the final offset for the current item
-                    guard let finalOffset = position.calculateOffset(
+                } else {
+                    guard let subMenuItemOffset = position.calculateOffset(
                         radius: 200,
                         index: index,
                         totalItems: subItems.count
                     ) else { return }
-
-                    // Animate to the final position
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        subMenuItemsOffsets[index] = finalOffset
-                    }
+                    // First item should go directly to its final position
+                    subMenuItemsOffsets[index] = subMenuItemOffset
                 }
             }
         }
     }
 
-
     private func collapseSubMenu() {
         for index in (0..<subItems.count).reversed() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(subItems.count - 1 - index) * 0.05) { // Further reduce the delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(subItems.count - 1 - index) * 0.05) {
                 // Animate the offset change before hiding the item
                 if index > 0 {
                     let previousOffset = subMenuItemsOffsets[index - 1]
                     guard let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count) else { return }
                     subMenuItemsOffsets[index] = newOffset
 
-                    withAnimation(.easeOut(duration: 0.7).speed(2.5)) { // Reduce duration and increase speed
+                    withAnimation(.easeOut(duration: 0.7).speed(2.5)) {
                         subMenuItemsOffsets[index] = previousOffset
                     }
                 } else {
-                    // For the first item, move it to the parent position
-                    guard let parentOffset = position.calculateOffset(radius: 100, index: index, totalItems: subItems.count) else {
-                        return
-                    }// Move it to the parent position
-                    subMenuItemsOffsets[index] = parentOffset
-
-                    // Animate this offset change back to the parent position
+                    // For the zeroth item, move it to the parent position
+                    guard let parentOffset = position.calculateOffset(radius: 100, index: index, totalItems: subItems.count) else { return }
+                  
+                    // Animate this offset change back to the parent position with a fade effect
                     withAnimation(.easeOut(duration: 0.7).speed(2.5)) {
                         subMenuItemsOffsets[index] = parentOffset
                     }
+
+                    // Apply opacity fade to the zeroth index to make the transition smoother
+                    withAnimation(.easeOut(duration: 0.7).speed(2.5).delay(0.2)) {
+                        // Slight fade out
+                        subMenuItemsVisible[index] = false
+                    }
                 }
 
-                // Delay hiding the item until after the animation completes, starting from the last item
-                withAnimation(.easeOut(duration: 0.7).delay(0.7).speed(2.5)) { // Faster hiding with less delay
+                // Delay hiding the item until after the animation completes
+                withAnimation(.easeOut(duration: 0.7).delay(0.7).speed(2.5)) {
                     subMenuItemsVisible[index] = false
                 }
             }
         }
     }
+
+
 
 }
