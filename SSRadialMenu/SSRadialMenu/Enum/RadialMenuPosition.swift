@@ -42,7 +42,7 @@ enum Position {
             if index >= maxItemsThatFit {
                 return nil
             }
-            print("Displaying item \(index + 1) out of \(totalItems). Maximum possible items: \(maxItemsThatFit).")
+//            print("Displaying item \(index + 1) out of \(totalItems). Maximum possible items: \(maxItemsThatFit).")
         }
 
         // Define base angle and angle range for each quadrant
@@ -71,7 +71,6 @@ enum Position {
         // Calculate x and y positions based on the radius and angle
         let x = radius * cos(angle)
         let y = radius * sin(angle)
-        print("Position for item \(index + 1): (\(x), \(y))")
         return (x, y)
     }
 

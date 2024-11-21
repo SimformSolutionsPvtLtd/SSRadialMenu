@@ -46,7 +46,7 @@ struct RadialMenu: View {
                                         if items.count > 4 {
                                             dragOffset = value.translation
                                             let angle = atan2(dragOffset.height, dragOffset.width)
-                                            currentPeelingAngle = angle * 180 / .pi  // Convert to degrees
+                                            currentPeelingAngle = angle * 180 / .pi
                                             print(currentPeelingAngle)
                                         }
                                     }
@@ -88,18 +88,30 @@ struct RadialMenu: View {
 
     private func createMenuItem(_ item: MenuItem, at index: Int, position: Position) -> some View {
         let radius: CGFloat = 100
-        let (x, y) = position.calculateOffset(radius: radius, index: index, totalItems: items.count) ?? (0,0)
-        return MenuItemView(item: item, isExpanded: $isExpanded, x: .constant(x), y: .constant(y), selectedItem: $selectedItem, menuItemsVisible: menuItemsVisible, index: index, onTap: {
-            subSubMenuPeelingAngle = currentPeelingAngle
-            selectedItem = item
-            startBounceAndPeelAnimation(item: item)
-            if let subItems = item.subMenuItems, !subItems.isEmpty {
-                showSubMenu.toggle()
-            } else {
-                showSubMenu = false
+        let (x, y) = position.calculateOffset(radius: radius, index: index, totalItems: items.count) ?? (0, 0)
+
+        return MenuItemView(
+            item: item,
+            isExpanded: $isExpanded,
+            x: .constant(x),
+            y: .constant(y),
+            selectedItem: $selectedItem,
+            menuItemsVisible: menuItemsVisible,
+            index: index,
+            onTap: {
                 subSubMenuPeelingAngle = currentPeelingAngle
-            }
-        }, xOffset: $xOffset, yOffset: $yOffset)
+                selectedItem = item
+                if let subItems = item.subMenuItems, !subItems.isEmpty {
+                    showSubMenu.toggle()
+                } else {
+                    showSubMenu = false
+                    subSubMenuPeelingAngle = currentPeelingAngle
+                }
+            },
+            xOffset: $xOffset,
+            yOffset: $yOffset
+        )
+        .modifier(ShadowModifier(isSelected: selectedItem?.id == item.id && showSubMenu))// Apply shadow based on selection
         .onDisappear {
             if showSubMenu {
                 showSubMenu = false
@@ -107,52 +119,17 @@ struct RadialMenu: View {
         }
     }
 
-    private func startBounceAndPeelAnimation(item: MenuItem?) {
-        subMenuItemsVisible = Array(repeating: false, count: 1)
-        var directions: [(CGFloat, CGFloat)] = []
-        if let item, let subMenuItems = item.subMenuItems {
-            for index in 0..<1 {
-                guard let offset = position.calculateOffset(radius: radius, index: index, totalItems: subMenuItems.count) else { return }
-                directions.append(offset)
-            }
+}
 
-            for index in 0..<1{
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * (0.4 / 6)) {
-                    withAnimation(.interactiveSpring) {
-                        subMenuItemsVisible[index] = true
-                    }
-                }
+struct ShadowModifier: ViewModifier {
+    let isSelected: Bool
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.4) {
-                    let nextDirection = directions[index]
-                    xOffset = nextDirection.0
-                    yOffset = nextDirection.1
-                    withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.4, blendDuration: 0)) {
-                        self.xOffset = 0
-                        self.yOffset = 0
-                        self.scaleEffect = 0.8
-                        self.shadowRadius = 15
-                        self.shadowYOffset = 10
-                    }
-
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // Adjusted delay for fluidity
-                        withAnimation(Animation.interactiveSpring(response: 0.5, dampingFraction: 0.5, blendDuration: 0)) {
-                            self.scaleEffect = 1.0
-                            self.shadowRadius = 10
-                            self.shadowYOffset = 5
-                        }
-                    }
-
-                    if index == subMenuItems.count - 1 {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            if subMenuItemsVisible.allSatisfy({ $0 }) {
-                                isBouncing = false
-                            }
-                        }
-                    }
-                }
-            }
-            isBouncing = true
+    func body(content: Content) -> some View {
+        if isSelected {
+            return AnyView(content
+                .shadow(color: .black, radius: 10, x: 0, y: 5))
+        } else {
+            return AnyView(content)
         }
     }
 }
