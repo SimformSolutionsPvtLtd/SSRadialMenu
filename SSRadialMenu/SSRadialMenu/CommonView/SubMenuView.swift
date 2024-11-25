@@ -40,14 +40,12 @@ struct SubMenuView: View {
             }
         }
         .onAppear {
-            // Start the staggered animation for each sub-menu item
             if isExpand {
-          
                 startSubMenuAnimation()
             }
         }
         .onChange(of: isExpand) { _, newValue in
-            if newValue {
+            if !newValue {
                 collapseSubMenu()
             } else {
                 startSubMenuAnimation()
@@ -71,7 +69,7 @@ struct SubMenuView: View {
                     guard let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count) else { return }
                     subMenuItemsOffsets[index] = previousOffset
 
-                    withAnimation(.easeOut(duration: 0.2)) { // Reduced duration for faster animation
+                    withAnimation(.easeOut(duration: 0.2)) { 
                         subMenuItemsOffsets[index] = newOffset
                     }
                 } else {
@@ -122,7 +120,4 @@ struct SubMenuView: View {
             }
         }
     }
-
-
-
 }
