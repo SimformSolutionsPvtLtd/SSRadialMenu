@@ -9,20 +9,29 @@ import SwiftUI
 
 struct SubMenuView: View {
     let subItems: [MenuItem]
-    let position: Position
-    @Binding var isExpand: Bool
-    @State private var subMenuItemsVisible: [Bool]
-    @State private var subMenuItemsOffsets: [(CGFloat, CGFloat)]
+      var position: Position
+      @Binding var parentOffset: (CGFloat, CGFloat)
+      @Binding var parentIndex: Int
+      @Binding var isExpand: Bool
+      @State private var subMenuItemsVisible: [Bool]
+      @State private var subMenuItemsOffsets: [(CGFloat, CGFloat)]
 
-    init(subItems: [MenuItem], position: Position, isExpand: Binding<Bool>) {
-        self.subItems = subItems
-        self.position = position
-        self._isExpand = isExpand
-        self._subMenuItemsVisible = State(initialValue: Array(repeating: false, count: subItems.count))
-        self._subMenuItemsOffsets = State(initialValue: Array(repeating: (0, 0), count: subItems.count))
+      init(
+          subItems: [MenuItem],
+          position: Position,
+          isExpand: Binding<Bool>,
+          parentOffset: Binding<(CGFloat, CGFloat)>,
+          parentIndex: Binding<Int>
+      ) {
+          self.subItems = subItems
+          self.position = position
+          self._isExpand = isExpand
+          self._subMenuItemsVisible = State(initialValue: Array(repeating: false, count: subItems.count))
+          self._subMenuItemsOffsets = State(initialValue: Array(repeating: (0, 0), count: subItems.count))
+          self._parentOffset = parentOffset // Initialize the binding
+          self._parentIndex = parentIndex
 
-    }
-
+      }
     var body: some View {
         ZStack {
             ForEach(subItems.indices, id: \.self) { index in
@@ -62,11 +71,16 @@ struct SubMenuView: View {
 
     private func startSubMenuAnimation() {
         for index in 0..<subItems.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.03) { // Reduced delay for faster expansion
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.03) {
                 subMenuItemsVisible[index] = true
                 if index > 0 {
                     let previousOffset = subMenuItemsOffsets[index - 1]
-                    guard let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count) else { return }
+                    guard let newOffset = position.calculateOffset(
+                        radius: 200,
+                        index: index,
+                        totalItems: subItems.count,
+                        parentIndex: parentIndex
+                    ) else { return }
                     subMenuItemsOffsets[index] = previousOffset
 
                     withAnimation(.easeOut(duration: 0.2)) { 
@@ -76,9 +90,10 @@ struct SubMenuView: View {
                     guard let subMenuItemOffset = position.calculateOffset(
                         radius: 200,
                         index: index,
-                        totalItems: subItems.count
+                        totalItems: subItems.count,
+                        parentIndex: parentIndex
                     ) else { return }
-                    // First item should go directly to its final position
+                    print(parentOffset)
                     subMenuItemsOffsets[index] = subMenuItemOffset
                 }
             }
@@ -91,29 +106,30 @@ struct SubMenuView: View {
                 // Animate the offset change before hiding the item
                 if index > 0 {
                     let previousOffset = subMenuItemsOffsets[index - 1]
-                    guard let newOffset = position.calculateOffset(radius: 200, index: index, totalItems: subItems.count) else { return }
+                    guard let newOffset = position.calculateOffset(
+                        radius: 200,
+                        index: index,
+                        totalItems: subItems.count,
+                        parentIndex: parentIndex
+                    ) else { return }
                     subMenuItemsOffsets[index] = newOffset
-
                     withAnimation(.easeOut(duration: 0.7).speed(2.5)) {
                         subMenuItemsOffsets[index] = previousOffset
                     }
                 } else {
-                    // For the zeroth item, move it to the parent position
-                    guard let parentOffset = position.calculateOffset(radius: 100, index: index, totalItems: subItems.count) else { return }
-                  
-                    // Animate this offset change back to the parent position with a fade effect
+                    guard let parentOffset = position.calculateOffset(
+                        radius: 100,
+                        index: index,
+                        totalItems: subItems.count,
+                        parentIndex: parentIndex
+                    ) else { return }
                     withAnimation(.easeOut(duration: 0.7).speed(2.5)) {
                         subMenuItemsOffsets[index] = parentOffset
                     }
-
-                    // Apply opacity fade to the zeroth index to make the transition smoother
                     withAnimation(.easeOut(duration: 0.7).speed(2.5).delay(0.2)) {
-                        // Slight fade out
                         subMenuItemsVisible[index] = false
                     }
                 }
-
-                // Delay hiding the item until after the animation completes
                 withAnimation(.easeOut(duration: 0.7).delay(0.7).speed(2.5)) {
                     subMenuItemsVisible[index] = false
                 }

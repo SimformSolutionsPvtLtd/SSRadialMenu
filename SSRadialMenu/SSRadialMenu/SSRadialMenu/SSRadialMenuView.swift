@@ -17,6 +17,8 @@ struct RadialMenu: View {
     @State private var xOffset: CGFloat = 0.0
     @State private var yOffset: CGFloat = 0.0
     @State private var selectedItem: MenuItem?
+    @State private var selectedItemOffset: (CGFloat, CGFloat)?
+    @State private var selectedIndex: Int?
     @State private var showSubMenu: Bool = false
     @State private var scaleEffect: CGFloat = 1.0
     @State private var dragOffset: CGSize = .zero  // Track drag offset
@@ -60,8 +62,17 @@ struct RadialMenu: View {
 
                 }
 
-                if let selectedItem, let subItems = selectedItem.subMenuItems {
-                    SubMenuView(subItems: subItems, position: position, isExpand: $showSubMenu)
+                if let selectedItem,
+                   let subItems = selectedItem.subMenuItems,
+                   let selectedItemOffset,
+                   let selectedIndex {
+                    SubMenuView(
+                        subItems: subItems,
+                        position: position,
+                        isExpand: $showSubMenu,
+                        parentOffset: .constant(selectedItemOffset),
+                        parentIndex: .constant(selectedIndex)
+                    )
                         .transition(.scale)
                         .animation(.easeInOut, value: showSubMenu)
                         .rotationEffect(.degrees(subSubMenuPeelingAngle), anchor: .center)
@@ -90,6 +101,7 @@ struct RadialMenu: View {
         let radius: CGFloat = 100
         let (x, y) = position.calculateOffset(radius: radius, index: index, totalItems: items.count) ?? (0, 0)
 
+
         return MenuItemView(
             item: item,
             isExpanded: $isExpanded,
@@ -107,7 +119,8 @@ struct RadialMenu: View {
                     showSubMenu = false
                     subSubMenuPeelingAngle = currentPeelingAngle
                 }
-                print(showSubMenu)
+                selectedItemOffset = (x, y)
+                selectedIndex = index
             },
             xOffset: $xOffset,
             yOffset: $yOffset

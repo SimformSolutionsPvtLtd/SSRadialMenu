@@ -25,7 +25,14 @@ enum Position {
         }
     }
   
-    func calculateOffset(radius: CGFloat, index: Int, totalItems: Int, peelingAngle: CGFloat = .zero, overlapThreshold: CGFloat = 20) -> (CGFloat, CGFloat)? {
+    func calculateOffset(
+        radius: CGFloat,
+        index: Int,
+        totalItems: Int,
+        parentIndex: Int = 0,
+        peelingAngle: CGFloat = .zero,
+        overlapThreshold: CGFloat = 20
+    ) -> (CGFloat, CGFloat)? {
         let baseAngle: CGFloat
         let angleRange: CGFloat
         let isFullCircle = totalItems > 4
@@ -36,7 +43,6 @@ enum Position {
         // Calculate minimum required radius to prevent overlap
         let minRequiredRadius = calculateMinRadiusForItems(totalItems, overlapThreshold: overlapThreshold)
 
-        // Limit the number of items that can fit if radius is too small
         if radius < minRequiredRadius {
             let maxItemsThatFit = Int(2 * .pi / (overlapThreshold / radius))
             if index >= maxItemsThatFit {
@@ -47,7 +53,7 @@ enum Position {
         // Define base angle and angle range for each quadrant
         switch self {
         case .topRight:
-            baseAngle = 3 * .pi / 2 + peelingAngle  // Adjust by peeling angle
+            baseAngle = 3 * .pi / 2 + peelingAngle
             angleRange = isFullCircle ? -2 * .pi : -.pi / 2
         case .bottomRight:
             baseAngle = 3 * .pi / 2 + peelingAngle
@@ -63,15 +69,17 @@ enum Position {
             angleRange = 2 * .pi
         }
 
-        // Adjust angle step for spacing based on total items and spacing factor
+        // Adjust for submenu starting at parentIndex
         let adjustedAngleRange = angleRange * extraSpacingFactor / CGFloat(totalItems)
-        let angle = baseAngle + adjustedAngleRange * CGFloat(index)
+        let parentStartAngle = baseAngle + adjustedAngleRange * CGFloat(parentIndex)
+        let angle = parentStartAngle + adjustedAngleRange * CGFloat(index)
 
         // Calculate x and y positions based on the radius and angle
         let x = radius * cos(angle)
         let y = radius * sin(angle)
         return (x, y)
     }
+
 
     // Helper function to calculate minimum required radius for a given number of items
     func calculateMinRadiusForItems(_ totalItems: Int, overlapThreshold: CGFloat) -> CGFloat {
