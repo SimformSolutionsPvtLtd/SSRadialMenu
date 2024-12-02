@@ -18,6 +18,7 @@
 		7DC84ACB2CDE14C400903218 /* CircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC84ACA2CDE14C400903218 /* CircleView.swift */; };
 		7DF38E7A2CD8D9B100C91782 /* RadialMenuPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */; };
 		7DF38E7C2CD8D9E400C91782 /* PlusToCrossView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */; };
+		7DFFDCDE2CFDFCD800518066 /* CircularView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DFFDCDD2CFDFCD800518066 /* CircularView.swift */; };
 		BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */; };
 		BCBEB58A297ED92F00C03B9C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB589297ED92F00C03B9C /* Assets.xcassets */; };
 		BCBEB58E297ED92F00C03B9C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB58D297ED92F00C03B9C /* Preview Assets.xcassets */; };
@@ -35,6 +36,7 @@
 		7DC84ACA2CDE14C400903218 /* CircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleView.swift; sourceTree = "<group>"; };
 		7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialMenuPosition.swift; sourceTree = "<group>"; };
 		7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlusToCrossView.swift; sourceTree = "<group>"; };
+		7DFFDCDD2CFDFCD800518066 /* CircularView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularView.swift; sourceTree = "<group>"; };
 		BCBEB582297ED92E00C03B9C /* SSRadialMenu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SSRadialMenu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuApp.swift; sourceTree = "<group>"; };
 		BCBEB589297ED92F00C03B9C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -98,6 +100,14 @@
 			path = Enum;
 			sourceTree = "<group>";
 		};
+		7DFFDCDC2CFDFCC700518066 /* CircularView */ = {
+			isa = PBXGroup;
+			children = (
+				7DFFDCDD2CFDFCD800518066 /* CircularView.swift */,
+			);
+			path = CircularView;
+			sourceTree = "<group>";
+		};
 		BCBEB579297ED92E00C03B9C = {
 			isa = PBXGroup;
 			children = (
@@ -117,6 +127,7 @@
 		BCBEB584297ED92E00C03B9C /* SSRadialMenu */ = {
 			isa = PBXGroup;
 			children = (
+				7DFFDCDC2CFDFCC700518066 /* CircularView */,
 				7DC84AC92CDE14B700903218 /* CircleView */,
 				7DD9AD232B878A3C008E7E8F /* Enum */,
 				7D28060C2B233409000820B9 /* Model */,
@@ -214,6 +225,7 @@
 				7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */,
 				7D76F96F2CDB4C8400A125BE /* LiquidPeelAwayView.swift in Sources */,
 				7DF38E7A2CD8D9B100C91782 /* RadialMenuPosition.swift in Sources */,
+				7DFFDCDE2CFDFCD800518066 /* CircularView.swift in Sources */,
 				7D76F96D2CDB4BC500A125BE /* BlurredOverlayCircles.swift in Sources */,
 				BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */,
 				7D4755E42B8CA7B800C4F67A /* LiquidFluidMenuView.swift in Sources */,
