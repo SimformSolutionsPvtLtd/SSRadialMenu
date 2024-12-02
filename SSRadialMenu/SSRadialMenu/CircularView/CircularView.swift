@@ -61,7 +61,7 @@ struct FinalView: View {
 
                     }
                     Button(action: {
-                        withAnimation(.linear(duration: 1.5)) {
+                        withAnimation {
                             showPizzaCards.toggle()
                         }
                     }, label: {
