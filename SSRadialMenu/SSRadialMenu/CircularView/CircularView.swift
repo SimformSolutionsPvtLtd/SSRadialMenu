@@ -23,18 +23,16 @@ struct ContentView: View {
 
 
 
-
-
 struct FinalView: View {
     @State private var angle: Double = 0.0
     @State private var startAngle: Double = 0.0
-    @State private var nameofPizza : String = "Cheese Pizza"
-    @State private var priceofPizza : String = "150 $"
+    @State private var nameofPizza: String = "Cheese Pizza"
+    @State private var priceofPizza: String = "150 $"
+    @State private var animatedIndices: Set<Int> = [] // Track indices for sequential animation
     let radius: CGFloat = 100
     let step: Double = 45.0
 
     @State private var showPizzaCards: Bool = false // State to toggle visibility of PizzaCards
-
 
     var body: some View {
         ZStack {
@@ -49,8 +47,13 @@ struct FinalView: View {
                             let pizzaAngle = anglePerPizza * Double(index) + angle
 
                             PizzaCard(pizza: pizzas[index])
-                                .offset(x: 100)
-                                .rotationEffect(.degrees(-pizzaAngle))
+                                .rotationEffect(.degrees(-pizzaAngle)) // Align to circular layout
+                                .offset(
+                                    x: animatedIndices.contains(index) ? radius * cos(pizzaAngle * .pi / 180) : 0,
+                                    y: animatedIndices.contains(index) ? radius * sin(pizzaAngle * .pi / 180) : 0
+                                )
+                                .scaleEffect(animatedIndices.contains(index) ? 1 : 0.1) // Scale up with animation
+                                .animation(.spring(response: 0.5, dampingFraction: 0.6), value: animatedIndices)
                                 .onChange(of: pizzaAngle, perform: { value in
                                     if isCardNearTriangle(pizzaAngle) {
                                         nameofPizza = pizzas[index].pizza
@@ -58,11 +61,15 @@ struct FinalView: View {
                                     }
                                 })
                         }
-
                     }
+
+                    // Central Button
                     Button(action: {
-                        withAnimation {
-                            showPizzaCards.toggle()
+                        showPizzaCards.toggle()
+                        if showPizzaCards {
+                            startSequentialAnimation()
+                        } else {
+                            animatedIndices.removeAll()
                         }
                     }, label: {
                         Image(systemName: "star.fill")
@@ -71,12 +78,9 @@ struct FinalView: View {
                             .foregroundColor(Color.yellow)
                             .clipShape(Circle())
                             .padding(20)
-
                     })
-
                 }
                 .frame(width: size.width, height: size.height, alignment: .topTrailing)
-
                 .gesture(
                     DragGesture()
                         .onChanged { value in
@@ -90,6 +94,17 @@ struct FinalView: View {
                             updatePizzaDetails()
                         }
                 )
+            }
+        }
+    }
+
+    func startSequentialAnimation() {
+        animatedIndices.removeAll() // Reset animation state
+        for index in 0..<pizzas.count {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.2) {
+                withAnimation(.easeIn) {
+                    _ = animatedIndices.insert(index) // Animate each item one by one
+                }
             }
         }
     }
@@ -120,7 +135,6 @@ struct FinalView: View {
     }
 }
 
-
 struct Triangle: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -148,16 +162,19 @@ struct Pizza : Identifiable {
     var pizza : String
     var pizzaImage : String
     var pizzaPrice : String
+    var subMenuItems: [Pizza]?
 
 }
 
 var pizzas : [Pizza] = [
-    .init(pizza: "Panner Pizza", pizzaImage: "pizza1",pizzaPrice: "200 $"),
-    .init(pizza: "Cheese Pizza", pizzaImage: "pizza2",pizzaPrice: "150 $"),
-    .init(pizza: "Italian Pizza", pizzaImage: "pizza3",pizzaPrice: "300 $"),
-    .init(pizza: "Pepperoni Pizza", pizzaImage: "pizza4",pizzaPrice: "200 $"),
-    .init(pizza: "Cheese Pizza", pizzaImage: "pizza5",pizzaPrice: "150 $"),
-    .init(pizza: "Italian Pizza", pizzaImage: "pizza6",pizzaPrice: "350 $"),
-    .init(pizza: "Italian Pizza", pizzaImage: "pizza7",pizzaPrice: "100 $"),
-    .init(pizza: "Veggies Pizza", pizzaImage: "pizza8",pizzaPrice: "300 $"),
+    .init(pizza: "Panner Pizza", pizzaImage: "pizza1", pizzaPrice: "200 $", subMenuItems: [
+           Pizza(pizza: "Sub Panner Pizza", pizzaImage: "pizza1", pizzaPrice: "200 $")
+       ]),
+    .init(pizza: "Cheese Pizza", pizzaImage: "pizza2",pizzaPrice: "150 $", subMenuItems: nil),
+    .init(pizza: "Italian Pizza", pizzaImage: "pizza3",pizzaPrice: "300 $", subMenuItems: nil),
+    .init(pizza: "Pepperoni Pizza", pizzaImage: "pizza4",pizzaPrice: "200 $", subMenuItems: nil),
+    .init(pizza: "Cheese Pizza", pizzaImage: "pizza5",pizzaPrice: "150 $", subMenuItems: nil),
+    .init(pizza: "Italian Pizza", pizzaImage: "pizza6",pizzaPrice: "350 $", subMenuItems: nil),
+    .init(pizza: "Italian Pizza", pizzaImage: "pizza7",pizzaPrice: "100 $", subMenuItems: nil),
+    .init(pizza: "Veggies Pizza", pizzaImage: "pizza8",pizzaPrice: "300 $", subMenuItems: nil),
 ]
