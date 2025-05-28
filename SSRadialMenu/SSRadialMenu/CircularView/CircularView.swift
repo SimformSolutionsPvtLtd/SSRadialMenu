@@ -24,8 +24,11 @@ struct FinalView: View {
     @State private var animatedIndices: Set<Int> = []
     @State private var showingSubMenuForIndex: Int? = nil // Tracks which item's submenu is showing
     @State private var subMenuAnimatedIndices: Set<Int> = [] // Tracks animated submenu items
+    @State private var showingSubSubMenuForIndex: (mainIndex: Int, subIndex: Int)? = nil // Tracks which submenu item's sub-submenu is showing
+    @State private var subSubMenuAnimatedIndices: Set<Int> = [] // Tracks animated sub-submenu items
     let radius: CGFloat = 115 // Increased radius for better spacing between items
     let subMenuRadius: CGFloat = 180 // Larger radius for submenus with better spacing
+    let subSubMenuRadius: CGFloat = 240 // Even larger radius for sub-submenus
     
     // Enhanced carousel properties
     let maxVisibleItems: Int = 6 // Reduced from 8 to 6 for better spacing
@@ -51,8 +54,8 @@ struct FinalView: View {
         // Calculate the floating point offset based on continuous rotation
         let floatingOffset = continuousRotation / anglePerItem
         
-        // Buffer for smooth scrolling with improved spacing
-        let bufferItems = 2 // Reduced buffer to minimize overlapping while maintaining smooth scrolling
+        // Buffer for smooth scrolling - restored to ensure enough items for carousel
+        let bufferItems = 2 // Restored buffer to provide enough items for smooth scrolling
         let startIndex = Int(floor(floatingOffset)) - bufferItems
         let endIndex = startIndex + maxVisibleItems + (bufferItems * 2)
         
@@ -77,8 +80,9 @@ struct FinalView: View {
         let itemRotation = Double(visualIndex) * anglePerItem - continuousRotation
         let normalizedRotation = ((itemRotation + 180).truncatingRemainder(dividingBy: 360)) - 180
         
-        // Expanded visibility threshold for smoother, seamless transitions during dragging
-        let visibilityThreshold = (totalSpan / 2) + (anglePerItem * 1.2) // Increased from 0.7 to 1.2 for smoother buffer
+        // Adjusted visibility threshold to show the correct number of items within the circular boundary
+        // Increased buffer to ensure edge items are always properly contained
+        let visibilityThreshold = (totalSpan / 2) + (anglePerItem * 0.8) // Increased buffer for better edge control
         return abs(normalizedRotation) <= visibilityThreshold
     }
 
@@ -100,6 +104,11 @@ struct FinalView: View {
                     // Submenu items (second layer)
                     if showingSubMenuForIndex != nil {
                         subMenuItemsView
+                    }
+                    
+                    // Sub-submenu items (third layer)
+                    if showingSubSubMenuForIndex != nil {
+                        subSubMenuItemsView
                     }
                     
                     // Main FAB button
@@ -168,15 +177,15 @@ struct FinalView: View {
             let itemRotation = Double(item.visualIndex) * anglePerItem - continuousRotation
             let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
             
-            // Enhanced visibility check with spacing consideration
-            if shouldItemBeVisible(visualIndex: item.visualIndex) {
-                // Calculate opacity for smooth fade-in/out at edges
-                let opacity = getItemOpacity(visualIndex: item.visualIndex)
-                
-                // Only show item if opacity is significant enough to avoid ghosting
-                if opacity > 0.1 {
-                    // Calculate initial position for chaining animation
-                    let initialPosition = getInitialPositionForChaining(itemIndex: item.index)
+                // Only show item if it's strictly within the circular boundary
+                if shouldItemBeVisible(visualIndex: item.visualIndex) {
+                    // Calculate opacity - only fade within the strict boundary
+                    let opacity = getItemOpacity(visualIndex: item.visualIndex)
+                    
+                    // Additional safety check: only render items with meaningful opacity
+                    if opacity > 0.05 { // Only show items with more than 5% opacity
+                        // Calculate initial position for chaining animation
+                        let initialPosition = getInitialPositionForChaining(itemIndex: item.index)
                     
                     PizzaCard(pizza: item.pizza, itemNumber: item.index + 1)
                         .rotationEffect(.degrees(-itemAngle))
@@ -197,9 +206,9 @@ struct FinalView: View {
                                 priceofPizza = item.pizza.pizzaPrice
                             }
                         }
+                    }
                 }
             }
-        }
     }
     
     @ViewBuilder
@@ -210,24 +219,97 @@ struct FinalView: View {
                 // Find the main item's current angle based on continuous rotation
                 let mainItemAngle = getMainItemAngle(for: selectedIndex)
                 
-                // Calculate submenu positioning
-                let subItemCount = Double(subMenuItems.count)
-                let subMenuAngleSpan: Double = 120.0
-                let subMenuAnglePerItem = subMenuAngleSpan / subItemCount
-                let subMenuStartAngle = mainItemAngle - (subMenuAngleSpan / 2) + (subMenuAnglePerItem / 2)
-                let subPizzaAngle = subMenuStartAngle + (Double(subIndex) * subMenuAnglePerItem)
+                // Calculate submenu positioning - first item directly above parent
+                // For bottomTrailing alignment, "above" means outward from center
+                let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
+                
+                // Calculate the outward direction from the parent item
+                // For items positioned around a circle, "directly above" means radially outward
+                let outwardAngle = mainItemAngle // The parent's angle IS the outward direction
+                
+                // First submenu item (index 0) appears directly outward from parent
+                // Subsequent items follow the same counterclockwise pattern as main menu
+                let subPizzaAngle = outwardAngle - (Double(subIndex) * subMenuAnglePerItem)
+                
+                // Calculate positions for smooth animation
+                let animatedPosition = CGPoint(
+                    x: subMenuRadius * cos(subPizzaAngle * .pi / 180),
+                    y: subMenuRadius * sin(subPizzaAngle * .pi / 180)
+                )
+                
+                let startPosition = CGPoint(
+                    x: radius * cos(mainItemAngle * .pi / 180),
+                    y: radius * sin(mainItemAngle * .pi / 180)
+                )
 
-                PizzaCard(pizza: subMenuItems[subIndex])
+                // Create hierarchical index for submenu items
+                let hierarchicalIndex = "\(selectedIndex + 1).\(subIndex + 1)"
+
+                PizzaCard(pizza: subMenuItems[subIndex], hierarchicalIndex: hierarchicalIndex, cardSize: 45) // Smaller size for submenu items
                     .rotationEffect(.degrees(-subPizzaAngle))
                     .offset(
-                        x: subMenuAnimatedIndices.contains(subIndex) ? subMenuRadius * cos(subPizzaAngle * .pi / 180) : radius * cos(mainItemAngle * .pi / 180),
-                        y: subMenuAnimatedIndices.contains(subIndex) ? subMenuRadius * sin(subPizzaAngle * .pi / 180) : radius * sin(mainItemAngle * .pi / 180)
+                        x: subMenuAnimatedIndices.contains(subIndex) ? animatedPosition.x : startPosition.x,
+                        y: subMenuAnimatedIndices.contains(subIndex) ? animatedPosition.y : startPosition.y
                     )
                     .scaleEffect(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.1)
+                    .opacity(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.3)
                     .animation(.spring(response: 0.5, dampingFraction: 0.6), value: subMenuAnimatedIndices)
                     .onTapGesture {
-                        nameofPizza = subMenuItems[subIndex].pizza
-                        priceofPizza = subMenuItems[subIndex].pizzaPrice
+                        handleSubMenuItemTap(mainIndex: selectedIndex, subIndex: subIndex, subMenuItem: subMenuItems[subIndex])
+                    }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var subSubMenuItemsView: some View {
+        if let (mainIndex, subIndex) = showingSubSubMenuForIndex,
+           let subMenuItems = pizzas[mainIndex].subMenuItems,
+           subIndex < subMenuItems.count,
+           let subSubMenuItems = subMenuItems[subIndex].subMenuItems {
+            
+            ForEach(subSubMenuItems.indices, id: \.self) { subSubIndex in
+                // Calculate the parent submenu item's angle using the same corrected logic as subMenuItemsView
+                let mainItemAngle = getMainItemAngle(for: mainIndex)
+                let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
+                
+                // Calculate parent submenu item's angle using corrected positioning
+                let outwardAngle = mainItemAngle // The parent's angle IS the outward direction
+                let parentSubMenuAngle = outwardAngle - (Double(subIndex) * subMenuAnglePerItem)
+                
+                // Calculate sub-submenu positioning - first item directly outward from parent submenu item
+                // The parent submenu item's angle IS the outward direction for sub-submenu
+                let subSubOutwardAngle = parentSubMenuAngle
+                let subSubPizzaAngle = subSubOutwardAngle - (Double(subSubIndex) * anglePerItem)
+                
+                // Calculate positions - start from parent submenu item position
+                let parentSubMenuPosition = CGPoint(
+                    x: subMenuRadius * cos(parentSubMenuAngle * .pi / 180),
+                    y: subMenuRadius * sin(parentSubMenuAngle * .pi / 180)
+                )
+                
+                let animatedPosition = CGPoint(
+                    x: subSubMenuRadius * cos(subSubPizzaAngle * .pi / 180),
+                    y: subSubMenuRadius * sin(subSubPizzaAngle * .pi / 180)
+                )
+
+                // Create hierarchical index (full three-level hierarchy)
+                let hierarchicalIndex = "\(mainIndex + 1).\(subIndex + 1).\(subSubIndex + 1)"
+                
+                PizzaCard(pizza: subSubMenuItems[subSubIndex], hierarchicalIndex: hierarchicalIndex, cardSize: 35) // Even smaller size for sub-submenu items
+                    .rotationEffect(.degrees(-subSubPizzaAngle))
+                    .offset(
+                        x: subSubMenuAnimatedIndices.contains(subSubIndex) ? animatedPosition.x : parentSubMenuPosition.x,
+                        y: subSubMenuAnimatedIndices.contains(subSubIndex) ? animatedPosition.y : parentSubMenuPosition.y
+                    )
+                    .scaleEffect(subSubMenuAnimatedIndices.contains(subSubIndex) ? 1 : 0.1)
+                    .opacity(subSubMenuAnimatedIndices.contains(subSubIndex) ? 1 : 0.3)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.6), value: subSubMenuAnimatedIndices)
+                    .onTapGesture {
+                        nameofPizza = subSubMenuItems[subSubIndex].pizza
+                        priceofPizza = subSubMenuItems[subSubIndex].pizzaPrice
+                        // Close sub-submenu after selection
+                        closeSubSubMenu()
                     }
             }
         }
@@ -266,11 +348,13 @@ struct FinalView: View {
                 
                 let translation = value.translation
                 
-                // Optimized horizontal wheel rotation for maximum smoothness
-                let rotationSensitivity: Double = 2.0
-                let delta = Double(translation.width) / radius * (180 / Double.pi) * rotationSensitivity
+                // Direct linear mapping: drag distance directly controls rotation
+                // Positive translation.width (drag right) = positive rotation (scroll right)
+                // Negative translation.width (drag left) = negative rotation (scroll left)
+                let rotationSensitivity: Double = 1.5 // Adjusted for more natural feel
+                let delta = Double(translation.width) * rotationSensitivity
                 
-                continuousRotation = startAngle - delta
+                continuousRotation = startAngle + delta
                 
                 // Update visible items silently during drag for seamless continuous scrolling
                 updateVisibleItemsAnimation()
@@ -283,10 +367,11 @@ struct FinalView: View {
                 let velocity = value.velocity.width
                 
                 if abs(velocity) > 100 { // Only add momentum for fast swipes
-                    let momentumRotation = Double(velocity) * 0.0008 // Slightly reduced for smoother momentum
+                    // Direct linear momentum: velocity directly affects rotation
+                    let momentumRotation = Double(velocity) * 0.002 // Adjusted for linear mapping
                     
                     withAnimation(.easeOut(duration: 0.6)) { // Shorter duration for snappier feel
-                        continuousRotation -= momentumRotation
+                        continuousRotation += momentumRotation
                         startAngle = continuousRotation
                     }
                     
@@ -306,22 +391,24 @@ struct FinalView: View {
     func getItemOpacity(visualIndex: Int) -> Double {
         let itemRotation = Double(visualIndex) * anglePerItem - continuousRotation
         let normalizedRotation = ((itemRotation + 180).truncatingRemainder(dividingBy: 360)) - 180
-        let maxDistance = totalSpan / 2
+        let coreDistance = totalSpan / 2 // Core visible area
+        let bufferDistance = coreDistance + (anglePerItem * 0.8) // Extended area with increased buffer
         let distance = abs(normalizedRotation)
         
-        if distance <= maxDistance {
+        // Full opacity for items in the core circular area
+        if distance <= coreDistance {
             return 1.0
-        } else if distance <= maxDistance + anglePerItem {
-            // Smoother fade out for seamless transitions during dragging
-            let fadeDistance = distance - maxDistance
-            let fadeRange = anglePerItem
+        }
+        // Stronger fade for items in the buffer zone to prevent them from appearing outside the boundary
+        else if distance <= bufferDistance {
+            let fadeDistance = distance - coreDistance
+            let fadeRange = bufferDistance - coreDistance
             let fadeRatio = fadeDistance / fadeRange
             
-            // Use a smoother curve for opacity transition
-            let smoothOpacity = cos(fadeRatio * .pi / 2)
-            return max(0.0, smoothOpacity)
+            // Even stronger fade to ensure edge items are barely visible and don't appear outside boundary
+            return max(0.0, 1.0 - (fadeRatio * 0.9)) // Fade from 100% to 10% opacity
         } else {
-            return 0.0
+            return 0.0 // Completely hidden for items outside the buffer
         }
     }
     
@@ -452,10 +539,41 @@ struct FinalView: View {
             priceofPizza = pizzas[index].pizzaPrice
         }
     }
+    
+    // Function to handle submenu item tap
+    func handleSubMenuItemTap(mainIndex: Int, subIndex: Int, subMenuItem: Pizza) {
+        // If there's already an open sub-submenu
+        if let currentOpenSubSubMenu = showingSubSubMenuForIndex {
+            // If the same submenu item is tapped again, close the sub-submenu
+            if currentOpenSubSubMenu.mainIndex == mainIndex && currentOpenSubSubMenu.subIndex == subIndex {
+                closeSubSubMenu()
+                return
+            }
+            // If a different submenu item is tapped, close the current sub-submenu
+            closeSubSubMenu()
+        }
+
+        // Only open a sub-submenu if the submenu item has sub-submenu items
+        if let subSubItems = subMenuItem.subMenuItems, !subSubItems.isEmpty {
+            showingSubSubMenuForIndex = (mainIndex: mainIndex, subIndex: subIndex)
+            startSubSubMenuSequentialAnimation(itemCount: subSubItems.count)
+        } else {
+            // For submenu items without sub-submenus, just update the selected pizza details
+            nameofPizza = subMenuItem.pizza
+            priceofPizza = subMenuItem.pizzaPrice
+        }
+    }
 
     func closeSubMenu() {
         showingSubMenuForIndex = nil
         subMenuAnimatedIndices.removeAll()
+        // Also close any open sub-submenus
+        closeSubSubMenu()
+    }
+    
+    func closeSubSubMenu() {
+        showingSubSubMenuForIndex = nil
+        subSubMenuAnimatedIndices.removeAll()
     }
 
     // Legacy functions enhanced for continuous infinite scrolling
@@ -534,27 +652,76 @@ struct FinalView: View {
             }
         }
     }
+    
+    func startSubSubMenuSequentialAnimation(itemCount: Int) {
+        subSubMenuAnimatedIndices.removeAll() // Reset animation state
+        for index in 0..<itemCount {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) {
+                withAnimation(.easeIn) {
+                    _ = subSubMenuAnimatedIndices.insert(index) // Animate each sub-submenu item one by one
+                }
+            }
+        }
+    }
 
     @ViewBuilder
-    func PizzaCard(pizza: Pizza, itemNumber: Int? = nil) -> some View {
+    func PizzaCard(pizza: Pizza, itemNumber: Int? = nil, hierarchicalIndex: String? = nil, cardSize: CGFloat = 55) -> some View {
         ZStack {
             Image(pizza.pizzaImage)
                 .resizable()
-                .frame(width: 55, height: 55) // Reduced size for better spacing and less overlap
+                .frame(width: cardSize, height: cardSize)
                 .clipShape(Circle())
-                .padding(4) // Add padding around each pizza card for visual separation
+                .padding(cardSize * 0.07) // Dynamic padding based on card size
             
-            // Add digit overlay to show item number
-            let displayNumber = itemNumber ?? (pizzas.firstIndex(where: { $0.id == pizza.id }) ?? 0) + 1
-            Text("\(displayNumber)")
-                .font(.bold(.system(size: 14))()) // Slightly smaller font size to match smaller card
+            // Add digit overlay to show item number or hierarchical index
+            let displayText: String = {
+                if let hierarchicalIndex = hierarchicalIndex {
+                    return hierarchicalIndex
+                } else if let itemNumber = itemNumber {
+                    return "\(itemNumber)"
+                } else {
+                    return "\((pizzas.firstIndex(where: { $0.id == pizza.id }) ?? 0) + 1)"
+                }
+            }()
+            
+            // Calculate dynamic sizes based on card size and menu level
+            let fontSize: CGFloat = {
+                if hierarchicalIndex != nil {
+                    let levelCount = hierarchicalIndex!.components(separatedBy: ".").count
+                    switch levelCount {
+                    case 2: return cardSize * 0.20 // Submenu items: smaller font
+                    case 3: return cardSize * 0.18 // Sub-submenu items: even smaller font
+                    default: return cardSize * 0.25 // Default
+                    }
+                } else {
+                    return cardSize * 0.25 // Main menu items: larger font
+                }
+            }()
+            
+            let badgeSize: CGFloat = {
+                if hierarchicalIndex != nil {
+                    let levelCount = hierarchicalIndex!.components(separatedBy: ".").count
+                    switch levelCount {
+                    case 2: return cardSize * 0.55 // Submenu badge
+                    case 3: return cardSize * 0.60 // Sub-submenu badge (slightly larger to accommodate longer text)
+                    default: return cardSize * 0.50
+                    }
+                } else {
+                    return cardSize * 0.40 // Main menu badge
+                }
+            }()
+            
+            let offsetMultiplier: CGFloat = cardSize / 55.0 // Scale offset based on card size
+            
+            Text(displayText)
+                .font(.bold(.system(size: fontSize))())
                 .foregroundColor(.white)
                 .background(
                     Circle()
                         .fill(Color.black.opacity(0.8))
-                        .frame(width: 22, height: 22) // Smaller badge to match smaller card
+                        .frame(width: badgeSize, height: badgeSize)
                 )
-                .offset(x: 18, y: -18) // Adjusted position for smaller card with padding
+                .offset(x: 18 * offsetMultiplier, y: -18 * offsetMultiplier)
         }
     }
 
@@ -600,13 +767,23 @@ struct Pizza : Identifiable {
 var pizzas : [Pizza] = {
     var basePizzas: [Pizza] = [
         .init(pizza: "Panner Pizza", pizzaImage: "pizza1", pizzaPrice: "200 $", subMenuItems: [
-               Pizza(pizza: "Sub Panner Pizza 1", pizzaImage: "pizza1", pizzaPrice: "200 $"),
-               Pizza(pizza: "Sub Panner Pizza 2", pizzaImage: "pizza1", pizzaPrice: "210 $"),
+               Pizza(pizza: "Sub Panner Pizza 1", pizzaImage: "pizza1", pizzaPrice: "200 $", subMenuItems: [
+                   Pizza(pizza: "Sub-Sub Panner 1A", pizzaImage: "pizza1", pizzaPrice: "205 $"),
+                   Pizza(pizza: "Sub-Sub Panner 1B", pizzaImage: "pizza1", pizzaPrice: "215 $")
+               ]),
+               Pizza(pizza: "Sub Panner Pizza 2", pizzaImage: "pizza1", pizzaPrice: "210 $", subMenuItems: [
+                   Pizza(pizza: "Sub-Sub Panner 2A", pizzaImage: "pizza1", pizzaPrice: "225 $"),
+                   Pizza(pizza: "Sub-Sub Panner 2B", pizzaImage: "pizza1", pizzaPrice: "235 $"),
+                   Pizza(pizza: "Sub-Sub Panner 2C", pizzaImage: "pizza1", pizzaPrice: "245 $")
+               ]),
                Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $")
            ]),
         .init(pizza: "Cheese Pizza", pizzaImage: "pizza2",pizzaPrice: "150 $", subMenuItems: nil),
         .init(pizza: "Italian Pizza", pizzaImage: "pizza3",pizzaPrice: "300 $", subMenuItems: [
-               Pizza(pizza: "Sub Italian 1", pizzaImage: "pizza3", pizzaPrice: "310 $"),
+               Pizza(pizza: "Sub Italian 1", pizzaImage: "pizza3", pizzaPrice: "310 $", subMenuItems: [
+                   Pizza(pizza: "Sub-Sub Italian 1A", pizzaImage: "pizza3", pizzaPrice: "315 $"),
+                   Pizza(pizza: "Sub-Sub Italian 1B", pizzaImage: "pizza3", pizzaPrice: "325 $")
+               ]),
                Pizza(pizza: "Sub Italian 2", pizzaImage: "pizza3", pizzaPrice: "320 $")
            ]),
         .init(pizza: "Margherita Pizza", pizzaImage: "pizza4",pizzaPrice: "180 $", subMenuItems: nil),
