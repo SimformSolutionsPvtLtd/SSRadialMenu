@@ -24,44 +24,62 @@ struct FinalView: View {
     @State private var animatedIndices: Set<Int> = []
     @State private var showingSubMenuForIndex: Int? = nil // Tracks which item's submenu is showing
     @State private var subMenuAnimatedIndices: Set<Int> = [] // Tracks animated submenu items
-    let radius: CGFloat = 100
-    let subMenuRadius: CGFloat = 165 // Larger radius for submenus
-    var step: Double { 
-        let totalDisplayItems = hasPlaceholder ? actualVisibleItemsCount + 1 : actualVisibleItemsCount
-        return totalDisplayItems <= 4 ? (90.0 / Double(totalDisplayItems) + 20) : (360.0 / Double(totalDisplayItems))
-    }
-    let maxVisibleItems: Int = 8 // Maximum items to display at once
+    let radius: CGFloat = 115 // Increased radius for better spacing between items
+    let subMenuRadius: CGFloat = 180 // Larger radius for submenus with better spacing
     
-    @State private var showPizzaCards: Bool = false // State to toggle visibility of PizzaCards
-    @State private var currentOffset: Int = 0 // Tracks the starting index for visible items
+    // Enhanced carousel properties
+    let maxVisibleItems: Int = 6 // Reduced from 8 to 6 for better spacing
+    let totalSpan: Double = 160.0 // Increased span for better spacing between items
+    @State private var showPizzaCards: Bool = false
+    @State private var continuousRotation: Double = 0.0 // Continuous rotation value
+    @State private var isDragging: Bool = false
     
-    // Computed properties for managing visible items and placeholder
-    var visibleItemsCount: Int {
-        min(maxVisibleItems, pizzas.count)
-    }
-    
-    var hasPlaceholder: Bool {
-        pizzas.count > maxVisibleItems
+    // Computed properties for smooth carousel
+    var anglePerItem: Double {
+        totalSpan / Double(maxVisibleItems - 1)
     }
     
-    var actualVisibleItemsCount: Int {
-        hasPlaceholder ? maxVisibleItems - 1 : visibleItemsCount
+    var itemsPerFullRotation: Double {
+        360.0 / anglePerItem
     }
     
-    var visibleItems: [Pizza] {
-        guard pizzas.count > 0 else { return [] }
-        var items: [Pizza] = []
+    
+    // Enhanced function to get visible items for smooth carousel with infinite scrolling
+    func getVisibleItemsForCarousel() -> [(pizza: Pizza, index: Int, visualIndex: Int)] {
+        var result: [(pizza: Pizza, index: Int, visualIndex: Int)] = []
         
-        for i in 0..<actualVisibleItemsCount {
-            let index = (currentOffset + i) % pizzas.count
-            items.append(pizzas[index])
+        // Calculate the floating point offset based on continuous rotation
+        let floatingOffset = continuousRotation / anglePerItem
+        
+        // Buffer for smooth scrolling with improved spacing
+        let bufferItems = 2 // Reduced buffer to minimize overlapping while maintaining smooth scrolling
+        let startIndex = Int(floor(floatingOffset)) - bufferItems
+        let endIndex = startIndex + maxVisibleItems + (bufferItems * 2)
+        
+        for i in startIndex...endIndex {
+            // Proper modulo handling for negative numbers to ensure infinite wrapping
+            let actualIndex = modulo(i, pizzas.count)
+            let visualIndex = i
+            result.append((pizza: pizzas[actualIndex], index: actualIndex, visualIndex: visualIndex))
         }
         
-        return items
+        return result
     }
     
-    var hiddenItemsCount: Int {
-        max(0, pizzas.count - actualVisibleItemsCount)
+    // Helper function for proper modulo operation that handles negative numbers
+    func modulo(_ a: Int, _ b: Int) -> Int {
+        let remainder = a % b
+        return remainder >= 0 ? remainder : remainder + b
+    }
+    
+    // Function to calculate if an item should be visible based on its angle - enhanced for infinite scrolling
+    func shouldItemBeVisible(visualIndex: Int) -> Bool {
+        let itemRotation = Double(visualIndex) * anglePerItem - continuousRotation
+        let normalizedRotation = ((itemRotation + 180).truncatingRemainder(dividingBy: 360)) - 180
+        
+        // Expanded visibility threshold for smoother, seamless transitions during dragging
+        let visibilityThreshold = (totalSpan / 2) + (anglePerItem * 1.2) // Increased from 0.7 to 1.2 for smoother buffer
+        return abs(normalizedRotation) <= visibilityThreshold
     }
 
     var body: some View {
@@ -69,177 +87,344 @@ struct FinalView: View {
             Color.black.ignoresSafeArea(.all)
             
             // Debug info at the top
-            VStack {
-                if showPizzaCards {
-                    HStack {
-                        Text("Visible: \(currentOffset + 1) - \(currentOffset + actualVisibleItemsCount)")
-                            .foregroundColor(.white)
-                            .font(.caption)
-                        if hasPlaceholder {
-                            Text("| Hidden: \((currentOffset + actualVisibleItemsCount + 1)) - \(pizzas.count)")
-                                .foregroundColor(.gray)
-                                .font(.caption)
-                        }
-                    }
-                    .padding(.top, 50)
-                }
-                Spacer()
-            }
+            debugInfoView
             
             GeometryReader { geometry in
                 let size = geometry.size
-
                 ZStack {
-                    // Main menu items
+                    // Enhanced carousel items
                     if showPizzaCards {
-                        // Render visible items
-                        ForEach(visibleItems.indices, id: \.self) { index in
-                            let totalDisplayItems = hasPlaceholder ? actualVisibleItemsCount + 1 : actualVisibleItemsCount
-                            let anglePerPizza = totalDisplayItems <= 4 ? 90.0 / Double(totalDisplayItems) + 20 : 360.0 / Double(totalDisplayItems)
-                            let pizzaAngle = alignment.itemAngle(index: index, angle: angle, anglePerPizza: anglePerPizza)
-                            let actualIndex = (currentOffset + index) % pizzas.count
-
-                            PizzaCard(pizza: visibleItems[index], itemNumber: actualIndex + 1)
-                                .rotationEffect(.degrees(-pizzaAngle))
-                                .offset(
-                                    x: animatedIndices.contains(index) ? radius * cos(pizzaAngle * .pi / 180) : 0,
-                                    y: animatedIndices.contains(index) ? radius * sin(pizzaAngle * .pi / 180) : 0
-                                )
-                                .scaleEffect(animatedIndices.contains(index) ? 1 : 0.1) // Scale up with animation
-                                .animation(.spring(response: 0.5, dampingFraction: 0.6), value: animatedIndices)
-                                .onTapGesture {
-                                    handlePizzaCardTap(index: actualIndex)
-                                }
-                                .onChange(of: pizzaAngle, perform: { _ in
-                                    if isCardNearTriangle(pizzaAngle) {
-                                        nameofPizza = visibleItems[index].pizza
-                                        priceofPizza = visibleItems[index].pizzaPrice
-                                    }
-                                })
-                        }
-                        
-                        // Render placeholder if needed
-                        if hasPlaceholder {
-                            let totalDisplayItems = actualVisibleItemsCount + 1
-                            let anglePerPizza = totalDisplayItems <= 4 ? 90.0 / Double(totalDisplayItems) + 20 : 360.0 / Double(totalDisplayItems)
-                            let placeholderIndex = actualVisibleItemsCount
-                            let placeholderAngle = alignment.itemAngle(index: placeholderIndex, angle: angle, anglePerPizza: anglePerPizza)
-                            
-                            PlaceholderCard(count: hiddenItemsCount)
-                                .rotationEffect(.degrees(-placeholderAngle))
-                                .offset(
-                                    x: animatedIndices.contains(placeholderIndex) ? radius * cos(placeholderAngle * .pi / 180) : 0,
-                                    y: animatedIndices.contains(placeholderIndex) ? radius * sin(placeholderAngle * .pi / 180) : 0
-                                )
-                                .scaleEffect(animatedIndices.contains(placeholderIndex) ? 1 : 0.1)
-                                .animation(.spring(response: 0.5, dampingFraction: 0.6), value: animatedIndices)
-                                .onTapGesture {
-                                    // Handle placeholder tap - could show a list or cycle through items
-                                    rotateToNextItem()
-                                }
-                        }
+                        carouselItemsView
                     }
-
+                    
                     // Submenu items (second layer)
-                    if let selectedIndex = showingSubMenuForIndex,
-                       let subMenuItems = pizzas[selectedIndex].subMenuItems {
-                        ForEach(subMenuItems.indices, id: \.self) { subIndex in
-                            // Find the visual index of the selected item in the current visible items
-                            let visualIndex = getVisualIndex(for: selectedIndex)
-                            let totalDisplayItems = hasPlaceholder ? actualVisibleItemsCount + 1 : actualVisibleItemsCount
-                            let anglePerPizza = totalDisplayItems <= 4 ? 90.0 / Double(totalDisplayItems) + 20 : 360.0 / Double(totalDisplayItems)
-                            let mainAngle = alignment.itemAngle(
-                                index: visualIndex,
-                                angle: angle,
-                                anglePerPizza: anglePerPizza
-                            )
-
-                            // Calculate submenu positioning
-                            let subItemCount = Double(subMenuItems.count)
-                            let subMenuAngleSpan: Double = 120.0 // Coverage angle for submenu items
-                            let subMenuAnglePerItem = subMenuAngleSpan / subItemCount
-                            let subMenuStartAngle = mainAngle - (subMenuAngleSpan / 2) + (subMenuAnglePerItem / 2)
-                            let subPizzaAngle = subMenuStartAngle + (Double(subIndex) * subMenuAnglePerItem)
-
-                            PizzaCard(pizza: subMenuItems[subIndex])
-                                .rotationEffect(.degrees(-subPizzaAngle))
-                                .offset(
-                                    x: subMenuAnimatedIndices.contains(subIndex) ? subMenuRadius * cos(subPizzaAngle * .pi / 180) : radius * cos(mainAngle * .pi / 180),
-                                    y: subMenuAnimatedIndices.contains(subIndex) ? subMenuRadius * sin(subPizzaAngle * .pi / 180) : radius * sin(mainAngle * .pi / 180)
-                                )
-                                .scaleEffect(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.1)
-                                .animation(.spring(response: 0.5, dampingFraction: 0.6), value: subMenuAnimatedIndices)
-                                .onTapGesture {
-                                    // Handle submenu item tap
-                                    nameofPizza = subMenuItems[subIndex].pizza
-                                    priceofPizza = subMenuItems[subIndex].pizzaPrice
-                                }
-                        }
+                    if showingSubMenuForIndex != nil {
+                        subMenuItemsView
                     }
-
+                    
                     // Main FAB button
-                    Button(action: {
-                        // Close any open submenu when toggling main menu
-                        if showingSubMenuForIndex != nil {
-                            closeSubMenu()
-                        }
-
-                        showPizzaCards.toggle()
-                        if showPizzaCards {
-                            startSequentialAnimation()
-                        } else {
-                            animatedIndices.removeAll()
-                        }
-                    }, label: {
-                        Image(systemName: "star.fill")
-                            .resizable()
-                            .frame(width: 50, height: 50)
-                            .foregroundColor(.yellow)
-                            .clipShape(Circle())
-                    })
-                    .frame(width: 80, height: 80)
-                    .clipShape(Circle())
+                    mainFabButton
                 }
                 .frame(width: size.width, height: size.height, alignment: alignment.toAlignment)
                 .padding(.top, -20)
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            let translation = value.translation
-                            let delta = -Double((translation.width + translation.height) / 2) / radius * (180 / .pi)
-                            angle = startAngle + delta
+                .gesture(dragGesture)
+            }
+        }
+    }
+    
+    // MARK: - View Components
+    @ViewBuilder
+    private var debugInfoView: some View {
+        VStack {
+            if showPizzaCards {
+                VStack(spacing: 4) {
+                    HStack {
+                        Text("Rotation: \(String(format: "%.1f", continuousRotation))°")
+                            .foregroundColor(.white)
+                            .font(.caption)
+                        Text("| Items: \(pizzas.count)")
+                            .foregroundColor(.gray)
+                            .font(.caption)
+                    }
+                    
+                    // Show infinite scrolling position
+                    let currentPosition = continuousRotation / anglePerItem
+                    HStack {
+                        Text("Position: \(String(format: "%.1f", currentPosition))")
+                            .foregroundColor(.cyan)
+                            .font(.caption2)
+                        Text("| Visible: \(animatedIndices.count)")
+                            .foregroundColor(.orange)
+                            .font(.caption2)
+                    }
+                }
+                .padding(.top, 50)
+                
+                // Test controls for infinite scrolling
+                HStack(spacing: 20) {
+                    Button("◀") {
+                        rotateToPreviousItem()
+                    }
+                    .foregroundColor(.white)
+                    .font(.title2)
+                    
+                    Button("▶") {
+                        rotateToNextItem()
+                    }
+                    .foregroundColor(.white)
+                    .font(.title2)
+                }
+                .padding(.top, 5)
+            }
+            Spacer()
+        }
+    }
+    
+    @ViewBuilder
+    private var carouselItemsView: some View {
+        let visibleItems = getVisibleItemsForCarousel()
+        
+        ForEach(Array(visibleItems.enumerated()), id: \.element.index) { _, item in
+            let itemRotation = Double(item.visualIndex) * anglePerItem - continuousRotation
+            let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
+            
+            // Enhanced visibility check with spacing consideration
+            if shouldItemBeVisible(visualIndex: item.visualIndex) {
+                // Calculate opacity for smooth fade-in/out at edges
+                let opacity = getItemOpacity(visualIndex: item.visualIndex)
+                
+                // Only show item if opacity is significant enough to avoid ghosting
+                if opacity > 0.1 {
+                    // Calculate initial position for chaining animation
+                    let initialPosition = getInitialPositionForChaining(itemIndex: item.index)
+                    
+                    PizzaCard(pizza: item.pizza, itemNumber: item.index + 1)
+                        .rotationEffect(.degrees(-itemAngle))
+                        .offset(
+                            x: animatedIndices.contains(item.visualIndex) ? radius * cos(itemAngle * .pi / 180) : initialPosition.x,
+                            y: animatedIndices.contains(item.visualIndex) ? radius * sin(itemAngle * .pi / 180) : initialPosition.y
+                        )
+                        .scaleEffect(animatedIndices.contains(item.visualIndex) ? 1 : 0.1)
+                        .opacity(opacity)
+                        .animation(isDragging ? .none : .spring(response: 0.5, dampingFraction: 0.7), value: animatedIndices)
+                        .animation(isDragging ? .none : .linear(duration: 0.15), value: continuousRotation)
+                        .onTapGesture {
+                            handlePizzaCardTap(index: item.index)
                         }
-                        .onEnded { _ in
-                            let normalizedAngle = angle.truncatingRemainder(dividingBy: 360.0)
-                            let snapAngle = (normalizedAngle / step).rounded() * step
-                            
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                angle = snapAngle
-                                startAngle = snapAngle
+                        .onChange(of: itemAngle) { _, _ in
+                            if isCardNearTriangle(itemAngle) {
+                                nameofPizza = item.pizza.pizza
+                                priceofPizza = item.pizza.pizzaPrice
                             }
-                            
-                            // Handle rotation to next/previous items for placeholder system
-                            if pizzas.count > maxVisibleItems {
-                                let rotationSteps = Int(snapAngle / step)
-                                let netRotation = rotationSteps % Int(360 / step)
-                                
-                                if abs(netRotation) > 0 {
-                                    let itemsToRotate = abs(netRotation)
-                                    for _ in 0..<itemsToRotate {
-                                        if netRotation > 0 {
-                                            rotateToNextItem()
-                                        } else {
-                                            rotateToPreviousItem()
-                                        }
-                                    }
-                                    // Reset angle after updating offset
-                                    angle = 0
-                                    startAngle = 0
-                                }
-                            }
-                            updatePizzaDetails()
                         }
-                )
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var subMenuItemsView: some View {
+        if let selectedIndex = showingSubMenuForIndex,
+           let subMenuItems = pizzas[selectedIndex].subMenuItems {
+            ForEach(subMenuItems.indices, id: \.self) { subIndex in
+                // Find the main item's current angle based on continuous rotation
+                let mainItemAngle = getMainItemAngle(for: selectedIndex)
+                
+                // Calculate submenu positioning
+                let subItemCount = Double(subMenuItems.count)
+                let subMenuAngleSpan: Double = 120.0
+                let subMenuAnglePerItem = subMenuAngleSpan / subItemCount
+                let subMenuStartAngle = mainItemAngle - (subMenuAngleSpan / 2) + (subMenuAnglePerItem / 2)
+                let subPizzaAngle = subMenuStartAngle + (Double(subIndex) * subMenuAnglePerItem)
+
+                PizzaCard(pizza: subMenuItems[subIndex])
+                    .rotationEffect(.degrees(-subPizzaAngle))
+                    .offset(
+                        x: subMenuAnimatedIndices.contains(subIndex) ? subMenuRadius * cos(subPizzaAngle * .pi / 180) : radius * cos(mainItemAngle * .pi / 180),
+                        y: subMenuAnimatedIndices.contains(subIndex) ? subMenuRadius * sin(subPizzaAngle * .pi / 180) : radius * sin(mainItemAngle * .pi / 180)
+                    )
+                    .scaleEffect(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.1)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.6), value: subMenuAnimatedIndices)
+                    .onTapGesture {
+                        nameofPizza = subMenuItems[subIndex].pizza
+                        priceofPizza = subMenuItems[subIndex].pizzaPrice
+                    }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var mainFabButton: some View {
+        Button(action: {
+            if showingSubMenuForIndex != nil {
+                closeSubMenu()
+            }
+
+            showPizzaCards.toggle()
+            if showPizzaCards {
+                startEnhancedSequentialAnimation()
+            } else {
+                animatedIndices.removeAll()
+            }
+        }, label: {
+            Image(systemName: "star.fill")
+                .resizable()
+                .frame(width: 50, height: 50)
+                .foregroundColor(.yellow)
+                .clipShape(Circle())
+        })
+        .frame(width: 80, height: 80)
+        .clipShape(Circle())
+    }
+    
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                if !isDragging {
+                    isDragging = true
+                }
+                
+                let translation = value.translation
+                
+                // Optimized horizontal wheel rotation for maximum smoothness
+                let rotationSensitivity: Double = 2.0
+                let delta = Double(translation.width) / radius * (180 / Double.pi) * rotationSensitivity
+                
+                continuousRotation = startAngle - delta
+                
+                // Update visible items silently during drag for seamless continuous scrolling
+                updateVisibleItemsAnimation()
+            }
+            .onEnded { value in
+                isDragging = false
+                startAngle = continuousRotation
+                
+                // Add momentum/inertia for natural wheel feel
+                let velocity = value.velocity.width
+                
+                if abs(velocity) > 100 { // Only add momentum for fast swipes
+                    let momentumRotation = Double(velocity) * 0.0008 // Slightly reduced for smoother momentum
+                    
+                    withAnimation(.easeOut(duration: 0.6)) { // Shorter duration for snappier feel
+                        continuousRotation -= momentumRotation
+                        startAngle = continuousRotation
+                    }
+                    
+                    // Update after momentum animation with shorter delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        updatePizzaDetailsForCarousel()
+                        updateVisibleItemsAnimation()
+                    }
+                } else {
+                    updatePizzaDetailsForCarousel()
+                    updateVisibleItemsAnimation()
+                }
+            }
+    }
+
+    // Enhanced helper functions for carousel with improved infinite scrolling
+    func getItemOpacity(visualIndex: Int) -> Double {
+        let itemRotation = Double(visualIndex) * anglePerItem - continuousRotation
+        let normalizedRotation = ((itemRotation + 180).truncatingRemainder(dividingBy: 360)) - 180
+        let maxDistance = totalSpan / 2
+        let distance = abs(normalizedRotation)
+        
+        if distance <= maxDistance {
+            return 1.0
+        } else if distance <= maxDistance + anglePerItem {
+            // Smoother fade out for seamless transitions during dragging
+            let fadeDistance = distance - maxDistance
+            let fadeRange = anglePerItem
+            let fadeRatio = fadeDistance / fadeRange
+            
+            // Use a smoother curve for opacity transition
+            let smoothOpacity = cos(fadeRatio * .pi / 2)
+            return max(0.0, smoothOpacity)
+        } else {
+            return 0.0
+        }
+    }
+    
+    func getMainItemAngle(for itemIndex: Int) -> Double {
+        let visibleItems = getVisibleItemsForCarousel()
+        for item in visibleItems {
+            if item.index == itemIndex {
+                let itemRotation = Double(item.visualIndex) * anglePerItem - continuousRotation
+                return alignment.itemAngleForCarousel(rotation: itemRotation)
+            }
+        }
+        return 0.0
+    }
+    
+    func startEnhancedSequentialAnimation() {
+        animatedIndices.removeAll()
+        let visibleItems = getVisibleItemsForCarousel()
+        
+        // Sort visible items by their actual pizza index for proper chaining sequence
+        let sortedVisibleItems = visibleItems
+            .filter { shouldItemBeVisible(visualIndex: $0.visualIndex) }
+            .sorted { $0.index < $1.index }
+        
+        // Create staggered chaining animation where each item appears from the previous one
+        for (sequenceIndex, item) in sortedVisibleItems.enumerated() {
+            let animationDelay = Double(sequenceIndex) * 0.30 // Increased delay for better chaining effect
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + animationDelay) {
+//                withAnimation(.spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0.3)) {
+                    animatedIndices.insert(item.visualIndex)
+//                }
+            }
+        }
+    }
+    
+    func updatePizzaDetailsForCarousel() {
+        // Find the item closest to the reference position (triangle)
+        let visibleItems = getVisibleItemsForCarousel()
+        var closestItem: (pizza: Pizza, index: Int, visualIndex: Int)?
+        var smallestDistance: Double = Double.infinity
+        
+        for item in visibleItems {
+            if shouldItemBeVisible(visualIndex: item.visualIndex) {
+                let itemRotation = Double(item.visualIndex) * anglePerItem - continuousRotation
+                let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
+                
+                if isCardNearTriangle(itemAngle) {
+                    let distance = abs(itemRotation)
+                    if distance < smallestDistance {
+                        smallestDistance = distance
+                        closestItem = item
+                    }
+                }
+            }
+        }
+        
+        if let item = closestItem {
+            nameofPizza = item.pizza.pizza
+            priceofPizza = item.pizza.pizzaPrice
+        }
+    }
+    
+    // Function to update animation state for items entering/leaving visibility during continuous scrolling
+    func updateVisibleItemsAnimation() {
+        let visibleItems = getVisibleItemsForCarousel()
+        var newAnimatedIndices = Set<Int>()
+        
+        for item in visibleItems {
+            if shouldItemBeVisible(visualIndex: item.visualIndex) {
+                newAnimatedIndices.insert(item.visualIndex)
+            }
+        }
+        
+        // During dragging, update items silently without animation for seamless transitions
+        if isDragging {
+            // Silently add newly visible items without animation
+            for visualIndex in newAnimatedIndices {
+                if !animatedIndices.contains(visualIndex) {
+                    animatedIndices.insert(visualIndex)
+                }
+            }
+            
+            // Silently remove items that are no longer visible without animation
+            let indicesToRemove = animatedIndices.subtracting(newAnimatedIndices)
+            for visualIndex in indicesToRemove {
+                animatedIndices.remove(visualIndex)
+            }
+        } else {
+            // When not dragging, use subtle animations for entering/exiting items
+            for visualIndex in newAnimatedIndices {
+                if !animatedIndices.contains(visualIndex) {
+                    withAnimation(.easeIn(duration: 0.2)) {
+                        animatedIndices.insert(visualIndex)
+                    }
+                }
+            }
+            
+            // Remove items that are no longer visible
+            let indicesToRemove = animatedIndices.subtracting(newAnimatedIndices)
+            for visualIndex in indicesToRemove {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    animatedIndices.remove(visualIndex)
+                }
             }
         }
     }
@@ -273,46 +458,70 @@ struct FinalView: View {
         subMenuAnimatedIndices.removeAll()
     }
 
+    // Legacy functions enhanced for continuous infinite scrolling
     func startSequentialAnimation() {
-        animatedIndices.removeAll() // Reset animation state
-        let totalItemsToAnimate = hasPlaceholder ? actualVisibleItemsCount + 1 : actualVisibleItemsCount
-        for index in 0..<totalItemsToAnimate {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) {
-                withAnimation(.easeIn) {
-                    _ = animatedIndices.insert(index) // Animate each item one by one
-                }
-            }
-        }
+        startEnhancedSequentialAnimation()
     }
     
     func rotateToNextItem() {
-        if pizzas.count > maxVisibleItems {
-            currentOffset = (currentOffset + 1) % pizzas.count
-            restartAnimation()
+        withAnimation(.easeInOut(duration: 0.3)) {
+            continuousRotation += anglePerItem
+            startAngle = continuousRotation
         }
+        updatePizzaDetailsForCarousel()
+        updateVisibleItemsAnimation()
     }
     
     func rotateToPreviousItem() {
-        if pizzas.count > maxVisibleItems {
-            currentOffset = (currentOffset - 1 + pizzas.count) % pizzas.count
-            restartAnimation()
+        withAnimation(.easeInOut(duration: 0.3)) {
+            continuousRotation -= anglePerItem
+            startAngle = continuousRotation
         }
+        updatePizzaDetailsForCarousel()
+        updateVisibleItemsAnimation()
     }
     
     func restartAnimation() {
         animatedIndices.removeAll()
-        startSequentialAnimation()
+        startEnhancedSequentialAnimation()
     }
     
     func getVisualIndex(for actualIndex: Int) -> Int {
-        // Find the visual position of an actual pizza index in the current visible items
-        for (visualIndex, item) in visibleItems.enumerated() {
-            let itemActualIndex = (currentOffset + visualIndex) % pizzas.count
-            if itemActualIndex == actualIndex {
-                return visualIndex
+        let visibleItems = getVisibleItemsForCarousel()
+        for item in visibleItems {
+            if item.index == actualIndex {
+                return item.visualIndex
             }
         }
-        return 0 // Fallback
+        return 0
+    }
+
+    // Function to calculate initial position for chaining animation
+    func getInitialPositionForChaining(itemIndex: Int) -> CGPoint {
+        let visibleItems = getVisibleItemsForCarousel()
+        let sortedVisibleItems = visibleItems
+            .filter { shouldItemBeVisible(visualIndex: $0.visualIndex) }
+            .sorted { $0.index < $1.index }
+        
+        // Find the current item's position in the sorted sequence
+        guard let currentItemSequence = sortedVisibleItems.firstIndex(where: { $0.index == itemIndex }) else {
+            return CGPoint.zero // Default to center if item not found
+        }
+        
+        if currentItemSequence == 0 {
+            // First item comes from the center (star button position)
+            return CGPoint.zero
+        } else {
+            // Subsequent items come from the previous item's final position
+            let previousItem = sortedVisibleItems[currentItemSequence - 1]
+            let previousItemRotation = Double(previousItem.visualIndex) * anglePerItem - continuousRotation
+            let previousItemAngle = alignment.itemAngleForCarousel(rotation: previousItemRotation)
+            
+            return CGPoint(
+                x: radius * cos(previousItemAngle * .pi / 180),
+                y: radius * sin(previousItemAngle * .pi / 180)
+            )
+        }
     }
 
     func startSubMenuSequentialAnimation(itemCount: Int) {
@@ -331,69 +540,26 @@ struct FinalView: View {
         ZStack {
             Image(pizza.pizzaImage)
                 .resizable()
-                .frame(width: 80, height: 80)
+                .frame(width: 55, height: 55) // Reduced size for better spacing and less overlap
                 .clipShape(Circle())
+                .padding(4) // Add padding around each pizza card for visual separation
             
             // Add digit overlay to show item number
             let displayNumber = itemNumber ?? (pizzas.firstIndex(where: { $0.id == pizza.id }) ?? 0) + 1
             Text("\(displayNumber)")
-                .font(.bold(.system(size: 20))())
+                .font(.bold(.system(size: 14))()) // Slightly smaller font size to match smaller card
                 .foregroundColor(.white)
                 .background(
                     Circle()
-                        .fill(Color.black.opacity(0.7))
-                        .frame(width: 30, height: 30)
+                        .fill(Color.black.opacity(0.8))
+                        .frame(width: 22, height: 22) // Smaller badge to match smaller card
                 )
-                .offset(x: 25, y: -25) // Position in top-right corner
-        }
-    }
-    
-    @ViewBuilder
-    func PlaceholderCard(count: Int) -> some View {
-        ZStack {
-            // Stack effect with multiple circles
-            Circle()
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 80, height: 80)
-                .offset(x: 2, y: 2)
-            
-            Circle()
-                .fill(Color.gray.opacity(0.5))
-                .frame(width: 80, height: 80)
-                .offset(x: 1, y: 1)
-            
-            Circle()
-                .fill(Color.gray.opacity(0.7))
-                .frame(width: 80, height: 80)
-            
-            // Count indicator showing range of hidden items
-            VStack(spacing: 2) {
-                Text("+\(count)")
-                    .font(.bold(.system(size: 14))())
-                    .foregroundColor(.white)
-                
-                // Show range of hidden items
-                let startIndex = actualVisibleItemsCount + currentOffset + 1
-                let endIndex = startIndex + count - 1
-                Text("\(startIndex)-\(endIndex)")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.8))
-            }
+                .offset(x: 18, y: -18) // Adjusted position for smaller card with padding
         }
     }
 
     func updatePizzaDetails() {
-        let totalDisplayItems = hasPlaceholder ? actualVisibleItemsCount + 1 : actualVisibleItemsCount
-        let anglePerPizza = totalDisplayItems <= 4 ? 90.0 / Double(totalDisplayItems) + 20 : 360.0 / Double(totalDisplayItems)
-        
-        // Find which item is currently at the "top" position (near the triangle)
-        let normalizedAngle = (angle + 360.0).truncatingRemainder(dividingBy: 360.0)
-        let itemIndex = Int((normalizedAngle / anglePerPizza).rounded()) % totalDisplayItems
-        
-        if itemIndex < visibleItems.count {
-            nameofPizza = visibleItems[itemIndex].pizza
-            priceofPizza = visibleItems[itemIndex].pizzaPrice
-        }
+        updatePizzaDetailsForCarousel()
     }
 
     func isCardNearTriangle(_ pizzaAngle: Double) -> Bool {
@@ -431,28 +597,50 @@ struct Pizza : Identifiable {
     var subMenuItems: [Pizza]?
 }
 
-var pizzas : [Pizza] = [
-    .init(pizza: "Panner Pizza", pizzaImage: "pizza1", pizzaPrice: "200 $", subMenuItems: [
-           Pizza(pizza: "Sub Panner Pizza 1", pizzaImage: "pizza1", pizzaPrice: "200 $"),
-           Pizza(pizza: "Sub Panner Pizza 2", pizzaImage: "pizza1", pizzaPrice: "210 $"),
-           Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $")
-       ]),
-    .init(pizza: "Cheese Pizza", pizzaImage: "pizza2",pizzaPrice: "150 $", subMenuItems: nil),
-    .init(pizza: "Italian Pizza", pizzaImage: "pizza3",pizzaPrice: "300 $", subMenuItems: [
-           Pizza(pizza: "Sub Italian 1", pizzaImage: "pizza3", pizzaPrice: "310 $"),
-           Pizza(pizza: "Sub Italian 2", pizzaImage: "pizza3", pizzaPrice: "320 $")
-       ]),
-    .init(pizza: "Margherita Pizza", pizzaImage: "pizza4",pizzaPrice: "180 $", subMenuItems: nil),
-    .init(pizza: "Pepperoni Pizza", pizzaImage: "pizza5",pizzaPrice: "220 $", subMenuItems: nil),
-    .init(pizza: "Veggie Pizza", pizzaImage: "pizza6",pizzaPrice: "190 $", subMenuItems: nil),
-    .init(pizza: "BBQ Pizza", pizzaImage: "pizza7",pizzaPrice: "250 $", subMenuItems: nil),
-    .init(pizza: "Hawaiian Pizza", pizzaImage: "pizza8",pizzaPrice: "210 $", subMenuItems: nil),
-    .init(pizza: "Meat Lovers", pizzaImage: "pizza1",pizzaPrice: "280 $", subMenuItems: nil),
-    .init(pizza: "Four Cheese", pizzaImage: "pizza2",pizzaPrice: "200 $", subMenuItems: nil),
-    .init(pizza: "Spicy Jalapeno", pizzaImage: "pizza3",pizzaPrice: "230 $", subMenuItems: nil),
-    .init(pizza: "Mushroom Delight", pizzaImage: "pizza4",pizzaPrice: "170 $", subMenuItems: nil),
-    .init(pizza: "Seafood Special", pizzaImage: "pizza5",pizzaPrice: "320 $", subMenuItems: nil)
-]
+var pizzas : [Pizza] = {
+    var basePizzas: [Pizza] = [
+        .init(pizza: "Panner Pizza", pizzaImage: "pizza1", pizzaPrice: "200 $", subMenuItems: [
+               Pizza(pizza: "Sub Panner Pizza 1", pizzaImage: "pizza1", pizzaPrice: "200 $"),
+               Pizza(pizza: "Sub Panner Pizza 2", pizzaImage: "pizza1", pizzaPrice: "210 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $")
+           ]),
+        .init(pizza: "Cheese Pizza", pizzaImage: "pizza2",pizzaPrice: "150 $", subMenuItems: nil),
+        .init(pizza: "Italian Pizza", pizzaImage: "pizza3",pizzaPrice: "300 $", subMenuItems: [
+               Pizza(pizza: "Sub Italian 1", pizzaImage: "pizza3", pizzaPrice: "310 $"),
+               Pizza(pizza: "Sub Italian 2", pizzaImage: "pizza3", pizzaPrice: "320 $")
+           ]),
+        .init(pizza: "Margherita Pizza", pizzaImage: "pizza4",pizzaPrice: "180 $", subMenuItems: nil),
+        .init(pizza: "Pepperoni Pizza", pizzaImage: "pizza5",pizzaPrice: "220 $", subMenuItems: nil),
+        .init(pizza: "Veggie Pizza", pizzaImage: "pizza6",pizzaPrice: "190 $", subMenuItems: nil),
+        .init(pizza: "BBQ Pizza", pizzaImage: "pizza7",pizzaPrice: "250 $", subMenuItems: nil),
+        .init(pizza: "Hawaiian Pizza", pizzaImage: "pizza8",pizzaPrice: "210 $", subMenuItems: nil),
+        .init(pizza: "Meat Lovers", pizzaImage: "pizza1",pizzaPrice: "280 $", subMenuItems: nil),
+        .init(pizza: "Four Cheese", pizzaImage: "pizza2",pizzaPrice: "200 $", subMenuItems: nil),
+        .init(pizza: "Spicy Jalapeno", pizzaImage: "pizza3",pizzaPrice: "230 $", subMenuItems: nil),
+        .init(pizza: "Mushroom Delight", pizzaImage: "pizza4",pizzaPrice: "170 $", subMenuItems: nil),
+        .init(pizza: "Seafood Special", pizzaImage: "pizza5",pizzaPrice: "320 $", subMenuItems: nil)
+    ]
+    
+    // Generate additional pizzas to test carousel with 50+ items
+    var allPizzas = basePizzas
+    let pizzaTypes = ["Supreme", "Mediterranean", "Buffalo Chicken", "White Sauce", "Pesto", "Ranch", "Taco", "Breakfast"]
+    let pizzaImages = ["pizza1", "pizza2", "pizza3", "pizza4", "pizza5", "pizza6", "pizza7", "pizza8"]
+    
+    for i in 14...60 {
+        let typeIndex = (i - 14) % pizzaTypes.count
+        let imageIndex = (i - 14) % pizzaImages.count
+        let price = 150 + (i * 10)
+        
+        allPizzas.append(.init(
+            pizza: "\(pizzaTypes[typeIndex]) Pizza \(i)",
+            pizzaImage: pizzaImages[imageIndex],
+            pizzaPrice: "\(price) $",
+            subMenuItems: nil
+        ))
+    }
+    
+    return allPizzas
+}()
 
 enum AlignmentType {
     case topLeading, topTrailing, bottomLeading, bottomTrailing
@@ -469,6 +657,8 @@ enum AlignmentType {
                 .bottomTrailing
         }
     }
+    
+    // Legacy function for compatibility
     func itemAngle(index: Int, angle: Double, anglePerPizza: Double) -> Double {
         switch self {
         case .topLeading:
@@ -479,6 +669,20 @@ enum AlignmentType {
             (anglePerPizza * Double(index) + 100 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
         case .bottomTrailing:
             -(anglePerPizza * Double(index) + 280 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
+        }
+    }
+    
+    // Enhanced function for carousel system
+    func itemAngleForCarousel(rotation: Double) -> Double {
+        switch self {
+        case .topLeading:
+            -(rotation + 100 - 190.0).truncatingRemainder(dividingBy: 360.0)
+        case .topTrailing:
+            (rotation + 280 - 190.0).truncatingRemainder(dividingBy: 360.0)
+        case .bottomLeading:
+            (rotation + 100 - 190.0).truncatingRemainder(dividingBy: 360.0)
+        case .bottomTrailing:
+            -(rotation + 280 - 190.0).truncatingRemainder(dividingBy: 360.0)
         }
     }
 }
