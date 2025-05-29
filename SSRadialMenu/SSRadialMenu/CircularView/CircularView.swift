@@ -343,6 +343,8 @@ struct FinalView: View {
 
             showPizzaCards.toggle()
             if showPizzaCards {
+                // Reset all scroll positions to zero for consistent starting point
+                resetAllScrollPositions()
                 startEnhancedSequentialAnimation()
             } else {
                 animatedIndices.removeAll()
@@ -692,6 +694,21 @@ struct FinalView: View {
             nameofPizza = subMenuItem.pizza
             priceofPizza = subMenuItem.pizzaPrice
         }
+    }
+    
+    // Function to reset all scroll positions to zero for consistent menu opening
+    func resetAllScrollPositions() {
+        // Reset main menu scroll position
+        continuousRotation = 0.0
+        startAngle = 0.0
+        
+        // Reset submenu scroll position
+        subMenuRotation = 0.0
+        subMenuStartAngle = 0.0
+        
+        // Reset sub-submenu scroll position
+        subSubMenuRotation = 0.0
+        subSubMenuStartAngle = 0.0
     }
 
     func closeSubMenu() {
