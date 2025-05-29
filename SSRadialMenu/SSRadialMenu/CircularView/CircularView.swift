@@ -34,8 +34,20 @@ struct FinalView: View {
     let maxVisibleItems: Int = 6 // Reduced from 8 to 6 for better spacing
     let totalSpan: Double = 160.0 // Increased span for better spacing between items
     @State private var showPizzaCards: Bool = false
-    @State private var continuousRotation: Double = 0.0 // Continuous rotation value
+    
+    // Independent rotation states for each menu level
+    @State private var continuousRotation: Double = 0.0 // Main menu rotation
+    @State private var subMenuRotation: Double = 0.0 // Submenu rotation
+    @State private var subSubMenuRotation: Double = 0.0 // Sub-submenu rotation
+    
+    // Independent dragging states for each menu level
     @State private var isDragging: Bool = false
+    @State private var isSubMenuDragging: Bool = false
+    @State private var isSubSubMenuDragging: Bool = false
+    
+    // Start angles for each menu level
+    @State private var subMenuStartAngle: Double = 0.0
+    @State private var subSubMenuStartAngle: Double = 0.0
     
     // Computed properties for smooth carousel
     var anglePerItem: Double {
@@ -116,7 +128,6 @@ struct FinalView: View {
                 }
                 .frame(width: size.width, height: size.height, alignment: alignment.toAlignment)
                 .padding(.top, -20)
-                .gesture(dragGesture)
             }
         }
     }
@@ -173,91 +184,98 @@ struct FinalView: View {
     private var carouselItemsView: some View {
         let visibleItems = getVisibleItemsForCarousel()
         
-        ForEach(Array(visibleItems.enumerated()), id: \.element.index) { _, item in
-            let itemRotation = Double(item.visualIndex) * anglePerItem - continuousRotation
-            let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
-            
-                // Only show item if it's strictly within the circular boundary
-                if shouldItemBeVisible(visualIndex: item.visualIndex) {
-                    // Calculate opacity - only fade within the strict boundary
-                    let opacity = getItemOpacity(visualIndex: item.visualIndex)
-                    
-                    // Additional safety check: only render items with meaningful opacity
-                    if opacity > 0.05 { // Only show items with more than 5% opacity
-                        // Calculate initial position for chaining animation
-                        let initialPosition = getInitialPositionForChaining(itemIndex: item.index)
-                    
-                    PizzaCard(pizza: item.pizza, itemNumber: item.index + 1)
-                        .rotationEffect(.degrees(-itemAngle))
-                        .offset(
-                            x: animatedIndices.contains(item.visualIndex) ? radius * cos(itemAngle * .pi / 180) : initialPosition.x,
-                            y: animatedIndices.contains(item.visualIndex) ? radius * sin(itemAngle * .pi / 180) : initialPosition.y
-                        )
-                        .scaleEffect(animatedIndices.contains(item.visualIndex) ? 1 : 0.1)
-                        .opacity(opacity)
-                        .animation(isDragging ? .none : .spring(response: 0.5, dampingFraction: 0.7), value: animatedIndices)
-                        .animation(isDragging ? .none : .linear(duration: 0.15), value: continuousRotation)
-                        .onTapGesture {
-                            handlePizzaCardTap(index: item.index)
-                        }
-                        .onChange(of: itemAngle) { _, _ in
-                            if isCardNearTriangle(itemAngle) {
-                                nameofPizza = item.pizza.pizza
-                                priceofPizza = item.pizza.pizzaPrice
+        ZStack {
+            ForEach(Array(visibleItems.enumerated()), id: \.element.index) { _, item in
+                let itemRotation = Double(item.visualIndex) * anglePerItem - continuousRotation
+                let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
+                
+                    // Only show item if it's strictly within the circular boundary
+                    if shouldItemBeVisible(visualIndex: item.visualIndex) {
+                        // Calculate opacity - only fade within the strict boundary
+                        let opacity = getItemOpacity(visualIndex: item.visualIndex)
+                        
+                        // Additional safety check: only render items with meaningful opacity
+                        if opacity > 0.05 { // Only show items with more than 5% opacity
+                            // Calculate initial position for chaining animation
+                            let initialPosition = getInitialPositionForChaining(itemIndex: item.index)
+                        
+                        PizzaCard(pizza: item.pizza, itemNumber: item.index + 1)
+                            .rotationEffect(.degrees(-itemAngle))
+                            .offset(
+                                x: animatedIndices.contains(item.visualIndex) ? radius * cos(itemAngle * .pi / 180) : initialPosition.x,
+                                y: animatedIndices.contains(item.visualIndex) ? radius * sin(itemAngle * .pi / 180) : initialPosition.y
+                            )
+                            .scaleEffect(animatedIndices.contains(item.visualIndex) ? 1 : 0.1)
+                            .opacity(opacity)
+                            .animation(isDragging ? .none : .spring(response: 0.5, dampingFraction: 0.7), value: animatedIndices)
+                            .animation(isDragging ? .none : .linear(duration: 0.15), value: continuousRotation)
+                            .onTapGesture {
+                                handlePizzaCardTap(index: item.index)
+                            }
+                            .onChange(of: itemAngle) { _, _ in
+                                if isCardNearTriangle(itemAngle) {
+                                    nameofPizza = item.pizza.pizza
+                                    priceofPizza = item.pizza.pizzaPrice
+                                }
                             }
                         }
                     }
                 }
-            }
+        }
+        .gesture(mainMenuDragGesture) // Add independent drag gesture for main menu
     }
     
     @ViewBuilder
     private var subMenuItemsView: some View {
         if let selectedIndex = showingSubMenuForIndex,
            let subMenuItems = pizzas[selectedIndex].subMenuItems {
-            ForEach(subMenuItems.indices, id: \.self) { subIndex in
-                // Find the main item's current angle based on continuous rotation
-                let mainItemAngle = getMainItemAngle(for: selectedIndex)
-                
-                // Calculate submenu positioning - first item directly above parent
-                // For bottomTrailing alignment, "above" means outward from center
-                let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
-                
-                // Calculate the outward direction from the parent item
-                // For items positioned around a circle, "directly above" means radially outward
-                let outwardAngle = mainItemAngle // The parent's angle IS the outward direction
-                
-                // First submenu item (index 0) appears directly outward from parent
-                // Subsequent items follow the same counterclockwise pattern as main menu
-                let subPizzaAngle = outwardAngle - (Double(subIndex) * subMenuAnglePerItem)
-                
-                // Calculate positions for smooth animation
-                let animatedPosition = CGPoint(
-                    x: subMenuRadius * cos(subPizzaAngle * .pi / 180),
-                    y: subMenuRadius * sin(subPizzaAngle * .pi / 180)
-                )
-                
-                let startPosition = CGPoint(
-                    x: radius * cos(mainItemAngle * .pi / 180),
-                    y: radius * sin(mainItemAngle * .pi / 180)
-                )
-
-                // Create hierarchical index for submenu items
-                let hierarchicalIndex = "\(selectedIndex + 1).\(subIndex + 1)"
-
-                PizzaCard(pizza: subMenuItems[subIndex], hierarchicalIndex: hierarchicalIndex, cardSize: 45) // Smaller size for submenu items
-                    .rotationEffect(.degrees(-subPizzaAngle))
-                    .offset(
-                        x: subMenuAnimatedIndices.contains(subIndex) ? animatedPosition.x : startPosition.x,
-                        y: subMenuAnimatedIndices.contains(subIndex) ? animatedPosition.y : startPosition.y
+            
+            ZStack {
+                ForEach(subMenuItems.indices, id: \.self) { subIndex in
+                    // Use fixed main item angle instead of current scrolled angle
+                    // This ensures submenu stays anchored to parent's original position
+                    let fixedMainItemAngle = getFixedMainItemAngle(for: selectedIndex)
+                    
+                    // Calculate submenu positioning with independent rotation
+                    let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
+                    
+                    // Calculate the outward direction from the parent item's fixed position
+                    let outwardAngle = fixedMainItemAngle
+                    
+                    // Apply submenu's independent rotation
+                    let subPizzaAngle = outwardAngle - (Double(subIndex) * subMenuAnglePerItem) + subMenuRotation
+                    
+                    // Calculate positions for smooth animation
+                    let animatedPosition = CGPoint(
+                        x: subMenuRadius * cos(subPizzaAngle * .pi / 180),
+                        y: subMenuRadius * sin(subPizzaAngle * .pi / 180)
                     )
-                    .scaleEffect(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.1)
-                    .opacity(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.3)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.6), value: subMenuAnimatedIndices)
-                    .onTapGesture {
-                        handleSubMenuItemTap(mainIndex: selectedIndex, subIndex: subIndex, subMenuItem: subMenuItems[subIndex])
-                    }
+                    
+                    // Start position should also use fixed angle for consistent anchoring
+                    let startPosition = CGPoint(
+                        x: radius * cos(fixedMainItemAngle * .pi / 180),
+                        y: radius * sin(fixedMainItemAngle * .pi / 180)
+                    )
+
+                    // Create hierarchical index for submenu items
+                    let hierarchicalIndex = "\(selectedIndex + 1).\(subIndex + 1)"
+
+                    PizzaCard(pizza: subMenuItems[subIndex], hierarchicalIndex: hierarchicalIndex, cardSize: 45) // Smaller size for submenu items
+                        .rotationEffect(.degrees(-subPizzaAngle))
+                        .offset(
+                            x: subMenuAnimatedIndices.contains(subIndex) ? animatedPosition.x : startPosition.x,
+                            y: subMenuAnimatedIndices.contains(subIndex) ? animatedPosition.y : startPosition.y
+                        )
+                        .scaleEffect(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.1)
+                        .opacity(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.3)
+                        .animation(isSubMenuDragging ? .none : .spring(response: 0.5, dampingFraction: 0.6), value: subMenuAnimatedIndices)
+                        .animation(isSubMenuDragging ? .none : .linear(duration: 0.15), value: subMenuRotation)
+                        .onTapGesture {
+                            handleSubMenuItemTap(mainIndex: selectedIndex, subIndex: subIndex, subMenuItem: subMenuItems[subIndex])
+                        }
+                }
             }
+            .gesture(subMenuDragGesture) // Add independent drag gesture for submenu
         }
     }
     
@@ -268,50 +286,51 @@ struct FinalView: View {
            subIndex < subMenuItems.count,
            let subSubMenuItems = subMenuItems[subIndex].subMenuItems {
             
-            ForEach(subSubMenuItems.indices, id: \.self) { subSubIndex in
-                // Calculate the parent submenu item's angle using the same corrected logic as subMenuItemsView
-                let mainItemAngle = getMainItemAngle(for: mainIndex)
-                let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
-                
-                // Calculate parent submenu item's angle using corrected positioning
-                let outwardAngle = mainItemAngle // The parent's angle IS the outward direction
-                let parentSubMenuAngle = outwardAngle - (Double(subIndex) * subMenuAnglePerItem)
-                
-                // Calculate sub-submenu positioning - first item directly outward from parent submenu item
-                // The parent submenu item's angle IS the outward direction for sub-submenu
-                let subSubOutwardAngle = parentSubMenuAngle
-                let subSubPizzaAngle = subSubOutwardAngle - (Double(subSubIndex) * anglePerItem)
-                
-                // Calculate positions - start from parent submenu item position
-                let parentSubMenuPosition = CGPoint(
-                    x: subMenuRadius * cos(parentSubMenuAngle * .pi / 180),
-                    y: subMenuRadius * sin(parentSubMenuAngle * .pi / 180)
-                )
-                
-                let animatedPosition = CGPoint(
-                    x: subSubMenuRadius * cos(subSubPizzaAngle * .pi / 180),
-                    y: subSubMenuRadius * sin(subSubPizzaAngle * .pi / 180)
-                )
-
-                // Create hierarchical index (full three-level hierarchy)
-                let hierarchicalIndex = "\(mainIndex + 1).\(subIndex + 1).\(subSubIndex + 1)"
-                
-                PizzaCard(pizza: subSubMenuItems[subSubIndex], hierarchicalIndex: hierarchicalIndex, cardSize: 35) // Even smaller size for sub-submenu items
-                    .rotationEffect(.degrees(-subSubPizzaAngle))
-                    .offset(
-                        x: subSubMenuAnimatedIndices.contains(subSubIndex) ? animatedPosition.x : parentSubMenuPosition.x,
-                        y: subSubMenuAnimatedIndices.contains(subSubIndex) ? animatedPosition.y : parentSubMenuPosition.y
+            ZStack {
+                ForEach(subSubMenuItems.indices, id: \.self) { subSubIndex in
+                    // Use fixed angles for both main and submenu items to ensure complete independence
+                    let fixedMainItemAngle = getFixedMainItemAngle(for: mainIndex)
+                    let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
+                    
+                    // Calculate parent submenu item's fixed angle (without any rotation influence)
+                    let fixedSubMenuAngle = fixedMainItemAngle - (Double(subIndex) * subMenuAnglePerItem)
+                    
+                    // Calculate sub-submenu positioning with only its own independent rotation
+                    let subSubPizzaAngle = fixedSubMenuAngle - (Double(subSubIndex) * anglePerItem) + subSubMenuRotation
+                    
+                    // Calculate positions - start from parent submenu item's fixed position
+                    let parentSubMenuFixedPosition = CGPoint(
+                        x: subMenuRadius * cos(fixedSubMenuAngle * .pi / 180),
+                        y: subMenuRadius * sin(fixedSubMenuAngle * .pi / 180)
                     )
-                    .scaleEffect(subSubMenuAnimatedIndices.contains(subSubIndex) ? 1 : 0.1)
-                    .opacity(subSubMenuAnimatedIndices.contains(subSubIndex) ? 1 : 0.3)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.6), value: subSubMenuAnimatedIndices)
-                    .onTapGesture {
-                        nameofPizza = subSubMenuItems[subSubIndex].pizza
-                        priceofPizza = subSubMenuItems[subSubIndex].pizzaPrice
-                        // Close sub-submenu after selection
-                        closeSubSubMenu()
-                    }
+                    
+                    let animatedPosition = CGPoint(
+                        x: subSubMenuRadius * cos(subSubPizzaAngle * .pi / 180),
+                        y: subSubMenuRadius * sin(subSubPizzaAngle * .pi / 180)
+                    )
+
+                    // Create hierarchical index (full three-level hierarchy)
+                    let hierarchicalIndex = "\(mainIndex + 1).\(subIndex + 1).\(subSubIndex + 1)"
+                    
+                    PizzaCard(pizza: subSubMenuItems[subSubIndex], hierarchicalIndex: hierarchicalIndex, cardSize: 35) // Even smaller size for sub-submenu items
+                        .rotationEffect(.degrees(-subSubPizzaAngle))
+                        .offset(
+                            x: subSubMenuAnimatedIndices.contains(subSubIndex) ? animatedPosition.x : parentSubMenuFixedPosition.x,
+                            y: subSubMenuAnimatedIndices.contains(subSubIndex) ? animatedPosition.y : parentSubMenuFixedPosition.y
+                        )
+                        .scaleEffect(subSubMenuAnimatedIndices.contains(subSubIndex) ? 1 : 0.1)
+                        .opacity(subSubMenuAnimatedIndices.contains(subSubIndex) ? 1 : 0.3)
+                        .animation(isSubSubMenuDragging ? .none : .spring(response: 0.5, dampingFraction: 0.6), value: subSubMenuAnimatedIndices)
+                        .animation(isSubSubMenuDragging ? .none : .linear(duration: 0.15), value: subSubMenuRotation)
+                        .onTapGesture {
+                            nameofPizza = subSubMenuItems[subSubIndex].pizza
+                            priceofPizza = subSubMenuItems[subSubIndex].pizzaPrice
+                            // Close sub-submenu after selection
+                            closeSubSubMenu()
+                        }
+                }
             }
+            .gesture(subSubMenuDragGesture) // Add independent drag gesture for sub-submenu
         }
     }
     
@@ -386,6 +405,108 @@ struct FinalView: View {
                 }
             }
     }
+    
+    // Independent drag gesture for main menu
+    private var mainMenuDragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                if !isDragging {
+                    isDragging = true
+                }
+                
+                let translation = value.translation
+                let rotationSensitivity: Double = 1.5
+                let delta = Double(translation.width) * rotationSensitivity
+                
+                continuousRotation = startAngle + delta
+                updateVisibleItemsAnimation()
+            }
+            .onEnded { value in
+                isDragging = false
+                startAngle = continuousRotation
+                
+                let velocity = value.velocity.width
+                
+                if abs(velocity) > 100 {
+                    let momentumRotation = Double(velocity) * 0.002
+                    
+                    withAnimation(.easeOut(duration: 0.6)) {
+                        continuousRotation += momentumRotation
+                        startAngle = continuousRotation
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        updatePizzaDetailsForCarousel()
+                        updateVisibleItemsAnimation()
+                    }
+                } else {
+                    updatePizzaDetailsForCarousel()
+                    updateVisibleItemsAnimation()
+                }
+            }
+    }
+    
+    // Independent drag gesture for submenu
+    private var subMenuDragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                if !isSubMenuDragging {
+                    isSubMenuDragging = true
+                }
+                
+                let translation = value.translation
+                let rotationSensitivity: Double = 1.5
+                let delta = Double(translation.width) * rotationSensitivity
+                
+                subMenuRotation = subMenuStartAngle + delta
+            }
+            .onEnded { value in
+                isSubMenuDragging = false
+                subMenuStartAngle = subMenuRotation
+                
+                let velocity = value.velocity.width
+                
+                if abs(velocity) > 100 {
+                    let momentumRotation = Double(velocity) * 0.002
+                    
+                    withAnimation(.easeOut(duration: 0.6)) {
+                        subMenuRotation += momentumRotation
+                        subMenuStartAngle = subMenuRotation
+                    }
+                }
+            }
+    }
+    
+    // Independent drag gesture for sub-submenu
+    private var subSubMenuDragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                if !isSubSubMenuDragging {
+                    isSubSubMenuDragging = true
+                }
+                
+                let translation = value.translation
+                let rotationSensitivity: Double = 1.5
+                let delta = Double(translation.width) * rotationSensitivity
+                
+                subSubMenuRotation = subSubMenuStartAngle + delta
+            }
+            .onEnded { value in
+                isSubSubMenuDragging = false
+                subSubMenuStartAngle = subSubMenuRotation
+                
+                let velocity = value.velocity.width
+                
+                if abs(velocity) > 100 {
+                    let momentumRotation = Double(velocity) * 0.002
+                    
+                    withAnimation(.easeOut(duration: 0.6)) {
+                        subSubMenuRotation += momentumRotation
+                        subSubMenuStartAngle = subSubMenuRotation
+                    }
+                }
+            }
+    }
 
     // Enhanced helper functions for carousel with improved infinite scrolling
     func getItemOpacity(visualIndex: Int) -> Double {
@@ -421,6 +542,15 @@ struct FinalView: View {
             }
         }
         return 0.0
+    }
+    
+    // New function to get fixed base angle for main menu items (for anchoring submenus)
+    func getFixedMainItemAngle(for itemIndex: Int) -> Double {
+        // Calculate the fixed base angle without considering main menu's current rotation
+        // This ensures submenus stay anchored to their parent's original position
+        let baseVisualIndex = itemIndex // Use the actual index as visual index for fixed positioning
+        let itemRotation = Double(baseVisualIndex) * anglePerItem
+        return alignment.itemAngleForCarousel(rotation: itemRotation)
     }
     
     func startEnhancedSequentialAnimation() {
@@ -567,6 +697,9 @@ struct FinalView: View {
     func closeSubMenu() {
         showingSubMenuForIndex = nil
         subMenuAnimatedIndices.removeAll()
+        // Reset submenu rotation when closing
+        subMenuRotation = 0.0
+        subMenuStartAngle = 0.0
         // Also close any open sub-submenus
         closeSubSubMenu()
     }
@@ -574,6 +707,9 @@ struct FinalView: View {
     func closeSubSubMenu() {
         showingSubSubMenuForIndex = nil
         subSubMenuAnimatedIndices.removeAll()
+        // Reset sub-submenu rotation when closing
+        subSubMenuRotation = 0.0
+        subSubMenuStartAngle = 0.0
     }
 
     // Legacy functions enhanced for continuous infinite scrolling
