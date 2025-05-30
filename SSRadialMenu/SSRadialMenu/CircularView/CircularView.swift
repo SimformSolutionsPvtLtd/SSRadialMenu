@@ -7,7 +7,7 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        FinalView(alignment: .bottomTrailing)
+        FinalView(alignment: .topTrailing)
     }
 }
 
@@ -239,11 +239,14 @@ struct FinalView: View {
                     // Calculate submenu positioning with independent rotation
                     let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
                     
-                    // Calculate the outward direction from the parent item's fixed position
-                    let outwardAngle = fixedMainItemAngle
-                    
-                    // Apply submenu's independent rotation
-                    let subPizzaAngle = outwardAngle - (Double(subIndex) * subMenuAnglePerItem) + subMenuRotation
+                    // Calculate submenu positioning with alignment-aware directional logic
+                    let subPizzaAngle = calculateAlignmentAwareSubMenuAngle(
+                        fixedMainItemAngle: fixedMainItemAngle,
+                        subIndex: subIndex,
+                        anglePerItem: subMenuAnglePerItem,
+                        subMenuRotation: subMenuRotation,
+                        alignment: alignment
+                    )
                     
                     // Calculate positions for smooth animation
                     let animatedPosition = CGPoint(
@@ -292,11 +295,23 @@ struct FinalView: View {
                     let fixedMainItemAngle = getFixedMainItemAngle(for: mainIndex)
                     let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
                     
-                    // Calculate parent submenu item's fixed angle (without any rotation influence)
-                    let fixedSubMenuAngle = fixedMainItemAngle - (Double(subIndex) * subMenuAnglePerItem)
+                    // Calculate parent submenu item's fixed angle using alignment-aware logic
+                    let fixedSubMenuAngle = calculateAlignmentAwareSubMenuAngle(
+                        fixedMainItemAngle: fixedMainItemAngle,
+                        subIndex: subIndex,
+                        anglePerItem: subMenuAnglePerItem,
+                        subMenuRotation: 0.0, // Use 0 rotation for fixed positioning
+                        alignment: alignment
+                    )
                     
                     // Calculate sub-submenu positioning with only its own independent rotation
-                    let subSubPizzaAngle = fixedSubMenuAngle - (Double(subSubIndex) * anglePerItem) + subSubMenuRotation
+                    let subSubPizzaAngle = calculateAlignmentAwareSubSubMenuAngle(
+                        fixedSubMenuAngle: fixedSubMenuAngle,
+                        subSubIndex: subSubIndex,
+                        anglePerItem: anglePerItem,
+                        subSubMenuRotation: subSubMenuRotation,
+                        alignment: alignment
+                    )
                     
                     // Calculate positions - start from parent submenu item's fixed position
                     let parentSubMenuFixedPosition = CGPoint(
@@ -694,6 +709,51 @@ struct FinalView: View {
             nameofPizza = subMenuItem.pizza
             priceofPizza = subMenuItem.pizzaPrice
         }
+    }
+    
+    // Helper function to determine if the alignment uses clockwise direction for sub-items
+    private func shouldUseClockwiseDirection(for alignment: AlignmentType) -> Bool {
+        switch alignment {
+        case .topLeading, .bottomTrailing:
+            return false // Counter-clockwise (negative angle direction)
+        case .topTrailing, .bottomLeading:
+            return true  // Clockwise (positive angle direction)
+        }
+    }
+    
+    // Helper function to get the directional multiplier for sub-submenu items
+    private func getSubSubMenuDirectionalMultiplier(for alignment: AlignmentType) -> Double {
+        return shouldUseClockwiseDirection(for: alignment) ? 1.0 : -1.0
+    }
+    
+    // Helper function to calculate alignment-aware sub-submenu angle
+    private func calculateAlignmentAwareSubSubMenuAngle(
+        fixedSubMenuAngle: Double,
+        subSubIndex: Int,
+        anglePerItem: Double,
+        subSubMenuRotation: Double,
+        alignment: AlignmentType
+    ) -> Double {
+        let directionalMultiplier = getSubSubMenuDirectionalMultiplier(for: alignment)
+        
+        // Apply directional logic: sub-submenu items should expand in the same directional pattern
+        // as their parent alignment, following the natural angular progression
+        return fixedSubMenuAngle + (directionalMultiplier * Double(subSubIndex) * anglePerItem) + subSubMenuRotation
+    }
+    
+    // Helper function to calculate alignment-aware submenu angle
+    private func calculateAlignmentAwareSubMenuAngle(
+        fixedMainItemAngle: Double,
+        subIndex: Int,
+        anglePerItem: Double,
+        subMenuRotation: Double,
+        alignment: AlignmentType
+    ) -> Double {
+        let directionalMultiplier = getSubSubMenuDirectionalMultiplier(for: alignment)
+        
+        // Apply directional logic: submenu items should expand in the same directional pattern
+        // as their parent alignment, following the natural angular progression
+        return fixedMainItemAngle + (directionalMultiplier * Double(subIndex) * anglePerItem) + subMenuRotation
     }
     
     // Function to reset all scroll positions to zero for consistent menu opening
