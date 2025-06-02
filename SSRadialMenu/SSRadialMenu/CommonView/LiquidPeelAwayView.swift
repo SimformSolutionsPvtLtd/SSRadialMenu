@@ -62,12 +62,12 @@ struct LiquidPeelAwayView: View {
         ZStack {
             BlurredOverlayCircles(isExpanded: $isExpanded, xOffset: $xOffset, yOffset: $yOffset, scaleEffect: $scaleEffect, currentPeelingAngle: $currentPeelingAngle, color: Color.blue, isMainMenu: true, externalFrameWidth: 100, externalFrameHeight: 100, index: 0)
 
-            RadialMenu(
-                items: menuItems,
-                position: position,
-                isExpanded: $isExpanded,
-                menuItemsVisible: $menuItemsVisible,
-                currentPeelingAngle: $currentPeelingAngle)
+//            RadialMenu(
+//                items: menuItems,
+//                position: position,
+//                isExpanded: $isExpanded,
+//                menuItemsVisible: $menuItemsVisible,
+//                currentPeelingAngle: $currentPeelingAngle)
           
             .onChange(of: isExpanded) { _, newVal in
                 if !newVal {
