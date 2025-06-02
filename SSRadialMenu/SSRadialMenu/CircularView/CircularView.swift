@@ -7,7 +7,7 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        FinalView(alignment: .bottomTrailing)
+        FinalView(alignment: .bottomLeading)
     }
 }
 
@@ -230,6 +230,45 @@ struct FinalView: View {
                                 .font(.caption2)
                         }
                     }
+                    
+                    // Show submenu debug info when a submenu is open
+                    if let selectedIndex = showingSubMenuForIndex,
+                       let subMenuItems = pizzas[selectedIndex].subMenuItems {
+                        Divider()
+                            .background(Color.gray)
+                            .frame(width: 200)
+                            .padding(.vertical, 4)
+                        
+                        HStack {
+                            Text("Submenu: \(String(format: "%.1f", subMenuRotation))°")
+                                .foregroundColor(.white)
+                                .font(.caption)
+                            Text("| Items: \(subMenuItems.count)")
+                                .foregroundColor(.gray)
+                                .font(.caption)
+                            Text("| Scroll: \(isSubMenuScrollingEnabled(for: selectedIndex) ? "ON" : "OFF")")
+                                .foregroundColor(isSubMenuScrollingEnabled(for: selectedIndex) ? .green : .red)
+                                .font(.caption)
+                        }
+                        
+                        // Show submenu controls if scrolling is enabled
+                        if isSubMenuScrollingEnabled(for: selectedIndex) {
+                            HStack(spacing: 20) {
+                                Button("◀") {
+                                    rotateSubMenuToPreviousItem()
+                                }
+                                .foregroundColor(.white)
+                                .font(.title3)
+                                
+                                Button("▶") {
+                                    rotateSubMenuToNextItem()
+                                }
+                                .foregroundColor(.white)
+                                .font(.title3)
+                            }
+                            .padding(.top, 2)
+                        }
+                    }
                 }
                 .padding(.top, 50)
                 
@@ -319,73 +358,55 @@ struct FinalView: View {
            let subMenuItems = pizzas[selectedIndex].subMenuItems {
             
             ZStack {
-                ForEach(subMenuItems.indices, id: \.self) { subIndex in
-                    let subPizzaAngle = calculateSubMenuAngle(
-                        selectedIndex: selectedIndex,
-                        subIndex: subIndex,
-                        subMenuItems: subMenuItems
+                // Use carousel-style approach for submenu items
+                let visibleSubMenuItems = getVisibleItemsForSubMenu(selectedIndex: selectedIndex, subMenuItems: subMenuItems)
+                
+                ForEach(Array(visibleSubMenuItems.enumerated()), id: \.element.index) { _, item in
+                    let (itemRotation, subPizzaAngle, opacity) = calculateSubMenuItemProperties(
+                        for: item,
+                        selectedIndex: selectedIndex
                     )
                     
-                    // Use fixed main item angle for consistent anchoring
-                    let fixedMainItemAngle = getFixedMainItemAngle(for: selectedIndex)
-                    
-                    // Calculate positions for smooth animation
-                    let animatedPosition = CGPoint(
-                        x: subMenuRadius * cos(subPizzaAngle * .pi / 180),
-                        y: subMenuRadius * sin(subPizzaAngle * .pi / 180)
-                    )
-                    
-                    // Start position should also use fixed angle for consistent anchoring
-                    let startPosition = CGPoint(
-                        x: radius * cos(fixedMainItemAngle * .pi / 180),
-                        y: radius * sin(fixedMainItemAngle * .pi / 180)
-                    )
+                    // Only show item if it's visible
+                    if shouldSubMenuItemBeVisible(visualIndex: item.visualIndex, selectedIndex: selectedIndex) {
+                        // Additional safety check: only render items with meaningful opacity
+                        if opacity > 0.05 {
+                            // Use fixed main item angle for consistent anchoring
+                            let fixedMainItemAngle = getFixedMainItemAngle(for: selectedIndex)
+                            
+                            // Calculate start position for animation
+                            let startPosition = CGPoint(
+                                x: radius * cos(fixedMainItemAngle * .pi / 180),
+                                y: radius * sin(fixedMainItemAngle * .pi / 180)
+                            )
+                            
+                            // Calculate positions for smooth animation
+                            let animatedPosition = CGPoint(
+                                x: subMenuRadius * cos(subPizzaAngle * .pi / 180),
+                                y: subMenuRadius * sin(subPizzaAngle * .pi / 180)
+                            )
 
-                    // Create hierarchical index for submenu items
-                    let hierarchicalIndex = "\(selectedIndex + 1).\(subIndex + 1)"
+                            // Create hierarchical index for submenu items
+                            let hierarchicalIndex = "\(selectedIndex + 1).\(item.index + 1)"
 
-                    PizzaCard(pizza: subMenuItems[subIndex], hierarchicalIndex: hierarchicalIndex, cardSize: 45) // Smaller size for submenu items
-                        .rotationEffect(.degrees(-subPizzaAngle))
-                        .offset(
-                            x: subMenuAnimatedIndices.contains(subIndex) ? animatedPosition.x : startPosition.x,
-                            y: subMenuAnimatedIndices.contains(subIndex) ? animatedPosition.y : startPosition.y
-                        )
-                        .scaleEffect(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.1)
-                        .opacity(subMenuAnimatedIndices.contains(subIndex) ? 1 : 0.3)
-                        .animation(isSubMenuDragging ? .none : .spring(response: 0.5, dampingFraction: 0.6), value: subMenuAnimatedIndices)
-                        .animation(isSubMenuDragging ? .none : .linear(duration: 0.15), value: subMenuRotation)
-                        .onTapGesture {
-                            handleSubMenuItemTap(mainIndex: selectedIndex, subIndex: subIndex, subMenuItem: subMenuItems[subIndex])
+                            PizzaCard(pizza: item.pizza, hierarchicalIndex: hierarchicalIndex, cardSize: 45) // Smaller size for submenu items
+                                .rotationEffect(.degrees(-subPizzaAngle))
+                                .offset(
+                                    x: subMenuAnimatedIndices.contains(item.visualIndex) ? animatedPosition.x : startPosition.x,
+                                    y: subMenuAnimatedIndices.contains(item.visualIndex) ? animatedPosition.y : startPosition.y
+                                )
+                                .scaleEffect(subMenuAnimatedIndices.contains(item.visualIndex) ? 1 : 0.1)
+                                .opacity(opacity)
+                                .animation(isSubMenuDragging ? .none : .spring(response: 0.5, dampingFraction: 0.6), value: subMenuAnimatedIndices)
+                                .animation(isSubMenuDragging ? .none : .linear(duration: 0.15), value: subMenuRotation)
+                                .onTapGesture {
+                                    handleSubMenuItemTap(mainIndex: selectedIndex, subIndex: item.index, subMenuItem: item.pizza)
+                                }
                         }
+                    }
                 }
             }
             .gesture(isSubMenuScrollingEnabled(for: selectedIndex) && showingSubSubMenuForIndex == nil ? subMenuDragGesture : nil) // Conditional drag gesture - disabled when sub-submenus are open
-        }
-    }
-    
-    // Helper function to calculate submenu angle
-    private func calculateSubMenuAngle(selectedIndex: Int, subIndex: Int, subMenuItems: [Pizza]) -> Double {
-        let fixedMainItemAngle = getFixedMainItemAngle(for: selectedIndex)
-        let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
-        
-        if isSubMenuScrollingEnabled(for: selectedIndex) {
-            // Scrollable mode: use existing carousel logic with rotation
-            return calculateAlignmentAwareSubMenuAngle(
-                fixedMainItemAngle: fixedMainItemAngle,
-                subIndex: subIndex,
-                anglePerItem: subMenuAnglePerItem,
-                subMenuRotation: subMenuRotation,
-                alignment: alignment
-            )
-        } else {
-            // Static mode: use original carousel positioning logic with fixed rotation
-            return calculateAlignmentAwareSubMenuAngle(
-                fixedMainItemAngle: fixedMainItemAngle,
-                subIndex: subIndex,
-                anglePerItem: subMenuAnglePerItem,
-                subMenuRotation: 0.0, // No rotation for static mode
-                alignment: alignment
-            )
         }
     }
     
@@ -405,21 +426,23 @@ struct FinalView: View {
                         subSubMenuItems: subSubMenuItems
                     )
                     
-                    // Calculate parent submenu item's fixed angle using alignment-aware logic
-                    let fixedMainItemAngle = getFixedMainItemAngle(for: mainIndex)
-                    let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
-                    let fixedSubMenuAngle = calculateAlignmentAwareSubMenuAngle(
-                        fixedMainItemAngle: fixedMainItemAngle,
-                        subIndex: subIndex,
-                        anglePerItem: subMenuAnglePerItem,
-                        subMenuRotation: 0.0, // Use 0 rotation for fixed positioning
-                        alignment: alignment
-                    )
+                    // Calculate parent submenu item's angle using the same simple pattern
+                    let parentSubMenuAngle: Double = {
+                        if isSubMenuScrollingEnabled(for: mainIndex) {
+                            // If parent submenu is scrollable, use current submenu rotation
+                            let subItemRotation = Double(subIndex) * anglePerItem - subMenuRotation
+                            return alignment.itemAngleForCarousel(rotation: subItemRotation)
+                        } else {
+                            // If parent submenu is static, use simple sequential positioning
+                            let staticSubItemRotation = Double(subIndex) * anglePerItem
+                            return alignment.itemAngleForCarousel(rotation: staticSubItemRotation)
+                        }
+                    }()
                     
-                    // Calculate positions - start from parent submenu item's fixed position
+                    // Calculate positions - start from parent submenu item's position
                     let parentSubMenuFixedPosition = CGPoint(
-                        x: subMenuRadius * cos(fixedSubMenuAngle * .pi / 180),
-                        y: subMenuRadius * sin(fixedSubMenuAngle * .pi / 180)
+                        x: subMenuRadius * cos(parentSubMenuAngle * .pi / 180),
+                        y: subMenuRadius * sin(parentSubMenuAngle * .pi / 180)
                     )
                     
                     let animatedPosition = CGPoint(
@@ -454,38 +477,15 @@ struct FinalView: View {
     
     // Helper function to calculate sub-submenu angle
     private func calculateSubSubMenuAngle(mainIndex: Int, subIndex: Int, subSubIndex: Int, subSubMenuItems: [Pizza]) -> Double {
-        // Use fixed angles for both main and submenu items to ensure complete independence
-        let fixedMainItemAngle = getFixedMainItemAngle(for: mainIndex)
-        let subMenuAnglePerItem = anglePerItem // Use same spacing as main menu
-        
-        // Calculate parent submenu item's fixed angle using alignment-aware logic
-        let fixedSubMenuAngle = calculateAlignmentAwareSubMenuAngle(
-            fixedMainItemAngle: fixedMainItemAngle,
-            subIndex: subIndex,
-            anglePerItem: subMenuAnglePerItem,
-            subMenuRotation: 0.0, // Use 0 rotation for fixed positioning
-            alignment: alignment
-        )
-        
-        // Calculate sub-submenu positioning with only its own independent rotation
+        // Calculate sub-submenu positioning using the same simple pattern as main menu
         if isSubSubMenuScrollingEnabled(for: mainIndex, subIndex: subIndex) {
-            // Scrollable mode: use existing carousel logic with rotation
-            return calculateAlignmentAwareSubSubMenuAngle(
-                fixedSubMenuAngle: fixedSubMenuAngle,
-                subSubIndex: subSubIndex,
-                anglePerItem: anglePerItem,
-                subSubMenuRotation: subSubMenuRotation,
-                alignment: alignment
-            )
+            // Scrollable mode: use the exact same pattern as main menu items
+            let itemRotation = Double(subSubIndex) * anglePerItem - subSubMenuRotation
+            return alignment.itemAngleForCarousel(rotation: itemRotation)
         } else {
-            // Static mode: use original carousel positioning logic with fixed rotation
-            return calculateAlignmentAwareSubSubMenuAngle(
-                fixedSubMenuAngle: fixedSubMenuAngle,
-                subSubIndex: subSubIndex,
-                anglePerItem: anglePerItem,
-                subSubMenuRotation: 0.0, // No rotation for static mode
-                alignment: alignment
-            )
+            // Static mode: use simple sequential positioning like main menu
+            let staticItemRotation = Double(subSubIndex) * anglePerItem
+            return alignment.itemAngleForCarousel(rotation: staticItemRotation)
         }
     }
     
@@ -603,7 +603,7 @@ struct FinalView: View {
             }
     }
     
-    // Independent drag gesture for submenu
+    // Independent drag gesture for submenu with carousel-style scrolling
     private var subMenuDragGesture: some Gesture {
         DragGesture()
             .onChanged { value in
@@ -616,6 +616,11 @@ struct FinalView: View {
                 let delta = Double(translation.width) * rotationSensitivity
                 
                 subMenuRotation = subMenuStartAngle + delta
+                
+                // Update visible items silently during drag for seamless continuous scrolling
+                if let selectedIndex = showingSubMenuForIndex {
+                    updateVisibleSubMenuItemsAnimation(for: selectedIndex)
+                }
             }
             .onEnded { value in
                 isSubMenuDragging = false
@@ -630,6 +635,15 @@ struct FinalView: View {
                         subMenuRotation += momentumRotation
                         subMenuStartAngle = subMenuRotation
                     }
+                    
+                    // Update after momentum animation with shorter delay
+                    if let selectedIndex = showingSubMenuForIndex {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            updateVisibleSubMenuItemsAnimation(for: selectedIndex)
+                        }
+                    }
+                } else if let selectedIndex = showingSubMenuForIndex {
+                    updateVisibleSubMenuItemsAnimation(for: selectedIndex)
                 }
             }
     }
@@ -860,51 +874,6 @@ struct FinalView: View {
         }
     }
     
-    // Helper function to determine if the alignment uses clockwise direction for sub-items
-    private func shouldUseClockwiseDirection(for alignment: AlignmentType) -> Bool {
-        switch alignment {
-        case .topLeading, .bottomTrailing:
-            return false // Counter-clockwise (negative angle direction)
-        case .topTrailing, .bottomLeading:
-            return true  // Clockwise (positive angle direction)
-        }
-    }
-    
-    // Helper function to get the directional multiplier for sub-submenu items
-    private func getSubSubMenuDirectionalMultiplier(for alignment: AlignmentType) -> Double {
-        return shouldUseClockwiseDirection(for: alignment) ? 1.0 : -1.0
-    }
-    
-    // Helper function to calculate alignment-aware sub-submenu angle
-    private func calculateAlignmentAwareSubSubMenuAngle(
-        fixedSubMenuAngle: Double,
-        subSubIndex: Int,
-        anglePerItem: Double,
-        subSubMenuRotation: Double,
-        alignment: AlignmentType
-    ) -> Double {
-        let directionalMultiplier = getSubSubMenuDirectionalMultiplier(for: alignment)
-        
-        // Apply directional logic: sub-submenu items should expand in the same directional pattern
-        // as their parent alignment, following the natural angular progression
-        return fixedSubMenuAngle + (directionalMultiplier * Double(subSubIndex) * anglePerItem) + subSubMenuRotation
-    }
-    
-    // Helper function to calculate alignment-aware submenu angle
-    private func calculateAlignmentAwareSubMenuAngle(
-        fixedMainItemAngle: Double,
-        subIndex: Int,
-        anglePerItem: Double,
-        subMenuRotation: Double,
-        alignment: AlignmentType
-    ) -> Double {
-        let directionalMultiplier = getSubSubMenuDirectionalMultiplier(for: alignment)
-        
-        // Apply directional logic: submenu items should expand in the same directional pattern
-        // as their parent alignment, following the natural angular progression
-        return fixedMainItemAngle + (directionalMultiplier * Double(subIndex) * anglePerItem) + subMenuRotation
-    }
-    
     // Function to reset all scroll positions to zero for consistent menu opening
     func resetAllScrollPositions() {
         // Reset main menu scroll position
@@ -920,6 +889,53 @@ struct FinalView: View {
         subSubMenuStartAngle = 0.0
     }
 
+    // Function to update animation state for submenu items entering/leaving visibility during continuous scrolling
+    func updateVisibleSubMenuItemsAnimation(for selectedIndex: Int) {
+        guard let subMenuItems = pizzas[selectedIndex].subMenuItems else { return }
+        
+        let visibleItems = getVisibleItemsForSubMenu(selectedIndex: selectedIndex, subMenuItems: subMenuItems)
+        var newAnimatedIndices = Set<Int>()
+        
+        for item in visibleItems {
+            if shouldSubMenuItemBeVisible(visualIndex: item.visualIndex, selectedIndex: selectedIndex) {
+                newAnimatedIndices.insert(item.visualIndex)
+            }
+        }
+        
+        // During dragging, update items silently without animation for seamless transitions
+        if isSubMenuDragging {
+            // Silently add newly visible items without animation
+            for visualIndex in newAnimatedIndices {
+                if !subMenuAnimatedIndices.contains(visualIndex) {
+                    subMenuAnimatedIndices.insert(visualIndex)
+                }
+            }
+            
+            // Silently remove items that are no longer visible without animation
+            let indicesToRemove = subMenuAnimatedIndices.subtracting(newAnimatedIndices)
+            for visualIndex in indicesToRemove {
+                subMenuAnimatedIndices.remove(visualIndex)
+            }
+        } else {
+            // When not dragging, use subtle animations for entering/exiting items
+            for visualIndex in newAnimatedIndices {
+                if !subMenuAnimatedIndices.contains(visualIndex) {
+                    withAnimation(.easeIn(duration: 0.2)) {
+                        subMenuAnimatedIndices.insert(visualIndex)
+                    }
+                }
+            }
+            
+            // Remove items that are no longer visible
+            let indicesToRemove = subMenuAnimatedIndices.subtracting(newAnimatedIndices)
+            for visualIndex in indicesToRemove {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    subMenuAnimatedIndices.remove(visualIndex)
+                }
+            }
+        }
+    }
+    
     func closeSubMenu() {
         showingSubMenuForIndex = nil
         subMenuAnimatedIndices.removeAll()
@@ -959,6 +975,31 @@ struct FinalView: View {
         }
         updatePizzaDetailsForCarousel()
         updateVisibleItemsAnimation()
+    }
+    
+    // Functions for submenu navigation
+    func rotateSubMenuToNextItem() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            subMenuRotation += anglePerItem
+            subMenuStartAngle = subMenuRotation
+        }
+        
+        // Update visible submenu items
+        if let selectedIndex = showingSubMenuForIndex {
+            updateVisibleSubMenuItemsAnimation(for: selectedIndex)
+        }
+    }
+    
+    func rotateSubMenuToPreviousItem() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            subMenuRotation -= anglePerItem
+            subMenuStartAngle = subMenuRotation
+        }
+        
+        // Update visible submenu items
+        if let selectedIndex = showingSubMenuForIndex {
+            updateVisibleSubMenuItemsAnimation(for: selectedIndex)
+        }
     }
     
     func restartAnimation() {
@@ -1004,12 +1045,131 @@ struct FinalView: View {
         }
     }
 
+    // Enhanced function to get visible items for submenu carousel with infinite scrolling
+    func getVisibleItemsForSubMenu(selectedIndex: Int, subMenuItems: [Pizza]) -> [(pizza: Pizza, index: Int, visualIndex: Int)] {
+        var result: [(pizza: Pizza, index: Int, visualIndex: Int)] = []
+        
+        if !isSubMenuScrollingEnabled(for: selectedIndex) {
+            // Static mode: show all items in their natural order starting from 0
+            for i in 0..<subMenuItems.count {
+                result.append((pizza: subMenuItems[i], index: i, visualIndex: i))
+            }
+            return result
+        }
+        
+        // Scrollable mode: use carousel logic with infinite wrapping
+        // Calculate the floating point offset based on continuous rotation
+        let floatingOffset = subMenuRotation / anglePerItem
+        
+        // Buffer for smooth scrolling
+        let bufferItems = 2
+        let startIndex = Int(floor(floatingOffset)) - bufferItems
+        let endIndex = startIndex + maxVisibleItems + (bufferItems * 2)
+        
+        for i in startIndex...endIndex {
+            // Proper modulo handling for negative numbers to ensure infinite wrapping
+            let actualIndex = modulo(i, subMenuItems.count)
+            let visualIndex = i
+            result.append((pizza: subMenuItems[actualIndex], index: actualIndex, visualIndex: visualIndex))
+        }
+        
+        return result
+    }
+    
+    // Helper function to calculate submenu item properties
+    private func calculateSubMenuItemProperties(for item: (pizza: Pizza, index: Int, visualIndex: Int), selectedIndex: Int) -> (rotation: Double, angle: Double, opacity: Double) {
+        if !isSubMenuScrollingEnabled(for: selectedIndex) {
+            // Static mode: use simple sequential positioning like main menu
+            let staticItemRotation = Double(item.index) * anglePerItem
+            let staticItemAngle = alignment.itemAngleForCarousel(rotation: staticItemRotation)
+            return (staticItemRotation, staticItemAngle, 1.0)
+        }
+        
+        // Scrollable mode: use the exact same pattern as main menu items
+        let itemRotation = Double(item.visualIndex) * anglePerItem - subMenuRotation
+        let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
+        let opacity = getSubMenuItemOpacity(visualIndex: item.visualIndex, selectedIndex: selectedIndex)
+        
+        return (itemRotation, itemAngle, opacity)
+    }
+    
+    // Function to calculate if a submenu item should be visible based on its angle
+    func shouldSubMenuItemBeVisible(visualIndex: Int, selectedIndex: Int) -> Bool {
+        if !isSubMenuScrollingEnabled(for: selectedIndex) {
+            // Static mode: all items are visible
+            return true
+        }
+        
+        // Scrollable mode: use visibility logic similar to main menu
+        let itemRotation = Double(visualIndex) * anglePerItem - subMenuRotation
+        let normalizedRotation = ((itemRotation + 180).truncatingRemainder(dividingBy: 360)) - 180
+        
+        // Use visibility threshold for scrollable items
+        let visibilityThreshold = (totalSpan / 2) + (anglePerItem * 0.8)
+        return abs(normalizedRotation) <= visibilityThreshold
+    }
+    
+    // Helper function for submenu item opacity
+    func getSubMenuItemOpacity(visualIndex: Int, selectedIndex: Int) -> Double {
+        if !isSubMenuScrollingEnabled(for: selectedIndex) {
+            // Static mode: all items have full opacity
+            return 1.0
+        }
+        
+        // Scrollable mode: opacity logic similar to main menu
+        let itemRotation = Double(visualIndex) * anglePerItem - subMenuRotation
+        let normalizedRotation = ((itemRotation + 180).truncatingRemainder(dividingBy: 360)) - 180
+        let coreDistance = totalSpan / 2 // Core visible area
+        let bufferDistance = coreDistance + (anglePerItem * 0.8) // Extended area with buffer
+        let distance = abs(normalizedRotation)
+        
+        // Full opacity for items in the core circular area
+        if distance <= coreDistance {
+            return 1.0
+        }
+        // Fade for items in the buffer zone
+        else if distance <= bufferDistance {
+            let fadeDistance = distance - coreDistance
+            let fadeRange = bufferDistance - coreDistance
+            let fadeRatio = fadeDistance / fadeRange
+            
+            return max(0.0, 1.0 - (fadeRatio * 0.9)) // Fade from 100% to 10% opacity
+        } else {
+            return 0.0 // Completely hidden for items outside the buffer
+        }
+    }
+    
     func startSubMenuSequentialAnimation(itemCount: Int) {
         subMenuAnimatedIndices.removeAll() // Reset animation state
-        for index in 0..<itemCount {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) {
-                withAnimation(.easeIn) {
-                    _ = subMenuAnimatedIndices.insert(index) // Animate each submenu item one by one
+        
+        // Get visible submenu items
+        if let selectedIndex = showingSubMenuForIndex,
+           let subMenuItems = pizzas[selectedIndex].subMenuItems {
+            
+            let visibleItems = getVisibleItemsForSubMenu(selectedIndex: selectedIndex, subMenuItems: subMenuItems)
+            
+            // Sort visible items by their actual index for proper chaining sequence
+            let sortedVisibleItems = visibleItems
+                .filter { shouldSubMenuItemBeVisible(visualIndex: $0.visualIndex, selectedIndex: selectedIndex) }
+                .sorted { $0.index < $1.index }
+            
+            // Create staggered chaining animation
+            for (sequenceIndex, item) in sortedVisibleItems.enumerated() {
+                let animationDelay = Double(sequenceIndex) * 0.1 // Delay for chaining effect
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + animationDelay) {
+                    withAnimation(.easeIn) {
+                        _ = subMenuAnimatedIndices.insert(item.visualIndex) // Animate each submenu item one by one
+                    }
+                }
+            }
+        } else {
+            // Fallback to original animation if no visible items
+            for index in 0..<itemCount {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) {
+                    withAnimation(.easeIn) {
+                        _ = subMenuAnimatedIndices.insert(index) // Animate each submenu item one by one
+                    }
                 }
             }
         }
@@ -1138,6 +1298,40 @@ var pizzas : [Pizza] = {
                    Pizza(pizza: "Sub-Sub Panner 2B", pizzaImage: "pizza1", pizzaPrice: "235 $"),
                    Pizza(pizza: "Sub-Sub Panner 2C", pizzaImage: "pizza1", pizzaPrice: "245 $")
                ]),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
+               Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
                Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $"),
                Pizza(pizza: "Sub Panner Pizza 3", pizzaImage: "pizza1", pizzaPrice: "220 $")
            ]),
