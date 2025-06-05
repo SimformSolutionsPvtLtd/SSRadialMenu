@@ -16,6 +16,7 @@
 		7D9237192DF073EC00CBDA4E /* MenuType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D9237182DF073E900CBDA4E /* MenuType.swift */; };
 		7D92371D2DF0740D00CBDA4E /* DebugInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D92371C2DF0740D00CBDA4E /* DebugInfoView.swift */; };
 		7D9237222DF0756A00CBDA4E /* AlignmentType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D9237212DF0756A00CBDA4E /* AlignmentType.swift */; };
+		7D9237232DF0756B00CBDA4E /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D9237242DF0756B00CBDA4E /* Constants.swift */; };
 		7D9237282DF1892500CBDA4E /* RadialMenuItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D9237232DF07B2F00CBDA4E /* RadialMenuItems.swift */; };
 		7DC84ACB2CDE14C400903218 /* CircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC84ACA2CDE14C400903218 /* CircleView.swift */; };
 		7DF38E7A2CD8D9B100C91782 /* RadialMenuPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */; };
@@ -37,6 +38,7 @@
 		7D92371C2DF0740D00CBDA4E /* DebugInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugInfoView.swift; sourceTree = "<group>"; };
 		7D9237212DF0756A00CBDA4E /* AlignmentType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlignmentType.swift; sourceTree = "<group>"; };
 		7D9237232DF07B2F00CBDA4E /* RadialMenuItems.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialMenuItems.swift; sourceTree = "<group>"; };
+		7D9237242DF0756B00CBDA4E /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		7DC84ACA2CDE14C400903218 /* CircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleView.swift; sourceTree = "<group>"; };
 		7DF38E792CD8D9B100C91782 /* RadialMenuPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialMenuPosition.swift; sourceTree = "<group>"; };
 		7DF38E7B2CD8D9E400C91782 /* PlusToCrossView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlusToCrossView.swift; sourceTree = "<group>"; };
@@ -84,6 +86,7 @@
 			children = (
 				7D9237212DF0756A00CBDA4E /* AlignmentType.swift */,
 				7D9237182DF073E900CBDA4E /* MenuType.swift */,
+				7D9237242DF0756B00CBDA4E /* Constants.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -234,6 +237,7 @@
 				7DF38E7A2CD8D9B100C91782 /* RadialMenuPosition.swift in Sources */,
 				7D92371D2DF0740D00CBDA4E /* DebugInfoView.swift in Sources */,
 				7D9237222DF0756A00CBDA4E /* AlignmentType.swift in Sources */,
+				7D9237232DF0756B00CBDA4E /* Constants.swift in Sources */,
 				7DFFDCDE2CFDFCD800518066 /* CircularView.swift in Sources */,
 				7D76F96D2CDB4BC500A125BE /* BlurredOverlayCircles.swift in Sources */,
 				BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */,
