@@ -8,10 +8,12 @@ import SwiftUI
 struct SSRadialMenu: View {
     let menuItems: [RadialMenuItems]
     var alignment: AlignmentType = .bottomTrailing
+    let fabIcon: String
     
-    init(menuItems: [RadialMenuItems], alignment: AlignmentType = .bottomTrailing) {
+    init(menuItems: [RadialMenuItems], alignment: AlignmentType = .bottomTrailing, fabIcon: String = "star.fill") {
         self.menuItems = menuItems
         self.alignment = alignment
+        self.fabIcon = fabIcon
     }
     
     // Core UI State
@@ -525,7 +527,7 @@ struct SSRadialMenu: View {
                 animatedIndices.removeAll()
             }
         }, label: {
-            Image(systemName: "star.fill")
+            Image(fabIcon)
                 .resizable()
                 .frame(width: 50, height: 50)
                 .foregroundColor(.yellow)
