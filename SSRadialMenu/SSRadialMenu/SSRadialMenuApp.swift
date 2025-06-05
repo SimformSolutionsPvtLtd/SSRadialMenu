@@ -9,97 +9,101 @@ import SwiftUI
 
 // Default menu items data with 60 items for testing
 private let defaultMenuItems: [RadialMenuItems] = {
-    var basePizzas: [RadialMenuItems] = [
-        .init(name: "Panner Pizza", icon: "pizza1", pizzaPrice: "200 $", subMenuItems: [
-               RadialMenuItems(name: "Sub Panner Pizza 1", icon: "pizza1", pizzaPrice: "200 $", subMenuItems: [
-                   RadialMenuItems(name: "Sub-Sub Panner 1A", icon: "pizza1", pizzaPrice: "205 $"),
-                   RadialMenuItems(name: "Sub-Sub Panner 1B", icon: "pizza1", pizzaPrice: "215 $")
+    var baseItems: [RadialMenuItems] = [
+        .init(name: "Action Item", icon: "pizza1", price: "200 $", subMenuItems: [
+               RadialMenuItems(name: "Sub Action 1", icon: "pizza1", price: "200 $", subMenuItems: [
+                   RadialMenuItems(name: "Sub-Sub Action 1A", icon: "pizza1", price: "205 $"),
+                   RadialMenuItems(name: "Sub-Sub Action 1B", icon: "pizza1", price: "215 $")
                ]),
-               RadialMenuItems(name: "Sub Panner Pizza 2", icon: "pizza1", pizzaPrice: "210 $", subMenuItems: [
-                   RadialMenuItems(name: "Sub-Sub Panner 2A", icon: "pizza1", pizzaPrice: "225 $"),
-                   RadialMenuItems(name: "Sub-Sub Panner 2B", icon: "pizza1", pizzaPrice: "235 $"),
-                   RadialMenuItems(name: "Sub-Sub Panner 2C", icon: "pizza1", pizzaPrice: "245 $")
+               RadialMenuItems(name: "Sub Action 2", icon: "pizza1", price: "210 $", subMenuItems: [
+                   RadialMenuItems(name: "Sub-Sub Action 2A", icon: "pizza1", price: "225 $"),
+                   RadialMenuItems(name: "Sub-Sub Action 2B", icon: "pizza1", price: "235 $"),
+                   RadialMenuItems(name: "Sub-Sub Action 2C", icon: "pizza1", price: "245 $")
                ]),
-               RadialMenuItems(name: "Sub Panner Pizza 3", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 4", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 5", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 6", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 7", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 8", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 9", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 10", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 11", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 12", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 13", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 14", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 15", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 16", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 17", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 18", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 19", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 20", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 21", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 22", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 23", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 24", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 25", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 26", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 27", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 28", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 29", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 30", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 31", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 32", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 33", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 34", icon: "pizza1", pizzaPrice: "220 $"),
-               RadialMenuItems(name: "Sub Panner Pizza 35", icon: "pizza1", pizzaPrice: "220 $")
+               RadialMenuItems(name: "Sub Action 3", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 4", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 5", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 6", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 7", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 8", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 9", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 10", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 11", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 12", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 13", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 14", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 15", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 16", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 17", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 18", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 19", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 20", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 21", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 22", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 23", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 24", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 25", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 26", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 27", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 28", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 29", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 30", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 31", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 32", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 33", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 34", icon: "pizza1", price: "220 $"),
+               RadialMenuItems(name: "Sub Action 35", icon: "pizza1", price: "220 $")
            ]),
-        .init(name: "Cheese Pizza", icon: "pizza2", pizzaPrice: "150 $", subMenuItems: nil),
-        .init(name: "Italian Pizza", icon: "pizza3", pizzaPrice: "300 $", subMenuItems: [
-               RadialMenuItems(name: "Sub Italian 1", icon: "pizza3", pizzaPrice: "310 $", subMenuItems: [
-                   RadialMenuItems(name: "Sub-Sub Italian 1A", icon: "pizza3", pizzaPrice: "315 $"),
-                   RadialMenuItems(name: "Sub-Sub Italian 1B", icon: "pizza3", pizzaPrice: "325 $")
+        .init(name: "Settings", icon: "pizza2", price: "150 $", subMenuItems: nil),
+        .init(name: "Profile", icon: "pizza3", price: "300 $", subMenuItems: [
+               RadialMenuItems(name: "Sub Profile 1", icon: "pizza3", price: "310 $", subMenuItems: [
+                   RadialMenuItems(name: "Sub-Sub Profile 1A", icon: "pizza3", price: "315 $"),
+                   RadialMenuItems(name: "Sub-Sub Profile 1B", icon: "pizza3", price: "325 $")
                ]),
-               RadialMenuItems(name: "Sub Italian 2", icon: "pizza3", pizzaPrice: "320 $")
+               RadialMenuItems(name: "Sub Profile 2", icon: "pizza3", price: "320 $")
            ]),
-        .init(name: "Margherita Pizza", icon: "pizza4", pizzaPrice: "180 $", subMenuItems: nil),
-        .init(name: "Pepperoni Pizza", icon: "pizza5", pizzaPrice: "220 $", subMenuItems: nil),
-        .init(name: "Veggie Pizza", icon: "pizza6", pizzaPrice: "190 $", subMenuItems: nil),
-        .init(name: "BBQ Pizza", icon: "pizza7", pizzaPrice: "250 $", subMenuItems: nil),
-        .init(name: "Hawaiian Pizza", icon: "pizza8", pizzaPrice: "210 $", subMenuItems: nil),
-        .init(name: "Meat Lovers", icon: "pizza1", pizzaPrice: "280 $", subMenuItems: nil),
-        .init(name: "Four Cheese", icon: "pizza2", pizzaPrice: "200 $", subMenuItems: nil),
-        .init(name: "Spicy Jalapeno", icon: "pizza3", pizzaPrice: "230 $", subMenuItems: nil),
-        .init(name: "Mushroom Delight", icon: "pizza4", pizzaPrice: "170 $", subMenuItems: nil),
-        .init(name: "Seafood Special", icon: "pizza5", pizzaPrice: "320 $", subMenuItems: nil)
+        .init(name: "Dashboard", icon: "pizza4", price: "180 $", subMenuItems: nil),
+        .init(name: "Reports", icon: "pizza5", price: "220 $", subMenuItems: nil),
+        .init(name: "Analytics", icon: "pizza6", price: "190 $", subMenuItems: nil),
+        .init(name: "Messages", icon: "pizza7", price: "250 $", subMenuItems: nil),
+        .init(name: "Notifications", icon: "pizza8", price: "210 $", subMenuItems: nil),
+        .init(name: "Files", icon: "pizza1", price: "280 $", subMenuItems: nil),
+        .init(name: "Calendar", icon: "pizza2", price: "200 $", subMenuItems: nil),
+        .init(name: "Tasks", icon: "pizza3", price: "230 $", subMenuItems: nil),
+        .init(name: "Contacts", icon: "pizza4", price: "170 $", subMenuItems: nil),
+        .init(name: "Help", icon: "pizza5", price: "320 $", subMenuItems: nil)
     ]
     
-    // Generate additional pizzas to test carousel with 50+ items
-    var allPizzas = basePizzas
-    let pizzaTypes = ["Supreme", "Mediterranean", "Buffalo Chicken", "White Sauce", "Pesto", "Ranch", "Taco", "Breakfast"]
-    let pizzaImages = ["pizza1", "pizza2", "pizza3", "pizza4", "pizza5", "pizza6", "pizza7", "pizza8"]
+    // Generate additional items to test carousel with 50+ items
+    var allItems = baseItems
+    let itemTypes = ["Option", "Tool", "Feature", "Command", "Service", "Module", "Widget", "Component"]
+    let itemImages = ["pizza1", "pizza2", "pizza3", "pizza4", "pizza5", "pizza6", "pizza7", "pizza8"]
     
     for i in 14...60 {
-        let typeIndex = (i - 14) % pizzaTypes.count
-        let imageIndex = (i - 14) % pizzaImages.count
+        let typeIndex = (i - 14) % itemTypes.count
+        let imageIndex = (i - 14) % itemImages.count
         let price = 150 + (i * 10)
         
-        allPizzas.append(.init(
-            name: "\(pizzaTypes[typeIndex]) Pizza \(i)",
-            icon: pizzaImages[imageIndex],
-            pizzaPrice: "\(price) $",
+        allItems.append(.init(
+            name: "\(itemTypes[typeIndex]) \(i)",
+            icon: itemImages[imageIndex],
+            price: "\(price) $",
             subMenuItems: nil
         ))
     }
     
-    return allPizzas
+    return allItems
 }()
 
 @main
 struct SSRadialMenuApp: App {
     var body: some Scene {
         WindowGroup {
-            SSRadialMenu(menuItems: defaultMenuItems, alignment: .topTrailing, fabIcon: "pizza2")
+            SSRadialMenu(
+                menuItems: defaultMenuItems,
+                alignment: .bottomTrailing,
+                fabIcon: "pizza1"
+            )
         }
     }
 }

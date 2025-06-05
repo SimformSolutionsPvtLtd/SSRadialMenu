@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct DebugInfoView: View {
-    let showPizzaCards: Bool
+    let showMenuCards: Bool
     let continuousRotation: Double
-    let pizzaCount: Int
+    let itemCount: Int
     let isMainMenuScrollingEnabled: Bool
     let anglePerItem: Double
     let animatedIndicesCount: Int
@@ -25,7 +25,7 @@ struct DebugInfoView: View {
 
     var body: some View {
         VStack {
-            if showPizzaCards {
+            if showMenuCards {
                 VStack(spacing: 4) {
                     // Main menu debug info
                     mainMenuDebugInfo
@@ -53,7 +53,7 @@ struct DebugInfoView: View {
             Text("Rotation: \(String(format: "%.1f", continuousRotation))°")
                 .foregroundColor(.white)
                 .font(.caption)
-            Text("| Items: \(pizzaCount)")
+            Text("| Items: \(itemCount)")
                 .foregroundColor(.gray)
                 .font(.caption)
             Text("| Scroll: \(isMainMenuScrollingEnabled ? "ON" : "OFF")")
@@ -85,7 +85,7 @@ struct DebugInfoView: View {
     @ViewBuilder
     private var staticModeInfo: some View {
         HStack {
-            Text("Static Mode: All \(pizzaCount) items visible")
+            Text("Static Mode: All \(itemCount) items visible")
                 .foregroundColor(.yellow)
                 .font(.caption2)
         }

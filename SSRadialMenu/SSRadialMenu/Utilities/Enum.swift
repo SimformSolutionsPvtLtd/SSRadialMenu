@@ -24,16 +24,16 @@ enum AlignmentType {
     }
     
     // Legacy function for compatibility
-    func itemAngle(index: Int, angle: Double, anglePerPizza: Double) -> Double {
+    func itemAngle(index: Int, angle: Double, anglePerItem: Double) -> Double {
         switch self {
         case .topLeading:
-            -(anglePerPizza * Double(index) + 100 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
+            -(anglePerItem * Double(index) + 100 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
         case .topTrailing:
-            (anglePerPizza * Double(index) + 280 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
+            (anglePerItem * Double(index) + 280 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
         case .bottomLeading:
-            (anglePerPizza * Double(index) + 100 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
+            (anglePerItem * Double(index) + 100 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
         case .bottomTrailing:
-            -(anglePerPizza * Double(index) + 280 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
+            -(anglePerItem * Double(index) + 280 + angle - 190.0).truncatingRemainder(dividingBy: 360.0)
         }
     }
     
@@ -73,4 +73,16 @@ enum AlignmentType {
             return -rawMomentum
         }
     }
+}
+
+enum MenuType {
+    case main, sub, subSub
+}
+
+enum MenuLevel {
+    case main, sub, subSub
+}
+
+enum RotationDirection {
+    case next, previous
 }
