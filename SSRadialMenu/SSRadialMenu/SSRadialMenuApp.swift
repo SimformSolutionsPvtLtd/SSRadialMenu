@@ -102,7 +102,9 @@ struct SSRadialMenuApp: App {
             SSRadialMenu(
                 menuItems: defaultMenuItems,
                 alignment: .bottomTrailing,
-                fabIcon: "pizza1"
+                fabIcon: "pizza1",
+                mainCardSize: 45.0,
+                spinsItemsDuringDrag: false
             )
         }
     }

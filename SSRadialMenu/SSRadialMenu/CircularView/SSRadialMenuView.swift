@@ -9,11 +9,15 @@ struct SSRadialMenu: View {
     let menuItems: [RadialMenuItems]
     var alignment: AlignmentType = .bottomTrailing
     let fabIcon: String
+    let mainCardSize: CGFloat
+    let spinsItemsDuringDrag: Bool
     
-    init(menuItems: [RadialMenuItems], alignment: AlignmentType = .bottomTrailing, fabIcon: String = "star.fill") {
+    init(menuItems: [RadialMenuItems], alignment: AlignmentType = .bottomTrailing, fabIcon: String = "star.fill", mainCardSize: CGFloat = 55.0, spinsItemsDuringDrag: Bool = true) {
         self.menuItems = menuItems
         self.alignment = alignment
         self.fabIcon = fabIcon
+        self.mainCardSize = mainCardSize
+        self.spinsItemsDuringDrag = spinsItemsDuringDrag
     }
     
     // Core UI State
@@ -155,7 +159,7 @@ extension SSRadialMenu {
                         hierarchicalIndex: getHierarchicalIndex(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex, itemIndex: item.index),
                         cardSize: getCardSize(for: menuLevel)
                     )
-                    .rotationEffect(.degrees(-itemAngle))
+                    .rotationEffect(.degrees(spinsItemsDuringDrag ? -itemAngle : 0))
                     .offset(x: currentPosition.x, y: currentPosition.y)
                     .scaleEffect(currentAnimatedIndices.contains(item.visualIndex) ? currentScaleEffect : VisualConstants.scaleEffectMinimal)
                     .opacity(finalOpacity)
@@ -225,7 +229,7 @@ extension SSRadialMenu {
                 }
             }()
 
-            let offsetMultiplier: CGFloat = cardSize / LayoutConstants.cardSizeMain
+            let offsetMultiplier: CGFloat = cardSize / mainCardSize
 
             Text(displayText)
                 .font(.bold(.system(size: fontSize))())
@@ -411,9 +415,9 @@ extension SSRadialMenu {
 
     private func getCardSize(for menuLevel: MenuLevel) -> CGFloat {
         switch menuLevel {
-        case .main: return LayoutConstants.cardSizeMain
-        case .sub: return LayoutConstants.cardSizeSub
-        case .subSub: return LayoutConstants.cardSizeSubSub
+        case .main: return mainCardSize
+        case .sub: return mainCardSize * 0.82  // Sub cards are ~18% smaller than main
+        case .subSub: return mainCardSize * 0.64  // Sub-sub cards are ~36% smaller than main
         }
     }
 
