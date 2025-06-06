@@ -9,61 +9,31 @@ import SwiftUI
 
 // Default menu items data with 60 items for testing
 private let defaultMenuItems: [RadialMenuItems] = {
+    // Create sub items for Action Item using a loop
+    var monthOfThirtyFirst: [RadialMenuItems] = []
+    for i in 1...31 {
+        monthOfThirtyFirst.append(RadialMenuItems(name: "Sub Item \(i)", icon: "\(i).circle"))
+    }
+
+    var monthsOfThirty: [RadialMenuItems] = []
+    for i in 1...30 {
+        monthsOfThirty.append(RadialMenuItems(name: "Sub Item \(i)", icon: "\(i).circle"))
+    }
+
+
     var baseItems: [RadialMenuItems] = [
-        .init(name: "Action Item", icon: "1.circle", subMenuItems: [
-               RadialMenuItems(name: "Sub Action 1", icon: "heart.fill", subMenuItems: [
-                    RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-                    RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill")
-               ]),
-               RadialMenuItems(name: "Sub Action 2", icon: "gear", image: "pizza1", subMenuItems: [
-                    RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-                    RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill")
-               ]),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "2.circle"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "3.circle"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "4.circle"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill")
-           ]),
-        .init(name: "Settings", icon: "2.circle", subMenuItems: nil),
-        .init(name: "Profile", icon: "3.circle", subMenuItems: [
-               RadialMenuItems(name: "Sub Profile 1", icon: "person.circle", subMenuItems: [
-                    RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-                    RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-                    RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-                    RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-                    RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-                    RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill")
-               ]),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1A", icon: "star.fill"),
-               RadialMenuItems(name: "Sub-Sub Action 1B", icon: "heart.fill")
-           ]),
-        .init(name: "Settings", icon: "4.circle", subMenuItems: nil),
-        .init(name: "Settings", icon: "5.circle", subMenuItems: nil),
-        .init(name: "Settings", icon: "6.circle", subMenuItems: nil),
-        .init(name: "Settings", icon: "7.circle", subMenuItems: nil),
-        .init(name: "Settings", icon: "8.circle", subMenuItems: nil),
-        .init(name: "Settings", icon: "9.circle", subMenuItems: nil),
-        .init(name: "Settings", icon: "10.circle", subMenuItems: nil),
-        .init(name: "Settings", icon: "11.circle", subMenuItems: nil),
-        .init(name: "Settings", icon: "12.circle", subMenuItems: nil)
+        .init(name: "January", icon: "1.square", subMenuItems: monthOfThirtyFirst),
+        .init(name: "February", icon: "2.square", subMenuItems: monthOfThirtyFirst),
+        .init(name: "March", icon: "3.square", subMenuItems: monthOfThirtyFirst),
+        .init(name: "April", icon: "4.square", subMenuItems: monthsOfThirty),
+        .init(name: "May", icon: "5.square", subMenuItems: monthOfThirtyFirst),
+        .init(name: "June", icon: "6.square", subMenuItems: monthsOfThirty),
+        .init(name: "July", icon: "7.square", subMenuItems: monthOfThirtyFirst),
+        .init(name: "August", icon: "8.square", subMenuItems: monthOfThirtyFirst),
+        .init(name: "September", icon: "9.square", subMenuItems: monthsOfThirty),
+        .init(name: "October", icon: "10.square", subMenuItems: monthOfThirtyFirst),
+        .init(name: "November", icon: "11.square", subMenuItems: monthsOfThirty),
+        .init(name: "Deecember", icon: "12.square", subMenuItems: monthOfThirtyFirst)
     ]
     
     // Generate additional items to test carousel with 50+ items
@@ -101,7 +71,8 @@ struct SSRadialMenuApp: App {
                 expandMenuIcon: "calendar.badge.plus",
                 collapseMenuIcon: "calendar.badge.minus",
                 mainCardSize: 45.0,
-                spinsItemsDuringDrag: false
+                spinsItemsDuringDrag: false,
+                wrapEnabled: true
             )
         }
     }

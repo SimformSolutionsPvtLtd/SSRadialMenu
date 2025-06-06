@@ -12,19 +12,22 @@ struct SSRadialMenu: View {
     let collapseMenuIcon: String?
     let mainCardSize: CGFloat
     let spinsItemsDuringDrag: Bool
+    let wrapEnabled: Bool
     
     init(menuItems: [RadialMenuItems], 
          alignment: AlignmentType = .bottomTrailing, 
          expandMenuIcon: String,
          collapseMenuIcon: String? = nil,
          mainCardSize: CGFloat = 55.0,
-         spinsItemsDuringDrag: Bool = true) {
+         spinsItemsDuringDrag: Bool = true,
+         wrapEnabled: Bool = true) {
         self.menuItems = menuItems
         self.alignment = alignment
         self.expandMenuIcon = expandMenuIcon
         self.collapseMenuIcon = collapseMenuIcon
         self.mainCardSize = mainCardSize
         self.spinsItemsDuringDrag = spinsItemsDuringDrag
+        self.wrapEnabled = wrapEnabled
     }
     
     // Core UI State
@@ -212,13 +215,15 @@ extension SSRadialMenu {
                     .clipShape(Circle())
                     .padding(cardSize * 0.07)
             } else {
-                // Fallback to SF Symbol icon
-                Image(systemName: item.icon)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: cardSize * 0.6, height: cardSize * 0.6)
-                    .foregroundColor(.white)
-                    .padding(cardSize * 0.07)
+                if let systemIcon = item.icon {
+                    // Fallback to SF Symbol icon
+                    Image(systemName: systemIcon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: cardSize * 0.6, height: cardSize * 0.6)
+                        .foregroundColor(.white)
+                        .padding(cardSize * 0.07)
+                }
             }
 
             let displayText: String? = {
@@ -333,17 +338,32 @@ extension SSRadialMenu {
         let startIndex = Int(floor(floatingOffset)) - bufferItems
         let endIndex = startIndex + maxVisibleItems + (bufferItems * Constants.PerformanceConstants.bufferItemCount)
 
-        for i in startIndex...endIndex {
-            let actualIndex = modulo(i, items.count)
-            result.append((item: items[actualIndex], index: actualIndex, visualIndex: i))
+        if wrapEnabled {
+            // With wrap enabled, we use modulo to wrap around the indices
+            for i in startIndex...endIndex {
+                let actualIndex = modulo(i, items.count)
+                result.append((item: items[actualIndex], index: actualIndex, visualIndex: i))
+            }
+        } else {
+            // Without wrap, we filter to only valid indices within the range
+            for i in startIndex...endIndex {
+                if i >= 0 && i < items.count {
+                    result.append((item: items[i], index: i, visualIndex: i))
+                }
+            }
         }
 
         return result
     }
 
     private func modulo(_ a: Int, _ b: Int) -> Int {
-        let remainder = a % b
-        return remainder >= 0 ? remainder : remainder + b
+        if wrapEnabled {
+            let remainder = a % b
+            return remainder >= 0 ? remainder : remainder + b
+        } else {
+            // When wrap is disabled, clamp the value to the valid range [0, b-1]
+            return max(0, min(a, b - 1))
+        }
     }
 }
 
@@ -557,7 +577,20 @@ extension SSRadialMenu {
             .onChanged { value in
                 setDragging(for: menuLevel, value: true)
                 let delta = alignment.calculateDragDelta(translation: value.translation)
-                updateRotation(for: menuLevel, value: getStartAngle(for: menuLevel) + delta)
+                var newRotation = getStartAngle(for: menuLevel) + delta
+                
+                // If wrap is disabled, ensure rotation stays within valid limits
+                if !wrapEnabled {
+                    let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+                    if itemCount > 0 {
+                        // Calculate the maximum rotation to ensure the last item can only slide to the edge
+                        let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
+                        // Limit rotation to prevent scrolling past the first or last item
+                        newRotation = min(max(0, newRotation), maxRotation)
+                    }
+                }
+                
+                updateRotation(for: menuLevel, value: newRotation)
                 updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             }
             .onEnded { value in
@@ -576,7 +609,18 @@ extension SSRadialMenu {
 
         let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity)
         let currentRotation = getCurrentRotation(for: menuLevel)
-        let newRotation = currentRotation + momentumRotation
+        var newRotation = currentRotation + momentumRotation
+        
+        // If wrap is disabled, ensure rotation stays within valid limits
+        if !wrapEnabled {
+            let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+            if itemCount > 0 {
+                // Calculate the maximum rotation to ensure the last item can only slide to the edge
+                let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
+                // Limit rotation to prevent scrolling past the first or last item
+                newRotation = min(max(0, newRotation), maxRotation)
+            }
+        }
 
         withAnimation(.easeOut(duration: AnimationConstants.momentumDuration)) {
             updateRotation(for: menuLevel, value: newRotation)
@@ -586,6 +630,23 @@ extension SSRadialMenu {
         // Use Timer instead of DispatchQueue for better performance
         Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumUpdateDelay, repeats: false) { _ in
             updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+        }
+    }
+    
+    // Helper function to get the item count for the current menu level
+    private func getItemCountForMenu(menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Int {
+        switch menuLevel {
+        case .main:
+            return menuItems.count
+        case .sub:
+            guard mainIndex < menuItems.count, let subItems = menuItems[mainIndex].subMenuItems else { return 0 }
+            return subItems.count
+        case .subSub:
+            guard mainIndex < menuItems.count, 
+                  let subItems = menuItems[mainIndex].subMenuItems,
+                  subIndex < subItems.count,
+                  let subSubItems = subItems[subIndex].subMenuItems else { return 0 }
+            return subSubItems.count
         }
     }
 }
@@ -673,6 +734,13 @@ extension SSRadialMenu {
         item.action?()
         if let subItems = menuItems[index].subMenuItems, !subItems.isEmpty {
             showingSubMenuForIndex = index
+            
+            // If wrap is disabled, ensure the rotation starts at 0
+            if !wrapEnabled {
+                rotations.sub = 0.0
+                startAngles.sub = 0.0
+            }
+            
             startSequentialAnimation(for: .sub, itemCount: subItems.count)
         } else {
             selectedItemName = menuItems[index].name
@@ -692,6 +760,13 @@ extension SSRadialMenu {
         item.action?()
         if let subSubItems = item.subMenuItems, !subSubItems.isEmpty {
             showingSubSubMenuForIndex = (mainIndex: mainIndex, subIndex: subIndex)
+            
+            // If wrap is disabled, ensure the rotation starts at 0
+            if !wrapEnabled {
+                rotations.subSub = 0.0
+                startAngles.subSub = 0.0
+            }
+            
             startSequentialAnimation(for: .subSub, itemCount: subSubItems.count)
         } else {
             selectedItemName = item.name
@@ -831,16 +906,48 @@ extension SSRadialMenu {
 extension SSRadialMenu {
     private func rotateMenu(_ menuLevel: MenuLevel, direction: RotationDirection) {
         let rotationChange = direction == .next ? anglePerItem : -anglePerItem
+        let currentRotation = getCurrentRotation(for: menuLevel)
+        var newRotation = currentRotation + rotationChange
+        
+        // Get the appropriate indices based on menu level
+        let mainIndex: Int
+        let subIndex: Int
+        
+        switch menuLevel {
+        case .main:
+            mainIndex = 0
+            subIndex = 0
+        case .sub:
+            mainIndex = showingSubMenuForIndex ?? 0
+            subIndex = 0
+        case .subSub:
+            mainIndex = showingSubMenuForIndex ?? 0
+            subIndex = showingSubSubMenuForIndex?.subIndex ?? 0
+        }
+        
+        // If wrap is disabled, limit the rotation
+        if !wrapEnabled {
+            let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+            
+            // Calculate rotation limits
+            if itemCount > 0 {
+                let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
+                // Prevent scrolling past boundaries
+                newRotation = min(max(0, newRotation), maxRotation)
+                
+                // If we're already at a boundary, don't animate if trying to go beyond
+                if (direction == .previous && currentRotation <= 0) ||
+                   (direction == .next && currentRotation >= maxRotation) {
+                    return
+                }
+            }
+        }
 
         withAnimation(.easeInOut(duration: AnimationConstants.menuAnimationDuration)) {
-            let currentRotation = getCurrentRotation(for: menuLevel)
-            let newRotation = currentRotation + rotationChange
             updateRotation(for: menuLevel, value: newRotation)
             updateStartAngle(for: menuLevel, value: newRotation)
         }
 
-        updateVisibleItemsAnimation(for: menuLevel,
-                                   mainIndex: showingSubMenuForIndex ?? 0,
-                                   subIndex: showingSubSubMenuForIndex?.subIndex ?? 0)
+        updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
     }
 }

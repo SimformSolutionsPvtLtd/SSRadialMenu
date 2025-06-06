@@ -11,7 +11,7 @@ import SwiftUI
 struct RadialMenuItems : Identifiable {
     var id : UUID = .init()
     var name : String
-    var icon : String
+    var icon : String? = nil
     var image: String? = nil
     var badgeText: String? = nil
     var action: (() -> Void)? = nil
