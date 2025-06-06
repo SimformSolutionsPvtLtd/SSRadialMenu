@@ -8,21 +8,27 @@ import SwiftUI
 struct SSRadialMenu: View {
     let menuItems: [RadialMenuItems]
     var alignment: AlignmentType = .bottomTrailing
-    let fabIcon: String
+    let expandMenuIcon: String
+    let collapseMenuIcon: String?
     let mainCardSize: CGFloat
     let spinsItemsDuringDrag: Bool
     
-    init(menuItems: [RadialMenuItems], alignment: AlignmentType = .bottomTrailing, fabIcon: String = "star.fill", mainCardSize: CGFloat = 55.0, spinsItemsDuringDrag: Bool = true) {
+    init(menuItems: [RadialMenuItems], 
+         alignment: AlignmentType = .bottomTrailing, 
+         expandMenuIcon: String,
+         collapseMenuIcon: String? = nil,
+         mainCardSize: CGFloat = 55.0,
+         spinsItemsDuringDrag: Bool = true) {
         self.menuItems = menuItems
         self.alignment = alignment
-        self.fabIcon = fabIcon
+        self.expandMenuIcon = expandMenuIcon
+        self.collapseMenuIcon = collapseMenuIcon
         self.mainCardSize = mainCardSize
         self.spinsItemsDuringDrag = spinsItemsDuringDrag
     }
     
     // Core UI State
     @State private var selectedItemName: String = "Default Item"
-    @State private var selectedItemPrice: String = "0 $"
     @State private var showMenuCards: Bool = false
     @State private var showingSubMenuForIndex: Int? = nil
     @State private var showingSubSubMenuForIndex: (mainIndex: Int, subIndex: Int)? = nil
@@ -109,11 +115,21 @@ extension SSRadialMenu {
                 animatedIndices.removeAll()
             }
         }, label: {
-            Image(fabIcon)
-                .resizable()
-                .frame(width: 50, height: 50)
-                .foregroundColor(.yellow)
-                .clipShape(Circle())
+            ZStack {
+                if let collapseMenuIcon {
+                    Image(systemName: collapseMenuIcon)
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                        .opacity(showMenuCards ? 1.0 : 0.0)
+                        .scaleEffect(showMenuCards ? 1.0 : 0.3)
+                }
+
+                Image(systemName: expandMenuIcon)
+                    .resizable()
+                    .frame(width: 50, height: 50)
+                    .opacity((showMenuCards && collapseMenuIcon != nil) ? 0.0 : 1.0)
+                    .scaleEffect((showMenuCards && collapseMenuIcon != nil) ? 0.3 : 1.0)
+            }
         })
         .frame(width: 80, height: 80)
         .clipShape(Circle())
@@ -172,7 +188,6 @@ extension SSRadialMenu {
                     .onChange(of: itemAngle) { _ in
                         if menuLevel == .main && isCardNearTriangle(itemAngle) {
                             selectedItemName = item.item.name
-                            selectedItemPrice = item.item.price
                         }
                     }
                 }
@@ -187,59 +202,81 @@ extension SSRadialMenu {
     @ViewBuilder
     func MenuCard(item: RadialMenuItems, itemNumber: Int? = nil, hierarchicalIndex: String? = nil, cardSize: CGFloat = 55) -> some View {
         ZStack {
-            Image(item.icon)
-                .resizable()
-                .frame(width: cardSize, height: cardSize)
-                .clipShape(Circle())
-                .padding(cardSize * 0.07)
+            // Support both SF Symbols (via icon) and asset images (via image)
+            if let imageName = item.image {
+                // Use asset image if provided
+                Image(imageName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: cardSize, height: cardSize)
+                    .clipShape(Circle())
+                    .padding(cardSize * 0.07)
+            } else {
+                // Fallback to SF Symbol icon
+                Image(systemName: item.icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: cardSize * 0.6, height: cardSize * 0.6)
+                    .foregroundColor(.white)
+                    .padding(cardSize * 0.07)
+            }
 
-            let displayText: String = {
-                if let hierarchicalIndex = hierarchicalIndex {
-                    return hierarchicalIndex
-                } else if let itemNumber = itemNumber {
-                    return "\(itemNumber)"
+            let displayText: String? = {
+                if let badgeText = item.badgeText, !badgeText.isEmpty {
+                    return badgeText
                 } else {
-                    return "\((menuItems.firstIndex(where: { $0.id == item.id }) ?? 0) + 1)"
+                    return nil
                 }
             }()
 
             let fontSize: CGFloat = {
-                if let hierarchicalIndex = hierarchicalIndex {
-                    let levelCount = hierarchicalIndex.components(separatedBy: ".").count
-                    switch levelCount {
-                    case 2: return cardSize * VisualConstants.fontSizeMedium
-                    case 3: return cardSize * VisualConstants.fontSizeSmall
-                    default: return cardSize * VisualConstants.fontSizeLarge
+                if displayText != nil {
+                    if let hierarchicalIndex = hierarchicalIndex {
+                        let levelCount = hierarchicalIndex.components(separatedBy: ".").count
+                        switch levelCount {
+                        case 2: return cardSize * VisualConstants.fontSizeMedium
+                        case 3: return cardSize * VisualConstants.fontSizeSmall
+                        default: return cardSize * VisualConstants.fontSizeLarge
+                        }
+                    } else {
+                        return cardSize * VisualConstants.fontSizeLarge
                     }
                 } else {
-                    return cardSize * VisualConstants.fontSizeLarge
+                    return 0
                 }
             }()
 
             let badgeSize: CGFloat = {
-                if let hierarchicalIndex = hierarchicalIndex {
-                    let levelCount = hierarchicalIndex.components(separatedBy: ".").count
-                    switch levelCount {
-                    case 2: return cardSize * VisualConstants.badgeSizeLarge
-                    case 3: return cardSize * VisualConstants.badgeSizeExtraLarge
-                    default: return cardSize * VisualConstants.badgeSizeMedium
+                if displayText != nil {
+                    if let hierarchicalIndex = hierarchicalIndex {
+                        let levelCount = hierarchicalIndex.components(separatedBy: ".").count
+                        switch levelCount {
+                        case 2: return cardSize * VisualConstants.badgeSizeLarge
+                        case 3: return cardSize * VisualConstants.badgeSizeExtraLarge
+                        default: return cardSize * VisualConstants.badgeSizeMedium
+                        }
+                    } else {
+                        return cardSize * VisualConstants.badgeSizeSmall
                     }
                 } else {
-                    return cardSize * VisualConstants.badgeSizeSmall
+                    return 0
                 }
             }()
 
             let offsetMultiplier: CGFloat = cardSize / mainCardSize
 
-            Text(displayText)
-                .font(.bold(.system(size: fontSize))())
-                .foregroundColor(.white)
-                .background(
-                    Circle()
-                        .fill(Color.black.opacity(VisualConstants.opacityBackground))
-                        .frame(width: badgeSize, height: badgeSize)
-                )
-                .offset(x: VisualConstants.badgeOffset * offsetMultiplier, y: -VisualConstants.badgeOffset * offsetMultiplier)
+            // Only show badge if displayText is not nil
+            if let displayText = displayText {
+                Text(displayText)
+                    .font(.bold(.system(size: fontSize))())
+                    .foregroundColor(.white)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(VisualConstants.opacityBackground))
+                            .frame(width: badgeSize, height: badgeSize)
+                    )
+                    .offset(x: VisualConstants.badgeOffset * offsetMultiplier, y: -VisualConstants.badgeOffset * offsetMultiplier)
+            }
         }
     }
 }
@@ -619,7 +656,6 @@ extension SSRadialMenu {
             handleSubItemTap(mainIndex: mainIndex, subIndex: itemIndex, item: item)
         case .subSub:
             selectedItemName = item.name
-            selectedItemPrice = item.price
             closeSubSubMenu()
         }
     }
@@ -640,7 +676,6 @@ extension SSRadialMenu {
             startSequentialAnimation(for: .sub, itemCount: subItems.count)
         } else {
             selectedItemName = menuItems[index].name
-            selectedItemPrice = menuItems[index].price
         }
     }
 
@@ -660,7 +695,6 @@ extension SSRadialMenu {
             startSequentialAnimation(for: .subSub, itemCount: subSubItems.count)
         } else {
             selectedItemName = item.name
-            selectedItemPrice = item.price
         }
     }
 }
@@ -780,7 +814,6 @@ extension SSRadialMenu {
 
         if let item = closestItem {
             selectedItemName = item.item.name
-            selectedItemPrice = item.item.price
         }
     }
 

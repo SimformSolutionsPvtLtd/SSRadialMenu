@@ -74,7 +74,7 @@ struct Constants {
         // Badge sizing constants
         static let badgeSizeSmall: CGFloat = 0.40
         static let badgeSizeMedium: CGFloat = 0.50
-        static let badgeSizeLarge: CGFloat = 0.55
+        static let badgeSizeLarge: CGFloat = 0.30
         static let badgeSizeExtraLarge: CGFloat = 0.60
         static let badgeOffset: CGFloat = 18.0
     }

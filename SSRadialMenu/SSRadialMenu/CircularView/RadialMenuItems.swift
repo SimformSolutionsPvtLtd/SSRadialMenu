@@ -12,7 +12,8 @@ struct RadialMenuItems : Identifiable {
     var id : UUID = .init()
     var name : String
     var icon : String
-    var price : String
+    var image: String? = nil
+    var badgeText: String? = nil
     var action: (() -> Void)? = nil
     var subMenuItems: [RadialMenuItems]?
 }

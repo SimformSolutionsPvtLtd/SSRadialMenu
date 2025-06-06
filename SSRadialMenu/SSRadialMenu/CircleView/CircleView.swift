@@ -98,7 +98,10 @@ extension CircleView {
             plusOpacity = plusDegree == 45 ? 0.4 : 1.0
             plusScale.toggle()
             isDistance = plusDegree == 45 ? distance : 0.0
-        } completion: {
+        }
+        
+        // Use DispatchQueue for completion to maintain macOS 13.0 compatibility
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             isBounceAnimating = false
         }
     }
