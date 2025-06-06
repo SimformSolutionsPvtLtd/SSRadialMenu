@@ -65,6 +65,7 @@ private let defaultMenuItems: [RadialMenuItems] = {
 struct SSRadialMenuApp: App {
     var body: some Scene {
         WindowGroup {
+            // Example 1: Icon-based FAB buttons with mixed menu items
             SSRadialMenu(
                 menuItems: defaultMenuItems,
                 alignment: .bottomTrailing,
@@ -72,8 +73,23 @@ struct SSRadialMenuApp: App {
                 collapseMenuIcon: "calendar.badge.minus",
                 mainCardSize: 45.0,
                 spinsItemsDuringDrag: false,
-                wrapEnabled: true
+                wrapEnabled: true,
+                zoomEffectEnabled: true,
+                zoomEffectScale: nil
             )
+            
+//             Example 2: Image-based FAB buttons with mixed menu items (uncomment to test)
+
+//            SSRadialMenu(
+//                menuItems: defaultMenuItems,
+//                alignment: .bottomTrailing,
+//                expandMenuImage: "pizza1",
+//                mainCardSize: 45.0,
+//                spinsItemsDuringDrag: false,
+//                wrapEnabled: true,
+//                zoomEffectEnabled: true,
+//                zoomEffectScale: nil
+//            )
         }
     }
 }

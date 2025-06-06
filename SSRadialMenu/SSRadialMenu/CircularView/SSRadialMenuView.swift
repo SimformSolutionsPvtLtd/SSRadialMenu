@@ -8,52 +8,120 @@ import SwiftUI
 struct SSRadialMenu: View {
     let menuItems: [RadialMenuItems]
     var alignment: AlignmentType = .bottomTrailing
-    let expandMenuIcon: String
+    let expandMenuIcon: String?
     let collapseMenuIcon: String?
+    let expandMenuImage: String?
+    let collapseMenuImage: String?
     let mainCardSize: CGFloat
     let spinsItemsDuringDrag: Bool
     let wrapEnabled: Bool
+    let zoomEffectEnabled: Bool
+    let zoomEffectScale: CGFloat?
+    let zoomOpacityReduction: Double
+
+    // MARK: - Icon-based Initializers
     
-    init(menuItems: [RadialMenuItems], 
-         alignment: AlignmentType = .bottomTrailing, 
+    /// Create a radial menu with SF Symbol icons for FAB buttons
+    /// - Parameters:
+    ///   - menuItems: Array of RadialMenuItems (can contain both icons and images)
+    ///   - alignment: Alignment of the menu
+    ///   - expandMenuIcon: SF Symbol name for the expand button
+    ///   - collapseMenuIcon: SF Symbol name for the collapse button (optional)
+    ///   - mainCardSize: Size of the main menu cards
+    ///   - spinsItemsDuringDrag: Whether items spin during drag
+    ///   - wrapEnabled: Whether wrapping is enabled for scrolling
+    ///   - zoomEffectEnabled: Whether zoom effect is enabled
+    ///   - zoomEffectScale: Scale factor for zoom effect
+    ///   - zoomOpacityReduction: Opacity reduction for non-zoomed items
+    init(menuItems: [RadialMenuItems],
+         alignment: AlignmentType = .bottomTrailing,
          expandMenuIcon: String,
          collapseMenuIcon: String? = nil,
          mainCardSize: CGFloat = 55.0,
          spinsItemsDuringDrag: Bool = true,
-         wrapEnabled: Bool = true) {
+         wrapEnabled: Bool = true,
+         zoomEffectEnabled: Bool = true,
+         zoomEffectScale: CGFloat? = nil,
+         zoomOpacityReduction: Double = 0.3
+    ) {
         self.menuItems = menuItems
         self.alignment = alignment
         self.expandMenuIcon = expandMenuIcon
         self.collapseMenuIcon = collapseMenuIcon
+        self.expandMenuImage = nil
+        self.collapseMenuImage = nil
         self.mainCardSize = mainCardSize
         self.spinsItemsDuringDrag = spinsItemsDuringDrag
         self.wrapEnabled = wrapEnabled
+        self.zoomEffectEnabled = zoomEffectEnabled
+        self.zoomEffectScale = zoomEffectScale
+        self.zoomOpacityReduction = zoomOpacityReduction
     }
+
+    // MARK: - Image-based Initializers
     
+    /// Create a radial menu with asset images for FAB buttons
+    /// - Parameters:
+    ///   - menuItems: Array of RadialMenuItems (can contain both icons and images)
+    ///   - alignment: Alignment of the menu
+    ///   - expandMenuImage: Image asset name for the expand button
+    ///   - collapseMenuImage: Image asset name for the collapse button (optional)
+    ///   - mainCardSize: Size of the main menu cards
+    ///   - spinsItemsDuringDrag: Whether items spin during drag
+    ///   - wrapEnabled: Whether wrapping is enabled for scrolling
+    ///   - zoomEffectEnabled: Whether zoom effect is enabled
+    ///   - zoomEffectScale: Scale factor for zoom effect
+    ///   - zoomOpacityReduction: Opacity reduction for non-zoomed items
+    init(menuItems: [RadialMenuItems],
+         alignment: AlignmentType = .bottomTrailing,
+         expandMenuImage: String,
+         collapseMenuImage: String? = nil,
+         mainCardSize: CGFloat = 55.0,
+         spinsItemsDuringDrag: Bool = true,
+         wrapEnabled: Bool = true,
+         zoomEffectEnabled: Bool = true,
+         zoomEffectScale: CGFloat? = nil,
+         zoomOpacityReduction: Double = 0.3
+    ) {
+        self.menuItems = menuItems
+        self.alignment = alignment
+        self.expandMenuIcon = nil
+        self.collapseMenuIcon = nil
+        self.expandMenuImage = expandMenuImage
+        self.collapseMenuImage = collapseMenuImage
+        self.mainCardSize = mainCardSize
+        self.spinsItemsDuringDrag = spinsItemsDuringDrag
+        self.wrapEnabled = wrapEnabled
+        self.zoomEffectEnabled = zoomEffectEnabled
+        self.zoomEffectScale = zoomEffectScale
+        self.zoomOpacityReduction = zoomOpacityReduction
+    }
+
     // Core UI State
     @State private var selectedItemName: String = "Default Item"
     @State private var showMenuCards: Bool = false
     @State private var showingSubMenuForIndex: Int? = nil
     @State private var showingSubSubMenuForIndex: (mainIndex: Int, subIndex: Int)? = nil
-    
+    @State private var zoomedItemIndex: Int? = nil // Track which main item is zoomed
+
     // Animation states consolidated
     @State private var animatedIndices: Set<Int> = []
     @State private var subMenuAnimatedIndices: Set<Int> = []
     @State private var subSubMenuAnimatedIndices: Set<Int> = []
-    
+
     // Unified rotation and dragging states
     @State private var rotations: (main: Double, sub: Double, subSub: Double) = (0, 0, 0)
     @State private var startAngles: (main: Double, sub: Double, subSub: Double) = (0, 0, 0)
     @State private var isDragging: (main: Bool, sub: Bool, subSub: Bool) = (false, false, false)
     @State private var scaleEffects: (main: CGFloat, sub: CGFloat, subSub: CGFloat) = (1.0, 1.0, 1.0)
-    
+
     // Constants
     private let radius: CGFloat = LayoutConstants.primaryRadius
     private let subMenuRadius: CGFloat = LayoutConstants.subMenuRadius
     private let subSubMenuRadius: CGFloat = LayoutConstants.subSubMenuRadius
     private let maxVisibleItems: Int = LayoutConstants.maxVisibleItems
     private let totalSpan: Double = AngleConstants.totalSpan
-    
+
     // Computed properties
     var anglePerItem: Double { totalSpan / Double(maxVisibleItems - 1) }
 
@@ -116,22 +184,50 @@ extension SSRadialMenu {
                 startSequentialAnimation(for: .main, itemCount: menuItems.count)
             } else {
                 animatedIndices.removeAll()
+                // Reset zoom effect when closing the menu, if enabled
+                if zoomEffectEnabled {
+                    zoomedItemIndex = nil
+                }
             }
         }, label: {
             ZStack {
-                if let collapseMenuIcon {
-                    Image(systemName: collapseMenuIcon)
-                        .resizable()
-                        .frame(width: 50, height: 50)
-                        .opacity(showMenuCards ? 1.0 : 0.0)
-                        .scaleEffect(showMenuCards ? 1.0 : 0.3)
+                // Collapse button (shown when menu is expanded)
+                if collapseMenuIcon != nil || collapseMenuImage != nil {
+                    Group {
+                        if let collapseImage = collapseMenuImage {
+                            // Use asset image for collapse button
+                            Image(collapseImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 50, height: 50)
+                        } else if let collapseIcon = collapseMenuIcon {
+                            // Use SF Symbol for collapse button
+                            Image(systemName: collapseIcon)
+                                .resizable()
+                                .frame(width: 50, height: 50)
+                        }
+                    }
+                    .opacity(showMenuCards ? 1.0 : 0.0)
+                    .scaleEffect(showMenuCards ? 1.0 : 0.3)
                 }
 
-                Image(systemName: expandMenuIcon)
-                    .resizable()
-                    .frame(width: 50, height: 50)
-                    .opacity((showMenuCards && collapseMenuIcon != nil) ? 0.0 : 1.0)
-                    .scaleEffect((showMenuCards && collapseMenuIcon != nil) ? 0.3 : 1.0)
+                // Expand button (shown when menu is collapsed)
+                Group {
+                    if let expandImage = expandMenuImage {
+                        // Use asset image for expand button
+                        Image(expandImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 50, height: 50)
+                    } else if let expandIcon = expandMenuIcon {
+                        // Use SF Symbol for expand button
+                        Image(systemName: expandIcon)
+                            .resizable()
+                            .frame(width: 50, height: 50)
+                    }
+                }
+                .opacity((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.0 : 1.0)
+                .scaleEffect((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.3 : 1.0)
             }
         })
         .frame(width: 80, height: 80)
@@ -170,7 +266,23 @@ extension SSRadialMenu {
                         isAnimated: currentAnimatedIndices.contains(item.visualIndex)
                     )
 
-                    let finalOpacity = currentAnimatedIndices.contains(item.visualIndex) ? min(progressiveOpacity, opacity) : 0.0
+                    let baseOpacity = currentAnimatedIndices.contains(item.visualIndex) ? min(progressiveOpacity, opacity) : 0.0
+
+                    // Apply zoom opacity reduction for non-zoomed items when zoom effect is active
+                    let finalOpacity: Double = {
+                        if zoomEffectEnabled && menuLevel == .main && zoomedItemIndex != nil {
+                            if shouldApplyZoomEffect(menuLevel: menuLevel, itemIndex: item.index) {
+                                // This is the zoomed item, keep full opacity
+                                return baseOpacity
+                            } else {
+                                // This is a non-zoomed item, apply opacity reduction
+                                return baseOpacity * (1.0 - zoomOpacityReduction)
+                            }
+                        } else {
+                            // No zoom effect active, use base opacity
+                            return baseOpacity
+                        }
+                    }()
 
                     MenuCard(
                         item: item.item,
@@ -180,11 +292,15 @@ extension SSRadialMenu {
                     )
                     .rotationEffect(.degrees(spinsItemsDuringDrag ? -itemAngle : 0))
                     .offset(x: currentPosition.x, y: currentPosition.y)
-                    .scaleEffect(currentAnimatedIndices.contains(item.visualIndex) ? currentScaleEffect : VisualConstants.scaleEffectMinimal)
+                    .scaleEffect(shouldApplyZoomEffect(menuLevel: menuLevel, itemIndex: item.index) ?
+                                getZoomScale() :
+                                (currentAnimatedIndices.contains(item.visualIndex) ? currentScaleEffect : VisualConstants.scaleEffectMinimal))
                     .opacity(finalOpacity)
                     .animation(currentDragging ? .none : .spring(response: AnimationConstants.springResponseSlow, dampingFraction: AnimationConstants.springAnimationDamping), value: currentAnimatedIndices)
                     .animation(currentDragging ? .none : .linear(duration: AnimationConstants.fadeOutDuration), value: getCurrentRotation(for: menuLevel))
                     .animation(currentDragging ? .none : .spring(response: AnimationConstants.springAnimationResponse, dampingFraction: AnimationConstants.springAnimationDamping), value: currentScaleEffect)
+                    .animation(zoomEffectEnabled && zoomEffectScale != 0 ?
+                              .spring(response: 0.3, dampingFraction: 0.6) : .none, value: zoomedItemIndex)
                     .onTapGesture {
                         handleItemTap(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex, itemIndex: item.index, item: item.item)
                     }
@@ -430,6 +546,18 @@ extension SSRadialMenu {
 
 // Menu Level Helper Functions - Helper functions for different menu levels.
 extension SSRadialMenu {
+    // Helper methods for zoom effect
+    private func shouldApplyZoomEffect(menuLevel: MenuLevel, itemIndex: Int) -> Bool {
+        guard zoomEffectEnabled && zoomEffectScale != 0 && menuLevel == .main else {
+            return false
+        }
+        return zoomedItemIndex == itemIndex
+    }
+
+    private func getZoomScale() -> CGFloat {
+        return zoomEffectScale ?? VisualConstants.scaleEffectZoomed
+    }
+
     private func getCurrentAnimatedIndices(for menuLevel: MenuLevel) -> Set<Int> {
         switch menuLevel {
         case .main: return animatedIndices
@@ -523,8 +651,8 @@ extension SSRadialMenu {
             let previousRadius = getRadius(for: menuLevel)
 
             return CGPoint(
-                x: previousRadius * cos(previousItemAngle * .pi / 180),
-                y: previousRadius * sin(previousItemAngle * .pi / 180)
+                x: previousRadius * 2 * cos(previousItemAngle * .pi / 180),
+                y: previousRadius * 2 * sin(previousItemAngle * .pi / 180)
             )
         }
     }
@@ -535,7 +663,7 @@ extension SSRadialMenu {
             return CGPoint.zero
         case .sub:
             let fixedMainItemAngle = getFixedMainItemAngle(for: mainIndex)
-            return CGPoint(x: radius * cos(fixedMainItemAngle * .pi / 180), y: radius * sin(fixedMainItemAngle * .pi / 180))
+            return CGPoint(x: radius * 2.5 * cos(fixedMainItemAngle * .pi / 180), y: radius * 2.5 * sin(fixedMainItemAngle * .pi / 180))
         case .subSub:
             let parentSubMenuAngle: Double = {
                 if isScrollingEnabled(menuLevel: .sub, mainIndex: mainIndex) {
@@ -578,7 +706,7 @@ extension SSRadialMenu {
                 setDragging(for: menuLevel, value: true)
                 let delta = alignment.calculateDragDelta(translation: value.translation)
                 var newRotation = getStartAngle(for: menuLevel) + delta
-                
+
                 // If wrap is disabled, ensure rotation stays within valid limits
                 if !wrapEnabled {
                     let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
@@ -589,7 +717,7 @@ extension SSRadialMenu {
                         newRotation = min(max(0, newRotation), maxRotation)
                     }
                 }
-                
+
                 updateRotation(for: menuLevel, value: newRotation)
                 updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             }
@@ -610,7 +738,7 @@ extension SSRadialMenu {
         let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity)
         let currentRotation = getCurrentRotation(for: menuLevel)
         var newRotation = currentRotation + momentumRotation
-        
+
         // If wrap is disabled, ensure rotation stays within valid limits
         if !wrapEnabled {
             let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
@@ -632,7 +760,7 @@ extension SSRadialMenu {
             updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
         }
     }
-    
+
     // Helper function to get the item count for the current menu level
     private func getItemCountForMenu(menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Int {
         switch menuLevel {
@@ -642,7 +770,7 @@ extension SSRadialMenu {
             guard mainIndex < menuItems.count, let subItems = menuItems[mainIndex].subMenuItems else { return 0 }
             return subItems.count
         case .subSub:
-            guard mainIndex < menuItems.count, 
+            guard mainIndex < menuItems.count,
                   let subItems = menuItems[mainIndex].subMenuItems,
                   subIndex < subItems.count,
                   let subSubItems = subItems[subIndex].subMenuItems else { return 0 }
@@ -691,6 +819,11 @@ extension SSRadialMenu {
         subMenuAnimatedIndices.removeAll()
         rotations.sub = 0.0
         startAngles.sub = 0.0
+
+        // Reset zoom effect when closing submenu, if enabled
+        if zoomEffectEnabled {
+            zoomedItemIndex = nil
+        }
         closeSubSubMenu()
     }
 
@@ -725,25 +858,42 @@ extension SSRadialMenu {
         if let currentOpen = showingSubMenuForIndex {
             if currentOpen == index {
                 closeSubMenu()
+                zoomedItemIndex = nil // Reset zoom when closing submenu
                 return
             }
             closeSubMenu()
+        }
+
+        // Apply zoom effect to the tapped item if enabled
+        if zoomEffectEnabled && zoomEffectScale != 0 {
+            zoomedItemIndex = index
         }
 
         // Execute the provided action, if available
         item.action?()
         if let subItems = menuItems[index].subMenuItems, !subItems.isEmpty {
             showingSubMenuForIndex = index
-            
+
             // If wrap is disabled, ensure the rotation starts at 0
             if !wrapEnabled {
                 rotations.sub = 0.0
                 startAngles.sub = 0.0
             }
-            
+
             startSequentialAnimation(for: .sub, itemCount: subItems.count)
         } else {
             selectedItemName = menuItems[index].name
+
+            // For items without submenus, remove zoom effect after a delay if enabled
+            if zoomEffectEnabled && zoomEffectScale != 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        if self.zoomedItemIndex == index {
+                            self.zoomedItemIndex = nil
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -760,13 +910,13 @@ extension SSRadialMenu {
         item.action?()
         if let subSubItems = item.subMenuItems, !subSubItems.isEmpty {
             showingSubSubMenuForIndex = (mainIndex: mainIndex, subIndex: subIndex)
-            
+
             // If wrap is disabled, ensure the rotation starts at 0
             if !wrapEnabled {
                 rotations.subSub = 0.0
                 startAngles.subSub = 0.0
             }
-            
+
             startSequentialAnimation(for: .subSub, itemCount: subSubItems.count)
         } else {
             selectedItemName = item.name
@@ -908,11 +1058,11 @@ extension SSRadialMenu {
         let rotationChange = direction == .next ? anglePerItem : -anglePerItem
         let currentRotation = getCurrentRotation(for: menuLevel)
         var newRotation = currentRotation + rotationChange
-        
+
         // Get the appropriate indices based on menu level
         let mainIndex: Int
         let subIndex: Int
-        
+
         switch menuLevel {
         case .main:
             mainIndex = 0
@@ -924,17 +1074,17 @@ extension SSRadialMenu {
             mainIndex = showingSubMenuForIndex ?? 0
             subIndex = showingSubSubMenuForIndex?.subIndex ?? 0
         }
-        
+
         // If wrap is disabled, limit the rotation
         if !wrapEnabled {
             let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-            
+
             // Calculate rotation limits
             if itemCount > 0 {
                 let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
                 // Prevent scrolling past boundaries
                 newRotation = min(max(0, newRotation), maxRotation)
-                
+
                 // If we're already at a boundary, don't animate if trying to go beyond
                 if (direction == .previous && currentRotation <= 0) ||
                    (direction == .next && currentRotation >= maxRotation) {

@@ -58,6 +58,7 @@ struct Constants {
         static let scaleEffectSmall: CGFloat = 0.8
         static let scaleEffectNormal: CGFloat = 1.0
         static let scaleEffectMinimal: CGFloat = 0.1
+        static let scaleEffectZoomed: CGFloat = 1.15
         static let blurRadius: CGFloat = 8.0
         static let opacityFull: Double = 1.0
         static let opacityHidden: Double = 0.0
