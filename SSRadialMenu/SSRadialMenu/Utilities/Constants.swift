@@ -32,6 +32,12 @@ struct Constants {
         static let fadeOutDuration: Double = 0.15
         static let momentumDuration: Double = 0.6
         static let momentumUpdateDelay: Double = 0.05
+        
+        // Spin wheel momentum constants for smooth, controlled behavior
+        static let momentumFrameRate: Double = 1.0 / 75.0 // 75 FPS for slightly faster animation
+        static let momentumSmoothness: Double = 0.30 // Slightly increased rotation per frame for faster movement
+        static let momentumDecayRate: Double = 0.970 // Slightly lower decay for longer spinning duration
+        static let momentumMinimumVelocity: Double = 0.070 // Lower minimum for longer spin
     }
     
     // MARK: - Layout Constants
@@ -99,6 +105,11 @@ struct Constants {
         static let bufferItemCount: Int = 2
         static let momentumVelocityThreshold: CGFloat = 100.0
         static let scrollThresholdItemCount: Int = 6
+        
+        // Enhanced spin wheel momentum constants for controlled movement
+        static let momentumVelocityMultiplier: Double = 0.045 // Slightly increased momentum multiplier for faster feel
+        static let maximumMomentumVelocity: Double = 8.0 // Increased maximum velocity for faster flicks
+        static let flickVelocityThreshold: CGFloat = 350.0 // Lower threshold for easier flick detection
     }
 }
 

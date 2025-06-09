@@ -19,6 +19,12 @@ struct SSRadialMenu: View {
     let zoomEffectScale: CGFloat?
     let zoomOpacityReduction: Double
     let scrollThresholdItemCount: Int
+    let scrollingBehavior: ScrollingBehavior
+    
+    // Selection tracking closures
+    let onMainMenuSelection: ((RadialMenuItems) -> Void)?
+    let onSubMenuSelection: ((RadialMenuItems) -> Void)?
+    let onSubSubMenuSelection: ((RadialMenuItems) -> Void)?
 
     // Initializer for icon-based FAB buttons (SF Symbols)
     init(menuItems: [RadialMenuItems],
@@ -31,7 +37,11 @@ struct SSRadialMenu: View {
          zoomEffectEnabled: Bool = true,
          zoomEffectScale: CGFloat? = nil,
          zoomOpacityReduction: Double = 0.3,
-         scrollThresholdItemCount: Int = PerformanceConstants.scrollThresholdItemCount
+         scrollThresholdItemCount: Int = PerformanceConstants.scrollThresholdItemCount,
+         scrollingBehavior: ScrollingBehavior = .simple,
+         onMainMenuSelection: ((RadialMenuItems) -> Void)? = nil,
+         onSubMenuSelection: ((RadialMenuItems) -> Void)? = nil,
+         onSubSubMenuSelection: ((RadialMenuItems) -> Void)? = nil
     ) {
         self.menuItems = menuItems
         self.alignment = alignment
@@ -46,6 +56,10 @@ struct SSRadialMenu: View {
         self.zoomEffectScale = zoomEffectScale
         self.zoomOpacityReduction = zoomOpacityReduction
         self.scrollThresholdItemCount = scrollThresholdItemCount
+        self.scrollingBehavior = scrollingBehavior
+        self.onMainMenuSelection = onMainMenuSelection
+        self.onSubMenuSelection = onSubMenuSelection
+        self.onSubSubMenuSelection = onSubSubMenuSelection
     }
     
     // Initializer for image-based FAB buttons (asset images)
@@ -59,7 +73,11 @@ struct SSRadialMenu: View {
          zoomEffectEnabled: Bool = true,
          zoomEffectScale: CGFloat? = nil,
          zoomOpacityReduction: Double = 0.3,
-         scrollThresholdItemCount: Int = PerformanceConstants.scrollThresholdItemCount
+         scrollThresholdItemCount: Int = PerformanceConstants.scrollThresholdItemCount,
+         scrollingBehavior: ScrollingBehavior = .simple,
+         onMainMenuSelection: ((RadialMenuItems) -> Void)? = nil,
+         onSubMenuSelection: ((RadialMenuItems) -> Void)? = nil,
+         onSubSubMenuSelection: ((RadialMenuItems) -> Void)? = nil
     ) {
         self.menuItems = menuItems
         self.alignment = alignment
@@ -74,6 +92,10 @@ struct SSRadialMenu: View {
         self.zoomEffectScale = zoomEffectScale
         self.zoomOpacityReduction = zoomOpacityReduction
         self.scrollThresholdItemCount = scrollThresholdItemCount
+        self.scrollingBehavior = scrollingBehavior
+        self.onMainMenuSelection = onMainMenuSelection
+        self.onSubMenuSelection = onSubMenuSelection
+        self.onSubSubMenuSelection = onSubSubMenuSelection
     }
 
     // Core UI State
@@ -82,6 +104,11 @@ struct SSRadialMenu: View {
     @State private var showingSubMenuForIndex: Int? = nil
     @State private var showingSubSubMenuForIndex: (mainIndex: Int, subIndex: Int)? = nil
     @State private var zoomedItemIndex: Int? = nil // Track which main item is zoomed
+    
+    // Selection tracking for each layer
+    @State private var selectedMainMenuItem: RadialMenuItems? = nil
+    @State private var selectedSubMenuItem: RadialMenuItems? = nil
+    @State private var selectedSubSubMenuItem: RadialMenuItems? = nil
 
     // Animation states consolidated
     @State private var animatedIndices: Set<Int> = []
@@ -94,6 +121,11 @@ struct SSRadialMenu: View {
     @State private var isDragging: (main: Bool, sub: Bool, subSub: Bool) = (false, false, false)
     @State private var scaleEffects: (main: CGFloat, sub: CGFloat, subSub: CGFloat) = (1.0, 1.0, 1.0)
 
+    // Enhanced momentum states for spin wheel effect
+    @State private var momentumVelocities: (main: Double, sub: Double, subSub: Double) = (0, 0, 0)
+    @State private var momentumTimers: (main: Timer?, sub: Timer?, subSub: Timer?) = (nil, nil, nil)
+    @State private var isMomentumActive: (main: Bool, sub: Bool, subSub: Bool) = (false, false, false)
+
     // Constants
     private let radius: CGFloat = LayoutConstants.primaryRadius
     private let subMenuRadius: CGFloat = LayoutConstants.subMenuRadius
@@ -103,27 +135,34 @@ struct SSRadialMenu: View {
 
     // Computed properties
     var anglePerItem: Double { totalSpan / Double(maxVisibleItems - 1) }
+    
+    // Public access to selected items
+    var currentSelectedMainItem: RadialMenuItems? { selectedMainMenuItem }
+    var currentSelectedSubItem: RadialMenuItems? { selectedSubMenuItem }
+    var currentSelectedSubSubItem: RadialMenuItems? { selectedSubSubMenuItem }
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea(.all)
 
-            DebugInfoView(
-                showMenuCards: showMenuCards,
-                continuousRotation: rotations.main,
-                itemCount: menuItems.count,
-                isMainMenuScrollingEnabled: isScrollingEnabled(menuLevel: .main),
-                anglePerItem: anglePerItem,
-                animatedIndicesCount: animatedIndices.count,
-                showingSubMenuForIndex: showingSubMenuForIndex,
-                subMenuRotation: rotations.sub,
-                subMenuItemsCount: showingSubMenuForIndex != nil ? (menuItems[showingSubMenuForIndex!].subMenuItems?.count ?? 0) : 0,
-                isSubMenuScrollingEnabled: { index in isScrollingEnabled(menuLevel: .sub, mainIndex: index) },
-                rotateSubMenuToPreviousItem: { rotateMenu(.sub, direction: .previous) },
-                rotateSubMenuToNextItem: { rotateMenu(.sub, direction: .next) },
-                rotateToPreviousItem: { rotateMenu(.main, direction: .previous) },
-                rotateToNextItem: { rotateMenu(.main, direction: .next) }
-            )
+            /**
+                DebugInfoView(
+                    showMenuCards: showMenuCards,
+                    continuousRotation: rotations.main,
+                    itemCount: menuItems.count,
+                    isMainMenuScrollingEnabled: isScrollingEnabled(menuLevel: .main),
+                    anglePerItem: anglePerItem,
+                    animatedIndicesCount: animatedIndices.count,
+                    showingSubMenuForIndex: showingSubMenuForIndex,
+                    subMenuRotation: rotations.sub,
+                    subMenuItemsCount: showingSubMenuForIndex != nil ? (menuItems[showingSubMenuForIndex!].subMenuItems?.count ?? 0) : 0,
+                    isSubMenuScrollingEnabled: { index in isScrollingEnabled(menuLevel: .sub, mainIndex: index) },
+                    rotateSubMenuToPreviousItem: { rotateMenu(.sub, direction: .previous) },
+                    rotateSubMenuToNextItem: { rotateMenu(.sub, direction: .next) },
+                    rotateToPreviousItem: { rotateMenu(.main, direction: .previous) },
+                    rotateToNextItem: { rotateMenu(.main, direction: .next) }
+                )
+            */
 
             GeometryReader { geometry in
                 ZStack {
@@ -163,6 +202,10 @@ extension SSRadialMenu {
                 startSequentialAnimation(for: .main, itemCount: menuItems.count)
             } else {
                 animatedIndices.removeAll()
+                // Reset all selections when closing the menu
+                selectedMainMenuItem = nil
+                selectedSubMenuItem = nil
+                selectedSubSubMenuItem = nil
                 // Reset zoom effect when closing the menu, if enabled
                 if zoomEffectEnabled {
                     zoomedItemIndex = nil
@@ -223,7 +266,7 @@ extension SSRadialMenu {
         let currentScaleEffect = getCurrentScaleEffect(for: menuLevel)
 
         ZStack {
-            ForEach(Array(visibleItems.enumerated()), id: \.element.index) { _, item in
+            ForEach(Array(visibleItems.enumerated()), id: \.element.visualIndex) { _, item in
                 let (_, itemAngle, opacity) = calculateItemProperties(for: item, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
 
                 if shouldItemBeVisible(visualIndex: item.visualIndex, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) && opacity > Constants.PerformanceConstants.minimumVisibleOpacity {
@@ -452,13 +495,10 @@ extension SSRadialMenu {
     }
 
     private func modulo(_ a: Int, _ b: Int) -> Int {
-        if wrapEnabled {
-            let remainder = a % b
-            return remainder >= 0 ? remainder : remainder + b
-        } else {
-            // When wrap is disabled, clamp the value to the valid range [0, b-1]
-            return max(0, min(a, b - 1))
-        }
+        // This function should only be called when wrapEnabled is true
+        // Proper modulo operation that handles negative numbers correctly
+        let remainder = a % b
+        return remainder >= 0 ? remainder : remainder + b
     }
 }
 
@@ -616,9 +656,9 @@ extension SSRadialMenu {
         let visibleItems = getVisibleItems(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
         let sortedVisibleItems = visibleItems
             .filter { shouldItemBeVisible(visualIndex: $0.visualIndex, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) }
-            .sorted { $0.index < $1.index }
+            .sorted { $0.visualIndex < $1.visualIndex } // Sort by visualIndex instead of index to handle wrap-around properly
 
-        guard let currentItemSequence = sortedVisibleItems.firstIndex(where: { $0.index == item.index }) else {
+        guard let currentItemSequence = sortedVisibleItems.firstIndex(where: { $0.index == item.index && $0.visualIndex == item.visualIndex }) else {
             return getDefaultInitialPosition(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
         }
 
@@ -682,8 +722,15 @@ extension SSRadialMenu {
 
         return AnyGesture(DragGesture()
             .onChanged { value in
+                // Immediately stop any active momentum when user starts dragging
+                if getMomentumActive(for: menuLevel) {
+                    stopMomentum(for: menuLevel)
+                }
+                
                 setDragging(for: menuLevel, value: true)
-                let delta = alignment.calculateDragDelta(translation: value.translation)
+                
+                // Moderate drag sensitivity for controlled spin wheel feel
+                let delta = alignment.calculateDragDelta(translation: value.translation, sensitivity: 8.0)
                 var newRotation = getStartAngle(for: menuLevel) + delta
 
                 // If wrap is disabled, ensure rotation stays within valid limits
@@ -703,60 +750,103 @@ extension SSRadialMenu {
             .onEnded { value in
                 setDragging(for: menuLevel, value: false)
                 updateStartAngle(for: menuLevel, value: getCurrentRotation(for: menuLevel))
-                handleDragMomentum(velocity: value.velocity.width, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+                
+                // Ultra-fast momentum handling for ultra-smooth gestures
+                let velocity = value.velocity.width
+                if abs(velocity) > 0.8 { // Ultra-low threshold for hyper-responsive momentum
+                    handleDragMomentum(velocity: velocity, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+                } else {
+                    // For very slow drags, ultra-fast momentum in spin wheel mode for hyper-responsiveness
+                    if scrollingBehavior == .spinWheel {
+                        let minimumMomentum = velocity > 0 ? 90.0 : -90.0 // Enhanced minimum momentum for ultra-smooth subtle movement
+                        handleDragMomentum(velocity: minimumMomentum, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+                    } else {
+                        updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+                    }
+                }
             })
     }
 
-    // Unified momentum handling
+    // Ultra-fast momentum handling for hyper-smooth response
     private func handleDragMomentum(velocity: CGFloat, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
-        guard abs(velocity) > Constants.PerformanceConstants.momentumVelocityThreshold else {
+        // Ultra-low threshold for hyper-responsive momentum triggering
+        guard abs(velocity) > 0.8 else {
             updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             return
         }
 
-        let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity)
-        let currentRotation = getCurrentRotation(for: menuLevel)
-        var newRotation = currentRotation + momentumRotation
+        // Stop any existing momentum for this menu level
+        stopMomentum(for: menuLevel)
 
-        // If wrap is disabled, ensure rotation stays within valid limits
-        if !wrapEnabled {
-            let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-            if itemCount > 0 {
-                // Calculate the maximum rotation to ensure the last item can only slide to the edge
-                let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
-                // Limit rotation to prevent scrolling past the first or last item
-                newRotation = min(max(0, newRotation), maxRotation)
+        // Use different behavior based on scrollingBehavior setting
+        switch scrollingBehavior {
+        case .simple:
+            // Original simple momentum behavior
+            let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity)
+            let currentRotation = getCurrentRotation(for: menuLevel)
+            var newRotation = currentRotation + momentumRotation
+
+            // If wrap is disabled, ensure rotation stays within valid limits
+            if !wrapEnabled {
+                let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+                if itemCount > 0 {
+                    let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
+                    newRotation = min(max(0, newRotation), maxRotation)
+                }
+            }
+
+            withAnimation(.easeOut(duration: AnimationConstants.momentumDuration)) {
+                updateRotation(for: menuLevel, value: newRotation)
+                updateStartAngle(for: menuLevel, value: newRotation)
+            }
+
+            Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumUpdateDelay, repeats: false) { _ in
+                updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+            }
+            
+        case .spinWheel:
+            // Enhanced momentum behavior with continuous spinning
+            // Calculate initial momentum velocity based on drag velocity
+            let initialVelocity = alignment.calculateMomentumRotation(velocity: velocity, factor: Constants.PerformanceConstants.momentumVelocityMultiplier)
+            
+            // Clamp velocity to reasonable limits
+            let clampedVelocity = max(-Constants.PerformanceConstants.maximumMomentumVelocity, 
+                                     min(Constants.PerformanceConstants.maximumMomentumVelocity, initialVelocity))
+
+            // Check if this is a flick gesture (high velocity) or regular drag
+            let isFlick = abs(velocity) > Constants.PerformanceConstants.flickVelocityThreshold
+            
+            if isFlick {
+                // Start continuous momentum for flick gestures
+                startContinuousMomentum(velocity: clampedVelocity, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+            } else {
+                // For regular drags in spinWheel mode, create momentum with ultra-high responsiveness for blazing fast movement
+                let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.055) // Ultra-high for blazing fast momentum
+                let currentRotation = getCurrentRotation(for: menuLevel)
+                var newRotation = currentRotation + momentumRotation
+
+                // If wrap is disabled, ensure rotation stays within valid limits
+                if !wrapEnabled {
+                    let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+                    if itemCount > 0 {
+                        let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
+                        newRotation = min(max(0, newRotation), maxRotation)
+                    }
+                }
+
+                // Use even faster timing for blazing quick momentum
+                withAnimation(.easeOut(duration: 0.25)) {
+                    updateRotation(for: menuLevel, value: newRotation)
+                    updateStartAngle(for: menuLevel, value: newRotation)
+                }
+
+                Timer.scheduledTimer(withTimeInterval: 0.05, repeats: false) { _ in
+                    updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+                }
             }
         }
-
-        withAnimation(.easeOut(duration: AnimationConstants.momentumDuration)) {
-            updateRotation(for: menuLevel, value: newRotation)
-            updateStartAngle(for: menuLevel, value: newRotation)
-        }
-
-        // Use Timer instead of DispatchQueue for better performance
-        Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumUpdateDelay, repeats: false) { _ in
-            updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-        }
     }
-
-    // Helper function to get the item count for the current menu level
-    private func getItemCountForMenu(menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Int {
-        switch menuLevel {
-        case .main:
-            return menuItems.count
-        case .sub:
-            guard mainIndex < menuItems.count, let subItems = menuItems[mainIndex].subMenuItems else { return 0 }
-            return subItems.count
-        case .subSub:
-            guard mainIndex < menuItems.count,
-                  let subItems = menuItems[mainIndex].subMenuItems,
-                  subIndex < subItems.count,
-                  let subSubItems = subItems[subIndex].subMenuItems else { return 0 }
-            return subSubItems.count
-        }
     }
-}
 
 // State Management - Functions for managing state across menu levels
 extension SSRadialMenu {
@@ -792,12 +882,68 @@ extension SSRadialMenu {
         }
     }
 
+    // Helper functions for momentum state management
+    private func updateMomentumVelocity(for menuLevel: MenuLevel, velocity: Double) {
+        switch menuLevel {
+        case .main: momentumVelocities.main = velocity
+        case .sub: momentumVelocities.sub = velocity
+        case .subSub: momentumVelocities.subSub = velocity
+        }
+    }
+
+    private func getMomentumVelocity(for menuLevel: MenuLevel) -> Double {
+        switch menuLevel {
+        case .main: return momentumVelocities.main
+        case .sub: return momentumVelocities.sub
+        case .subSub: return momentumVelocities.subSub
+        }
+    }
+
+    private func updateMomentumTimer(for menuLevel: MenuLevel, timer: Timer?) {
+        switch menuLevel {
+        case .main: momentumTimers.main = timer
+        case .sub: momentumTimers.sub = timer
+        case .subSub: momentumTimers.subSub = timer
+        }
+    }
+
+    private func getMomentumTimer(for menuLevel: MenuLevel) -> Timer? {
+        switch menuLevel {
+        case .main: return momentumTimers.main
+        case .sub: return momentumTimers.sub
+        case .subSub: return momentumTimers.subSub
+        }
+    }
+
+    private func setMomentumActive(for menuLevel: MenuLevel, value: Bool) {
+        switch menuLevel {
+        case .main: isMomentumActive.main = value
+        case .sub: isMomentumActive.sub = value
+        case .subSub: isMomentumActive.subSub = value
+        }
+    }
+
+    private func getMomentumActive(for menuLevel: MenuLevel) -> Bool {
+        switch menuLevel {
+        case .main: return isMomentumActive.main
+        case .sub: return isMomentumActive.sub
+        case .subSub: return isMomentumActive.subSub
+        }
+    }
+
     // Menu control functions
     private func closeSubMenu() {
+        // Stop momentum when closing submenu
+        stopMomentum(for: .sub)
+        
         showingSubMenuForIndex = nil
         subMenuAnimatedIndices.removeAll()
         rotations.sub = 0.0
         startAngles.sub = 0.0
+
+        // Reset sub-level selections when closing submenu
+        selectedSubMenuItem = nil
+        selectedSubSubMenuItem = nil
 
         // Reset zoom effect when closing submenu, if enabled
         if zoomEffectEnabled {
@@ -807,15 +953,114 @@ extension SSRadialMenu {
     }
 
     private func closeSubSubMenu() {
+        // Stop momentum when closing sub-submenu
+        stopMomentum(for: .subSub)
+        
         showingSubSubMenuForIndex = nil
         subSubMenuAnimatedIndices.removeAll()
         rotations.subSub = 0.0
         startAngles.subSub = 0.0
+        
+        // Reset sub-sub level selection when closing sub-submenu
+        selectedSubSubMenuItem = nil
     }
 
     private func resetAllScrollPositions() {
+        // Stop all momentum when resetting positions
+        stopMomentum(for: .main)
+        stopMomentum(for: .sub)
+        stopMomentum(for: .subSub)
+        
         rotations = (0, 0, 0)
         startAngles = (0, 0, 0)
+    }
+    
+    // MARK: - Momentum Functions
+    
+    // Start continuous momentum animation for spin wheel effect
+    private func startContinuousMomentum(velocity: Double, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
+        // Set initial momentum velocity
+        updateMomentumVelocity(for: menuLevel, velocity: velocity)
+        setMomentumActive(for: menuLevel, value: true)
+
+        // Create and start the momentum timer
+        let timer = Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumFrameRate, repeats: true) { timer in
+            self.updateMomentumFrame(timer: timer, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+        }
+        
+        // Store the timer
+        updateMomentumTimer(for: menuLevel, timer: timer)
+    }
+
+    // Update momentum on each frame with improved responsiveness
+    private func updateMomentumFrame(timer: Timer, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
+        let currentVelocity = getMomentumVelocity(for: menuLevel)
+        
+        // Check if velocity is too low to continue
+        if abs(currentVelocity) < AnimationConstants.momentumMinimumVelocity {
+            stopMomentum(for: menuLevel)
+            updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+            return
+        }
+
+        // Update rotation based on current velocity with improved smoothness
+        let currentRotation = getCurrentRotation(for: menuLevel)
+        var newRotation = currentRotation + (currentVelocity * AnimationConstants.momentumSmoothness)
+
+        // If wrap is disabled, ensure rotation stays within valid limits and stop momentum at edges
+        if !wrapEnabled {
+            let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+            if itemCount > 0 {
+                let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
+                let clampedRotation = min(max(0, newRotation), maxRotation)
+                
+                // If we hit the boundary, stop momentum
+                if clampedRotation != newRotation {
+                    newRotation = clampedRotation
+                    stopMomentum(for: menuLevel)
+                    updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+                    return
+                }
+            }
+        }
+
+        // Apply the rotation update directly for smoothest performance
+        updateRotation(for: menuLevel, value: newRotation)
+        updateStartAngle(for: menuLevel, value: newRotation)
+
+        // Apply decay to velocity for gradual slowdown
+        let decayedVelocity = currentVelocity * AnimationConstants.momentumDecayRate
+        updateMomentumVelocity(for: menuLevel, velocity: decayedVelocity)
+
+        // Update visible items periodically for performance
+        if Int(currentRotation / anglePerItem) != Int(newRotation / anglePerItem) {
+            updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+        }
+    }
+
+    // Stop momentum animation
+    private func stopMomentum(for menuLevel: MenuLevel) {
+        getMomentumTimer(for: menuLevel)?.invalidate()
+        updateMomentumTimer(for: menuLevel, timer: nil)
+        updateMomentumVelocity(for: menuLevel, velocity: 0)
+        setMomentumActive(for: menuLevel, value: false)
+    }
+
+    // Helper function to get the item count for the current menu level
+    private func getItemCountForMenu(menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Int {
+        switch menuLevel {
+        case .main:
+            return menuItems.count
+        case .sub:
+            guard mainIndex < menuItems.count, let subItems = menuItems[mainIndex].subMenuItems else { return 0 }
+            return subItems.count
+        case .subSub:
+            guard mainIndex < menuItems.count,
+                  let subItems = menuItems[mainIndex].subMenuItems,
+                  subIndex < subItems.count,
+                  let subSubItems = subItems[subIndex].subMenuItems else { return 0 }
+            return subSubItems.count
+        }
     }
 }
 
@@ -828,8 +1073,7 @@ extension SSRadialMenu {
         case .sub:
             handleSubItemTap(mainIndex: mainIndex, subIndex: itemIndex, item: item)
         case .subSub:
-            selectedItemName = item.name
-            closeSubSubMenu()
+            handleSubSubItemTap(item: item)
         }
     }
 
@@ -843,6 +1087,12 @@ extension SSRadialMenu {
             closeSubMenu()
         }
 
+        // Track selection for main menu
+        selectedMainMenuItem = item
+        // Reset sub-level selections when selecting a new main item
+        selectedSubMenuItem = nil
+        selectedSubSubMenuItem = nil
+
         // Apply zoom effect to the tapped item if enabled
         if zoomEffectEnabled && zoomEffectScale != 0 {
             zoomedItemIndex = index
@@ -850,6 +1100,10 @@ extension SSRadialMenu {
 
         // Execute the provided action, if available
         item.action?()
+        
+        // Call the selection closure
+        onMainMenuSelection?(item)
+        
         if let subItems = menuItems[index].subMenuItems, !subItems.isEmpty {
             showingSubMenuForIndex = index
 
@@ -885,8 +1139,17 @@ extension SSRadialMenu {
             closeSubSubMenu()
         }
 
+        // Track selection for sub menu
+        selectedSubMenuItem = item
+        // Reset sub-sub level selection when selecting a new sub item
+        selectedSubSubMenuItem = nil
+
         // Execute the provided action, if available
         item.action?()
+        
+        // Call the selection closure
+        onSubMenuSelection?(item)
+        
         if let subSubItems = item.subMenuItems, !subSubItems.isEmpty {
             showingSubSubMenuForIndex = (mainIndex: mainIndex, subIndex: subIndex)
 
@@ -901,6 +1164,20 @@ extension SSRadialMenu {
             selectedItemName = item.name
         }
     }
+    
+    private func handleSubSubItemTap(item: RadialMenuItems) {
+        // Track selection for sub-sub menu
+        selectedSubSubMenuItem = item
+        
+        // Execute the provided action, if available
+        item.action?()
+        
+        // Call the selection closure
+        onSubSubMenuSelection?(item)
+        
+        selectedItemName = item.name
+        closeSubSubMenu()
+    }
 }
 
 // Animation Management - Functions for managing animations.
@@ -911,13 +1188,24 @@ extension SSRadialMenu {
         let visibleItems = getVisibleItems(for: menuLevel, mainIndex: showingSubMenuForIndex ?? 0, subIndex: showingSubSubMenuForIndex?.subIndex ?? 0)
         let sortedItems = visibleItems
             .filter { shouldItemBeVisible(visualIndex: $0.visualIndex, menuLevel: menuLevel, mainIndex: showingSubMenuForIndex ?? 0, subIndex: showingSubSubMenuForIndex?.subIndex ?? 0) }
-            .sorted { $0.index < $1.index }
+            .filter { $0.visualIndex >= 0 } // Filter out items with negative visual indices to prevent items appearing before 0th index
+            .sorted { $0.index < $1.index } // Sort by actual index to ensure proper order (0, 1, 2, 3, 4...)
 
-        // Use Timer for batch animation instead of multiple DispatchQueue calls
+        // Only animate items from 0th to 4th index (5 items total: 0, 1, 2, 3, 4)
+        let maxAnimatedItems = 5
+        
         for (sequenceIndex, item) in sortedItems.enumerated() {
-            let delay = Double(sequenceIndex) * AnimationConstants.itemSequenceDelay
-            Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-                withAnimation(.spring(response: AnimationConstants.springAnimationResponse, dampingFraction: AnimationConstants.springAnimationDamping)) {
+            if sequenceIndex < maxAnimatedItems {
+                // Items from 0th to 4th index (indices 0, 1, 2, 3, 4) get sequential pop-out animation
+                let delay = Double(sequenceIndex) * AnimationConstants.itemSequenceDelay
+                Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+                    withAnimation(.spring(response: AnimationConstants.springAnimationResponse, dampingFraction: AnimationConstants.springAnimationDamping)) {
+                        self.addToAnimatedIndices(visualIndex: item.visualIndex, menuLevel: menuLevel)
+                    }
+                }
+            } else {
+                // Items beyond the 4th index appear immediately without animation
+                Timer.scheduledTimer(withTimeInterval: 0.01, repeats: false) { _ in
                     self.addToAnimatedIndices(visualIndex: item.visualIndex, menuLevel: menuLevel)
                 }
             }

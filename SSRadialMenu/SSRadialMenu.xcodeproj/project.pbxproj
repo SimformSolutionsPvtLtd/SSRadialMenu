@@ -18,6 +18,9 @@
 		BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */; };
 		BCBEB58A297ED92F00C03B9C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB589297ED92F00C03B9C /* Assets.xcassets */; };
 		BCBEB58E297ED92F00C03B9C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB58D297ED92F00C03B9C /* Preview Assets.xcassets */; };
+		FD123ABC2B1234567890 /* DemoSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD123ABB2B1234567890 /* DemoSelectionView.swift */; };
+		FD123ABD2B1234567891 /* CalendarDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD123ABC2B1234567891 /* CalendarDemoView.swift */; };
+		FD123ABE2B1234567892 /* FoodDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD123ABD2B1234567892 /* FoodDemoView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +37,9 @@
 		BCBEB589297ED92F00C03B9C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BCBEB58B297ED92F00C03B9C /* SSRadialMenu.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SSRadialMenu.entitlements; sourceTree = "<group>"; };
 		BCBEB58D297ED92F00C03B9C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		FD123ABB2B1234567890 /* DemoSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSelectionView.swift; sourceTree = "<group>"; };
+		FD123ABC2B1234567891 /* CalendarDemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDemoView.swift; sourceTree = "<group>"; };
+		FD123ABD2B1234567892 /* FoodDemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDemoView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +112,9 @@
 				7DC84AC92CDE14B700903218 /* CircleView */,
 				7D28060C2B233409000820B9 /* Model */,
 				BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */,
+				FD123ABB2B1234567890 /* DemoSelectionView.swift */,
+				FD123ABC2B1234567891 /* CalendarDemoView.swift */,
+				FD123ABD2B1234567892 /* FoodDemoView.swift */,
 				BCBEB589297ED92F00C03B9C /* Assets.xcassets */,
 				BCBEB58B297ED92F00C03B9C /* SSRadialMenu.entitlements */,
 				BCBEB58C297ED92F00C03B9C /* Preview Content */,
@@ -201,6 +210,9 @@
 				BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */,
 				7D9237282DF1892500CBDA4E /* RadialMenuItems.swift in Sources */,
 				7D4755E42B8CA7B800C4F67A /* LiquidFluidMenuView.swift in Sources */,
+				FD123ABC2B1234567890 /* DemoSelectionView.swift in Sources */,
+				FD123ABD2B1234567891 /* CalendarDemoView.swift in Sources */,
+				FD123ABE2B1234567892 /* FoodDemoView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+enum ScrollingBehavior {
+    case simple
+    case spinWheel
+}
+
 enum AlignmentType {
     case topLeading, topTrailing, bottomLeading, bottomTrailing
 
@@ -51,7 +56,8 @@ enum AlignmentType {
         }
     }
     
-    func calculateDragDelta(translation: CGSize, sensitivity: Double = 1.5) -> Double {
+    func calculateDragDelta(translation: CGSize, sensitivity: Double = 12.0) -> Double {
+        // Slightly increased sensitivity for faster and more responsive dragging
         let rawDelta = Double(translation.width) * sensitivity
         
         switch self {
@@ -63,14 +69,16 @@ enum AlignmentType {
     }
     
     // Helper function to calculate momentum rotation based on alignment
-    func calculateMomentumRotation(velocity: CGFloat, factor: Double = 0.002) -> Double {
+    func calculateMomentumRotation(velocity: CGFloat, factor: Double = 0.028) -> Double {
+        // Slightly increased momentum calculation for faster spinning
         let rawMomentum = Double(velocity) * factor
         
+        // Use the same directional logic as drag delta for consistency
         switch self {
-        case .topLeading, .bottomTrailing:
-            return rawMomentum
-        case .topTrailing, .bottomLeading:
-            return -rawMomentum
+        case .topLeading, .bottomLeading:
+            return -rawMomentum  // Same as drag delta: negative
+        case .topTrailing, .bottomTrailing:
+            return rawMomentum   // Same as drag delta: positive
         }
     }
 }

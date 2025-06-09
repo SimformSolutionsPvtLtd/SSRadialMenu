@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct LiquidFluidMenuView: View {
-    let centerWidth = UIScreen.main.bounds.width / 2
-    let centerHight = UIScreen.main.bounds.height / 2
+    let centerWidth: CGFloat = 400 // Use fixed values for cross-platform compatibility
+    let centerHeight: CGFloat = 600
     
     
     @State var positions: [CGPoint] = [
