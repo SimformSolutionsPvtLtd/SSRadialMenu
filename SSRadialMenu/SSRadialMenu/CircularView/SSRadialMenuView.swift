@@ -18,21 +18,9 @@ struct SSRadialMenu: View {
     let zoomEffectEnabled: Bool
     let zoomEffectScale: CGFloat?
     let zoomOpacityReduction: Double
+    let scrollThresholdItemCount: Int
 
-    // MARK: - Icon-based Initializers
-    
-    /// Create a radial menu with SF Symbol icons for FAB buttons
-    /// - Parameters:
-    ///   - menuItems: Array of RadialMenuItems (can contain both icons and images)
-    ///   - alignment: Alignment of the menu
-    ///   - expandMenuIcon: SF Symbol name for the expand button
-    ///   - collapseMenuIcon: SF Symbol name for the collapse button (optional)
-    ///   - mainCardSize: Size of the main menu cards
-    ///   - spinsItemsDuringDrag: Whether items spin during drag
-    ///   - wrapEnabled: Whether wrapping is enabled for scrolling
-    ///   - zoomEffectEnabled: Whether zoom effect is enabled
-    ///   - zoomEffectScale: Scale factor for zoom effect
-    ///   - zoomOpacityReduction: Opacity reduction for non-zoomed items
+    // Initializer for icon-based FAB buttons (SF Symbols)
     init(menuItems: [RadialMenuItems],
          alignment: AlignmentType = .bottomTrailing,
          expandMenuIcon: String,
@@ -42,7 +30,8 @@ struct SSRadialMenu: View {
          wrapEnabled: Bool = true,
          zoomEffectEnabled: Bool = true,
          zoomEffectScale: CGFloat? = nil,
-         zoomOpacityReduction: Double = 0.3
+         zoomOpacityReduction: Double = 0.3,
+         scrollThresholdItemCount: Int = PerformanceConstants.scrollThresholdItemCount
     ) {
         self.menuItems = menuItems
         self.alignment = alignment
@@ -56,22 +45,10 @@ struct SSRadialMenu: View {
         self.zoomEffectEnabled = zoomEffectEnabled
         self.zoomEffectScale = zoomEffectScale
         self.zoomOpacityReduction = zoomOpacityReduction
+        self.scrollThresholdItemCount = scrollThresholdItemCount
     }
-
-    // MARK: - Image-based Initializers
     
-    /// Create a radial menu with asset images for FAB buttons
-    /// - Parameters:
-    ///   - menuItems: Array of RadialMenuItems (can contain both icons and images)
-    ///   - alignment: Alignment of the menu
-    ///   - expandMenuImage: Image asset name for the expand button
-    ///   - collapseMenuImage: Image asset name for the collapse button (optional)
-    ///   - mainCardSize: Size of the main menu cards
-    ///   - spinsItemsDuringDrag: Whether items spin during drag
-    ///   - wrapEnabled: Whether wrapping is enabled for scrolling
-    ///   - zoomEffectEnabled: Whether zoom effect is enabled
-    ///   - zoomEffectScale: Scale factor for zoom effect
-    ///   - zoomOpacityReduction: Opacity reduction for non-zoomed items
+    // Initializer for image-based FAB buttons (asset images)
     init(menuItems: [RadialMenuItems],
          alignment: AlignmentType = .bottomTrailing,
          expandMenuImage: String,
@@ -81,7 +58,8 @@ struct SSRadialMenu: View {
          wrapEnabled: Bool = true,
          zoomEffectEnabled: Bool = true,
          zoomEffectScale: CGFloat? = nil,
-         zoomOpacityReduction: Double = 0.3
+         zoomOpacityReduction: Double = 0.3,
+         scrollThresholdItemCount: Int = PerformanceConstants.scrollThresholdItemCount
     ) {
         self.menuItems = menuItems
         self.alignment = alignment
@@ -95,6 +73,7 @@ struct SSRadialMenu: View {
         self.zoomEffectEnabled = zoomEffectEnabled
         self.zoomEffectScale = zoomEffectScale
         self.zoomOpacityReduction = zoomOpacityReduction
+        self.scrollThresholdItemCount = scrollThresholdItemCount
     }
 
     // Core UI State
@@ -192,42 +171,42 @@ extension SSRadialMenu {
         }, label: {
             ZStack {
                 // Collapse button (shown when menu is expanded)
-                if collapseMenuIcon != nil || collapseMenuImage != nil {
-                    Group {
-                        if let collapseImage = collapseMenuImage {
-                            // Use asset image for collapse button
-                            Image(collapseImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 50, height: 50)
-                        } else if let collapseIcon = collapseMenuIcon {
-                            // Use SF Symbol for collapse button
-                            Image(systemName: collapseIcon)
-                                .resizable()
-                                .frame(width: 50, height: 50)
-                        }
-                    }
-                    .opacity(showMenuCards ? 1.0 : 0.0)
-                    .scaleEffect(showMenuCards ? 1.0 : 0.3)
+                if let collapseMenuIcon = collapseMenuIcon {
+                    // SF Symbol collapse icon
+                    Image(systemName: collapseMenuIcon)
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                        .opacity(showMenuCards ? 1.0 : 0.0)
+                        .scaleEffect(showMenuCards ? 1.0 : 0.3)
+                } else if let collapseMenuImage = collapseMenuImage {
+                    // Asset image collapse icon
+                    Image(collapseMenuImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 50, height: 50)
+                        .clipShape(Circle())
+                        .opacity(showMenuCards ? 1.0 : 0.0)
+                        .scaleEffect(showMenuCards ? 1.0 : 0.3)
                 }
 
                 // Expand button (shown when menu is collapsed)
-                Group {
-                    if let expandImage = expandMenuImage {
-                        // Use asset image for expand button
-                        Image(expandImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 50, height: 50)
-                    } else if let expandIcon = expandMenuIcon {
-                        // Use SF Symbol for expand button
-                        Image(systemName: expandIcon)
-                            .resizable()
-                            .frame(width: 50, height: 50)
-                    }
+                if let expandMenuIcon = expandMenuIcon {
+                    // SF Symbol expand icon
+                    Image(systemName: expandMenuIcon)
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                        .opacity((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.0 : 1.0)
+                        .scaleEffect((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.3 : 1.0)
+                } else if let expandMenuImage = expandMenuImage {
+                    // Asset image expand icon
+                    Image(expandMenuImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 50, height: 50)
+                        .clipShape(Circle())
+                        .opacity((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.0 : 1.0)
+                        .scaleEffect((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.3 : 1.0)
                 }
-                .opacity((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.0 : 1.0)
-                .scaleEffect((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.3 : 1.0)
             }
         })
         .frame(width: 80, height: 80)
@@ -407,17 +386,17 @@ extension SSRadialMenu {
     private func isScrollingEnabled(menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Bool {
         switch menuLevel {
         case .main:
-            return menuItems.count > Constants.PerformanceConstants.scrollThresholdItemCount
+            return menuItems.count > scrollThresholdItemCount
         case .sub:
             guard mainIndex < menuItems.count,
                   let subItems = menuItems[mainIndex].subMenuItems else { return false }
-            return subItems.count > Constants.PerformanceConstants.scrollThresholdItemCount
+            return subItems.count > scrollThresholdItemCount
         case .subSub:
             guard mainIndex < menuItems.count,
                   let subItems = menuItems[mainIndex].subMenuItems,
                   subIndex < subItems.count,
                   let subSubItems = subItems[subIndex].subMenuItems else { return false }
-            return subSubItems.count > Constants.PerformanceConstants.scrollThresholdItemCount
+            return subSubItems.count > scrollThresholdItemCount
         }
     }
 

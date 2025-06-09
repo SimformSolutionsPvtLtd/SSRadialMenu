@@ -107,3 +107,4 @@ typealias AnimationConstants = Constants.AnimationConstants
 typealias LayoutConstants = Constants.LayoutConstants
 typealias VisualConstants = Constants.VisualConstants
 typealias AngleConstants = Constants.AngleConstants
+typealias PerformanceConstants = Constants.PerformanceConstants
