@@ -769,27 +769,62 @@ extension SSRadialMenu {
         return (itemRotation, itemAngle, opacity)
     }
 
-    // Unified initial position calculation
+    // Unified initial position calculation for smooth circular flow
     private func getInitialPosition(for item: (item: RadialMenuItems, index: Int, visualIndex: Int), menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> CGPoint {
-        let visibleItems = getVisibleItems(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-        let sortedVisibleItems = visibleItems
-            .filter { shouldItemBeVisible(visualIndex: $0.visualIndex, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) }
-            .sorted { $0.visualIndex < $1.visualIndex } // Sort by visualIndex instead of index to handle wrap-around properly
-
-        guard let currentItemSequence = sortedVisibleItems.firstIndex(where: { $0.index == item.index && $0.visualIndex == item.visualIndex }) else {
-            return getDefaultInitialPosition(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-        }
-
-        if currentItemSequence == 0 {
-            return getDefaultInitialPosition(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-        } else {
-            let previousItem = sortedVisibleItems[currentItemSequence - 1]
-            let (_, previousItemAngle, _) = calculateItemProperties(for: previousItem, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-            let previousRadius = getRadius(for: menuLevel)
-
+        // Check if we're in momentum mode (spinWheel with active momentum)
+        let isMomentumActive = getMomentumActive(for: menuLevel)
+        let isSpinWheelMode = scrollingBehavior == .spinWheel
+        
+        // For momentum/spinWheel mode, items should appear directly at their final position
+        if isMomentumActive && isSpinWheelMode {
+            let currentRotation = getCurrentRotation(for: menuLevel)
+            let itemRotation = Double(item.visualIndex) * anglePerItem - currentRotation
+            let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
+            let itemRadius = getRadius(for: menuLevel)
+            
             return CGPoint(
-                x: previousRadius * 2 * cos(previousItemAngle * .pi / 180),
-                y: previousRadius * 2 * sin(previousItemAngle * .pi / 180)
+                x: itemRadius * cos(itemAngle * .pi / 180),
+                y: itemRadius * sin(itemAngle * .pi / 180)
+            )
+        }
+        
+        // For non-momentum scenarios, calculate natural entry position
+        let currentRotation = getCurrentRotation(for: menuLevel)
+        let itemRotation = Double(item.visualIndex) * anglePerItem - currentRotation
+        let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
+        let itemRadius = getRadius(for: menuLevel)
+        
+        // Calculate where the item is coming from in the circular flow
+        let isScrollingEnabled = isScrollingEnabled(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+        
+        if !isScrollingEnabled {
+            // For non-scrolling menus, items appear from center
+            return CGPoint.zero
+        }
+        
+        // Calculate entry position from outside the visible area but on the circular path
+        let visibilityThreshold = (totalSpan / 2) + (anglePerItem * visibilityBufferMultiplier)
+        let normalizedRotation = ((itemRotation + halfCircle).truncatingRemainder(dividingBy: fullCircle)) - halfCircle
+        
+        // Determine if item is entering from left or right side of the visible area
+        let isEnteringFromLeft = normalizedRotation < -visibilityThreshold
+        let isEnteringFromRight = normalizedRotation > visibilityThreshold
+        
+        if isEnteringFromLeft || isEnteringFromRight {
+            // Item is entering from outside, position it just outside the visible area
+            let entryRadius = itemRadius * 1.2 // Slightly outside for smooth entry
+            let entryAngleOffset = isEnteringFromLeft ? -(visibilityThreshold + anglePerItem * 0.5) : (visibilityThreshold + anglePerItem * 0.5)
+            let entryAngle = alignment.itemAngleForCarousel(rotation: entryAngleOffset)
+            
+            return CGPoint(
+                x: entryRadius * cos(entryAngle * .pi / 180),
+                y: entryRadius * sin(entryAngle * .pi / 180)
+            )
+        } else {
+            // Item is already in view, use its natural position
+            return CGPoint(
+                x: itemRadius * 2 * cos(itemAngle * .pi / 180),
+                y: itemRadius * 2 * sin(itemAngle * .pi / 180)
             )
         }
     }
@@ -1075,6 +1110,9 @@ extension SSRadialMenu {
         updateMomentumVelocity(for: menuLevel, velocity: enhancedVelocity)
         setMomentumActive(for: menuLevel, value: true)
 
+        // Immediately update visible items to ensure they're aware of momentum mode
+        updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+
         // Create and start the momentum timer with faster frame rate for smoother spinning
         let timer = Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumFrameRate, repeats: true) { timer in
             self.updateMomentumFrame(timer: timer, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
@@ -1124,10 +1162,9 @@ extension SSRadialMenu {
         let decayedVelocity = currentVelocity * AnimationConstants.momentumDecayRate
         updateMomentumVelocity(for: menuLevel, velocity: decayedVelocity)
 
-        // Update visible items periodically for performance
-        if Int(currentRotation / anglePerItem) != Int(newRotation / anglePerItem) {
-            updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-        }
+        // Update visible items on every frame during momentum for smooth item appearance
+        // This ensures new items appearing during fast momentum are positioned correctly
+        updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
     }
 
     // Stop momentum animation
@@ -1315,7 +1352,7 @@ extension SSRadialMenu {
         }
     }
 
-    // Unified visibility animation updates
+    // Unified visibility animation updates with momentum handling
     private func updateVisibleItemsAnimation(for menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
         let visibleItems = getVisibleItems(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
         var newAnimatedIndices = Set<Int>()
@@ -1328,9 +1365,11 @@ extension SSRadialMenu {
 
         let currentAnimatedIndices = getCurrentAnimatedIndices(for: menuLevel)
         let currentDragging = getCurrentDragging(for: menuLevel)
+        let isMomentumActive = getMomentumActive(for: menuLevel)
+        let isSpinWheelMode = scrollingBehavior == .spinWheel
 
-        if currentDragging {
-            // Silent updates during dragging
+        if currentDragging || (isMomentumActive && isSpinWheelMode) {
+            // Silent updates during dragging or momentum for instant appearance
             for visualIndex in newAnimatedIndices {
                 if !currentAnimatedIndices.contains(visualIndex) {
                     addToAnimatedIndices(visualIndex: visualIndex, menuLevel: menuLevel)
@@ -1342,7 +1381,7 @@ extension SSRadialMenu {
                 removeFromAnimatedIndices(visualIndex: visualIndex, menuLevel: menuLevel)
             }
         } else {
-            // Animated updates when not dragging
+            // Animated updates when not dragging and not in momentum
             for visualIndex in newAnimatedIndices {
                 if !currentAnimatedIndices.contains(visualIndex) {
                     withAnimation(.easeIn(duration: AnimationConstants.fadeInDuration)) {
