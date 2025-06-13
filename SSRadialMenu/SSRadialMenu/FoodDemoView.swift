@@ -33,6 +33,7 @@ struct FoodDemoView: View {
                     zoomEffectScale: 1.05,
                     scrollThresholdItemCount: 4,
                     scrollingBehavior: ScrollingBehavior.spinWheel,
+                    spinWheelSpeed: .fast,
                     onMainMenuSelection: { item in
                         selectedMainItem = item
                         selectedSubItem = nil // Reset sub selection when main changes

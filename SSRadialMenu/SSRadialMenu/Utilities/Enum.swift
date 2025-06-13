@@ -12,6 +12,48 @@ enum ScrollingBehavior {
     case spinWheel
 }
 
+enum SpinWheelSpeed {
+    case slow
+    case normal
+    case fast
+    
+    /// Speed multiplier for momentum calculations
+    var speedMultiplier: Double {
+        switch self {
+        case .slow:
+            return 0.75
+        case .normal:
+            return 1.0
+        case .fast:
+            return 1.5
+        }
+    }
+    
+    /// Velocity multiplier for drag sensitivity
+    var velocityMultiplier: Double {
+        switch self {
+        case .slow:
+            return 0.025
+        case .normal:
+            return 0.035
+        case .fast:
+            return 0.055
+        }
+    }
+    
+    /// Maximum momentum velocity
+    var maxVelocity: Double {
+        switch self {
+        case .slow:
+            return 6.0
+        case .normal:
+            return 8.0
+        case .fast:
+            return 12.0
+        }
+    }
+}
+
 enum AlignmentType {
     case topLeading, topTrailing, bottomLeading, bottomTrailing
 
@@ -70,7 +112,7 @@ enum AlignmentType {
     
     // Helper function to calculate momentum rotation based on alignment
     func calculateMomentumRotation(velocity: CGFloat, factor: Double = 0.004) -> Double {
-        // Very slow momentum calculation for controlled regular scrolling
+        // Momentum calculation for controlled scrolling with configurable factor
         let rawMomentum = Double(velocity) * factor
         
         // Use the same directional logic as drag delta for consistency

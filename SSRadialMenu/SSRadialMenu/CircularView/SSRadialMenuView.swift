@@ -20,6 +20,7 @@ struct SSRadialMenu: View {
     let zoomOpacityReduction: Double
     let scrollThresholdItemCount: Int
     let scrollingBehavior: ScrollingBehavior
+    let spinWheelSpeed: SpinWheelSpeed
 
     // Selection tracking closures
     let onMainMenuSelection: ((RadialMenuItems) -> Void)?
@@ -39,6 +40,7 @@ struct SSRadialMenu: View {
          zoomOpacityReduction: Double = 0.3,
          scrollThresholdItemCount: Int = PerformanceConstants.scrollThresholdItemCount,
          scrollingBehavior: ScrollingBehavior = .simple,
+         spinWheelSpeed: SpinWheelSpeed = .normal,
          onMainMenuSelection: ((RadialMenuItems) -> Void)? = nil,
          onSubMenuSelection: ((RadialMenuItems) -> Void)? = nil,
          onSubSubMenuSelection: ((RadialMenuItems) -> Void)? = nil
@@ -58,6 +60,7 @@ struct SSRadialMenu: View {
             zoomOpacityReduction: zoomOpacityReduction,
             scrollThresholdItemCount: scrollThresholdItemCount,
             scrollingBehavior: scrollingBehavior,
+            spinWheelSpeed: spinWheelSpeed,
             onMainMenuSelection: onMainMenuSelection,
             onSubMenuSelection: onSubMenuSelection,
             onSubSubMenuSelection: onSubSubMenuSelection
@@ -77,6 +80,7 @@ struct SSRadialMenu: View {
          zoomOpacityReduction: Double = 0.3,
          scrollThresholdItemCount: Int = PerformanceConstants.scrollThresholdItemCount,
          scrollingBehavior: ScrollingBehavior = .simple,
+         spinWheelSpeed: SpinWheelSpeed = .normal,
          onMainMenuSelection: ((RadialMenuItems) -> Void)? = nil,
          onSubMenuSelection: ((RadialMenuItems) -> Void)? = nil,
          onSubSubMenuSelection: ((RadialMenuItems) -> Void)? = nil
@@ -96,6 +100,7 @@ struct SSRadialMenu: View {
             zoomOpacityReduction: zoomOpacityReduction,
             scrollThresholdItemCount: scrollThresholdItemCount,
             scrollingBehavior: scrollingBehavior,
+            spinWheelSpeed: spinWheelSpeed,
             onMainMenuSelection: onMainMenuSelection,
             onSubMenuSelection: onSubMenuSelection,
             onSubSubMenuSelection: onSubSubMenuSelection
@@ -117,6 +122,7 @@ struct SSRadialMenu: View {
                 zoomOpacityReduction: Double,
                 scrollThresholdItemCount: Int,
                 scrollingBehavior: ScrollingBehavior,
+                spinWheelSpeed: SpinWheelSpeed,
                 onMainMenuSelection: ((RadialMenuItems) -> Void)?,
                 onSubMenuSelection: ((RadialMenuItems) -> Void)?,
                 onSubSubMenuSelection: ((RadialMenuItems) -> Void)?) {
@@ -134,6 +140,7 @@ struct SSRadialMenu: View {
         self.zoomOpacityReduction = zoomOpacityReduction
         self.scrollThresholdItemCount = scrollThresholdItemCount
         self.scrollingBehavior = scrollingBehavior
+        self.spinWheelSpeed = spinWheelSpeed
         self.onMainMenuSelection = onMainMenuSelection
         self.onSubMenuSelection = onSubMenuSelection
         self.onSubSubMenuSelection = onSubSubMenuSelection
@@ -377,9 +384,12 @@ extension SSRadialMenu {
                         y: currentRadius * sin(itemAngle * .pi / 180)
                     )
 
+                    // For fast speed momentum, always use final position to maintain consistent radius
+                    let isFastMomentum = getMomentumActive(for: menuLevel) && scrollingBehavior == .spinWheel && (spinWheelSpeed == .fast)
+                    
                     let currentPosition = CGPoint(
-                        x: currentAnimatedIndices.contains(item.visualIndex) ? finalPosition.x : initialPosition.x,
-                        y: currentAnimatedIndices.contains(item.visualIndex) ? finalPosition.y : initialPosition.y
+                        x: (currentAnimatedIndices.contains(item.visualIndex) || isFastMomentum) ? finalPosition.x : initialPosition.x,
+                        y: (currentAnimatedIndices.contains(item.visualIndex) || isFastMomentum) ? finalPosition.y : initialPosition.y
                     )
 
                     let progressiveOpacity = calculateProgressiveOpacity(
@@ -389,7 +399,7 @@ extension SSRadialMenu {
                         isAnimated: currentAnimatedIndices.contains(item.visualIndex)
                     )
 
-                    let baseOpacity = currentAnimatedIndices.contains(item.visualIndex) ? min(progressiveOpacity, opacity) : 0.0
+                    let baseOpacity = (currentAnimatedIndices.contains(item.visualIndex) || isFastMomentum) ? min(progressiveOpacity, opacity) : 0.0
 
                     // Apply zoom opacity reduction for non-zoomed items when zoom effect is active
                     let finalOpacity: Double = {
@@ -419,9 +429,9 @@ extension SSRadialMenu {
                                 getZoomScale() :
                                 (currentAnimatedIndices.contains(item.visualIndex) ? currentScaleEffect : VisualConstants.scaleEffectMinimal))
                     .opacity(finalOpacity)
-                    .animation(currentDragging ? .none : .spring(response: AnimationConstants.springResponseSlow, dampingFraction: AnimationConstants.springAnimationDamping), value: currentAnimatedIndices)
-                    .animation(currentDragging ? .none : .linear(duration: AnimationConstants.fadeOutDuration), value: getCurrentRotation(for: menuLevel))
-                    .animation(currentDragging ? .none : .spring(response: AnimationConstants.springAnimationResponse, dampingFraction: AnimationConstants.springAnimationDamping), value: currentScaleEffect)
+                    .animation((currentDragging || isFastMomentum) ? .none : .spring(response: AnimationConstants.springResponseSlow, dampingFraction: AnimationConstants.springAnimationDamping), value: currentAnimatedIndices)
+                    .animation((currentDragging || isFastMomentum) ? .none : .linear(duration: AnimationConstants.fadeOutDuration), value: getCurrentRotation(for: menuLevel))
+                    .animation((currentDragging || isFastMomentum) ? .none : .spring(response: AnimationConstants.springAnimationResponse, dampingFraction: AnimationConstants.springAnimationDamping), value: currentScaleEffect)
                     .animation(zoomEffectEnabled && zoomEffectScale != 0 ?
                               .spring(response: 0.3, dampingFraction: 0.6) : .none, value: zoomedItemIndex)
                     .onTapGesture {
@@ -775,12 +785,12 @@ extension SSRadialMenu {
         let isMomentumActive = getMomentumActive(for: menuLevel)
         let isSpinWheelMode = scrollingBehavior == .spinWheel
         
-        // For momentum/spinWheel mode, items should appear directly at their final position
+        // For momentum/spinWheel mode, items should appear directly at their final position with exact radius
         if isMomentumActive && isSpinWheelMode {
             let currentRotation = getCurrentRotation(for: menuLevel)
             let itemRotation = Double(item.visualIndex) * anglePerItem - currentRotation
             let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
-            let itemRadius = getRadius(for: menuLevel)
+            let itemRadius = getRadius(for: menuLevel) // Use exact radius, no modifications
             
             return CGPoint(
                 x: itemRadius * cos(itemAngle * .pi / 180),
@@ -810,6 +820,15 @@ extension SSRadialMenu {
         let isEnteringFromLeft = normalizedRotation < -visibilityThreshold
         let isEnteringFromRight = normalizedRotation > visibilityThreshold
         
+        // For fast speed momentum, always use exact radius to prevent radius changes
+        if isSpinWheelMode && (spinWheelSpeed == .fast) {
+            // During fast spinning, maintain consistent radius for all items
+            return CGPoint(
+                x: itemRadius * cos(itemAngle * .pi / 180),
+                y: itemRadius * sin(itemAngle * .pi / 180)
+            )
+        }
+        
         if isEnteringFromLeft || isEnteringFromRight {
             // Item is entering from outside, position it just outside the visible area
             let entryRadius = itemRadius * 1.2 // Slightly outside for smooth entry
@@ -823,8 +842,8 @@ extension SSRadialMenu {
         } else {
             // Item is already in view, use its natural position
             return CGPoint(
-                x: itemRadius * 2 * cos(itemAngle * .pi / 180),
-                y: itemRadius * 2 * sin(itemAngle * .pi / 180)
+                x: itemRadius * 2.1 * cos(itemAngle * .pi / 180),
+                y: itemRadius * 2.1 * sin(itemAngle * .pi / 180)
             )
         }
     }
@@ -882,8 +901,9 @@ extension SSRadialMenu {
 
                 setDragging(for: menuLevel, value: true)
 
-                // Slower drag sensitivity for very controlled regular spin wheel movement
-                let delta = alignment.calculateDragDelta(translation: value.translation, sensitivity: 1.2)
+                // Apply speed-based drag sensitivity for spin wheel movement
+                let baseSensitivity = scrollingBehavior == .spinWheel ? 1.2 * spinWheelSpeed.speedMultiplier : 1.2
+                let delta = alignment.calculateDragDelta(translation: value.translation, sensitivity: baseSensitivity)
                 var newRotation = getStartAngle(for: menuLevel) + delta
 
                 // If wrap is disabled, ensure rotation stays within valid limits
@@ -911,7 +931,7 @@ extension SSRadialMenu {
                 } else {
                     // For very slow drags, provide reduced momentum in spin wheel mode for more controlled regular scrolling
                     if scrollingBehavior == .spinWheel {
-                        let minimumMomentum = velocity > 0 ? 35.0 : -35.0 // Reduced minimum momentum for slower regular movement
+                        let minimumMomentum = (velocity > 0 ? 35.0 : -35.0) * spinWheelSpeed.speedMultiplier // Apply speed multiplier for minimum momentum
                         handleDragMomentum(velocity: minimumMomentum, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
                     } else {
                         updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
@@ -935,7 +955,7 @@ extension SSRadialMenu {
         switch scrollingBehavior {
         case .simple:
             // Simple momentum behavior with extremely slow movement
-            let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.001) // Even slower factor for simple mode
+            let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.001 * spinWheelSpeed.speedMultiplier) // Apply speed multiplier for simple mode
             let currentRotation = getCurrentRotation(for: menuLevel)
             var newRotation = currentRotation + momentumRotation
 
@@ -959,12 +979,12 @@ extension SSRadialMenu {
 
         case .spinWheel:
             // Enhanced momentum behavior with continuous spinning
-            // Calculate initial momentum velocity based on drag velocity
-            let initialVelocity = alignment.calculateMomentumRotation(velocity: velocity, factor: Constants.PerformanceConstants.momentumVelocityMultiplier)
+            // Calculate initial momentum velocity based on drag velocity with speed multiplier
+            let initialVelocity = alignment.calculateMomentumRotation(velocity: velocity, factor: spinWheelSpeed.velocityMultiplier)
 
-            // Clamp velocity to reasonable limits
-            let clampedVelocity = max(-Constants.PerformanceConstants.maximumMomentumVelocity,
-                                     min(Constants.PerformanceConstants.maximumMomentumVelocity, initialVelocity))
+            // Clamp velocity to reasonable limits based on speed setting
+            let clampedVelocity = max(-spinWheelSpeed.maxVelocity,
+                                     min(spinWheelSpeed.maxVelocity, initialVelocity))
 
             // Check if this is a flick gesture (high velocity) or regular drag
             let isFlick = abs(velocity) > Constants.PerformanceConstants.flickVelocityThreshold
@@ -973,8 +993,8 @@ extension SSRadialMenu {
                 // Start continuous momentum for flick gestures
                 startContinuousMomentum(velocity: clampedVelocity, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             } else {
-                // For regular drags in spinWheel mode, create momentum with much slower responsiveness for very controlled movement
-                let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.004) // Much slower factor for very controlled regular scrolling
+                // For regular drags in spinWheel mode, create momentum with controlled responsiveness based on speed setting
+                let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.004 * spinWheelSpeed.speedMultiplier) // Apply speed multiplier for controlled regular scrolling
                 let currentRotation = getCurrentRotation(for: menuLevel)
                 var newRotation = currentRotation + momentumRotation
 
@@ -1103,8 +1123,8 @@ extension SSRadialMenu {
 
     // Start continuous momentum animation for spin wheel effect with spring-like behavior
     private func startContinuousMomentum(velocity: Double, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
-        // Enhance velocity for better spring effect on long flicks
-        let enhancedVelocity = velocity * 2.0 // Increased amplification for faster initial velocity
+        // Enhance velocity for better spring effect on long flicks with speed multiplier
+        let enhancedVelocity = velocity * 2.0 * spinWheelSpeed.speedMultiplier // Apply speed multiplier for enhanced velocity
         
         // Set initial momentum velocity
         updateMomentumVelocity(for: menuLevel, velocity: enhancedVelocity)
@@ -1133,9 +1153,9 @@ extension SSRadialMenu {
             return
         }
 
-        // Update rotation based on current velocity with improved smoothness
+        // Update rotation based on current velocity with improved smoothness and speed multiplier
         let currentRotation = getCurrentRotation(for: menuLevel)
-        var newRotation = currentRotation + (currentVelocity * AnimationConstants.momentumSmoothness)
+        var newRotation = currentRotation + (currentVelocity * AnimationConstants.momentumSmoothness * spinWheelSpeed.speedMultiplier)
 
         // If wrap is disabled, ensure rotation stays within valid limits and stop momentum at edges
         if !wrapEnabled {

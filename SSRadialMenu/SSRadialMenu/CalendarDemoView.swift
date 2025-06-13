@@ -111,6 +111,7 @@ struct CalendarDemoView: View {
                     zoomEffectScale: 1.1,
                     scrollThresholdItemCount: 4,
                     scrollingBehavior: ScrollingBehavior.spinWheel,
+                    spinWheelSpeed: .normal,
                     onMainMenuSelection: { item in
                         selectedMainItem = item
                         selectedSubItem = nil // Reset sub selection when main changes
