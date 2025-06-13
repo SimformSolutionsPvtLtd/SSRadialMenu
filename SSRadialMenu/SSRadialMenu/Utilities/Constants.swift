@@ -25,19 +25,19 @@ struct Constants {
         
         // CircularView animation constants
         static let menuAnimationDuration: Double = 0.3
-        static let itemSequenceDelay: Double = 0.25
-        static let springAnimationResponse: Double = 0.6
-        static let springAnimationDamping: Double = 0.7
-        static let fadeInDuration: Double = 0.2
-        static let fadeOutDuration: Double = 0.15
-        static let momentumDuration: Double = 0.6
-        static let momentumUpdateDelay: Double = 0.05
+        static let itemSequenceDelay: Double = 0.35 // Increased delay between items for slower animation
+        static let springAnimationResponse: Double = 0.8 // Slower spring response
+        static let springAnimationDamping: Double = 0.8 // Higher damping for smoother animation
+        static let fadeInDuration: Double = 0.3 // Slower fade in
+        static let fadeOutDuration: Double = 0.25 // Slower fade out
+        static let momentumDuration: Double = 1.8 // Even longer momentum duration for extremely slow feel
+        static let momentumUpdateDelay: Double = 0.12 // Much slower update delay
         
         // Spin wheel momentum constants for smooth, controlled behavior
-        static let momentumFrameRate: Double = 1.0 / 75.0 // 75 FPS for slightly faster animation
-        static let momentumSmoothness: Double = 0.30 // Slightly increased rotation per frame for faster movement
-        static let momentumDecayRate: Double = 0.970 // Slightly lower decay for longer spinning duration
-        static let momentumMinimumVelocity: Double = 0.070 // Lower minimum for longer spin
+        static let momentumFrameRate: Double = 1.0 / 60.0 // 60 FPS for smoother animation
+        static let momentumSmoothness: Double = 0.28 // Increased rotation per frame for faster spin wheel feel
+        static let momentumDecayRate: Double = 0.970 // Slightly lower decay for longer spinning
+        static let momentumMinimumVelocity: Double = 0.10 // Higher threshold before stopping
     }
     
     // MARK: - Layout Constants
@@ -107,9 +107,9 @@ struct Constants {
         static let scrollThresholdItemCount: Int = 6
         
         // Enhanced spin wheel momentum constants for controlled movement
-        static let momentumVelocityMultiplier: Double = 0.045 // Slightly increased momentum multiplier for faster feel
-        static let maximumMomentumVelocity: Double = 8.0 // Increased maximum velocity for faster flicks
-        static let flickVelocityThreshold: CGFloat = 350.0 // Lower threshold for easier flick detection
+        static let momentumVelocityMultiplier: Double = 0.035 // Increased for faster flick responsiveness  
+        static let maximumMomentumVelocity: Double = 8.0 // Higher maximum velocity for stronger flicks
+        static let flickVelocityThreshold: CGFloat = 250.0 // Lower threshold for easier flick activation
     }
 }
 

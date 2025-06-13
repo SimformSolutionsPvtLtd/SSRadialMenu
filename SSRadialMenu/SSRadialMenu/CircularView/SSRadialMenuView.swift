@@ -847,8 +847,8 @@ extension SSRadialMenu {
 
                 setDragging(for: menuLevel, value: true)
 
-                // Moderate drag sensitivity for controlled spin wheel feel
-                let delta = alignment.calculateDragDelta(translation: value.translation, sensitivity: 8.0)
+                // Slower drag sensitivity for very controlled regular spin wheel movement
+                let delta = alignment.calculateDragDelta(translation: value.translation, sensitivity: 1.2)
                 var newRotation = getStartAngle(for: menuLevel) + delta
 
                 // If wrap is disabled, ensure rotation stays within valid limits
@@ -869,14 +869,14 @@ extension SSRadialMenu {
                 setDragging(for: menuLevel, value: false)
                 updateStartAngle(for: menuLevel, value: getCurrentRotation(for: menuLevel))
 
-                // Ultra-fast momentum handling for ultra-smooth gestures
+                // Much more controlled momentum handling for very smooth gestures
                 let velocity = value.velocity.width
-                if abs(velocity) > 0.8 { // Ultra-low threshold for hyper-responsive momentum
+                if abs(velocity) > 0.1 { // Extremely low threshold for highly controlled momentum
                     handleDragMomentum(velocity: velocity, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
                 } else {
-                    // For very slow drags, ultra-fast momentum in spin wheel mode for hyper-responsiveness
+                    // For very slow drags, provide reduced momentum in spin wheel mode for more controlled regular scrolling
                     if scrollingBehavior == .spinWheel {
-                        let minimumMomentum = velocity > 0 ? 90.0 : -90.0 // Enhanced minimum momentum for ultra-smooth subtle movement
+                        let minimumMomentum = velocity > 0 ? 35.0 : -35.0 // Reduced minimum momentum for slower regular movement
                         handleDragMomentum(velocity: minimumMomentum, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
                     } else {
                         updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
@@ -885,10 +885,10 @@ extension SSRadialMenu {
             })
     }
 
-    // Ultra-fast momentum handling for hyper-smooth response
+    // Controlled momentum handling for smooth response
     private func handleDragMomentum(velocity: CGFloat, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
-        // Ultra-low threshold for hyper-responsive momentum triggering
-        guard abs(velocity) > 0.8 else {
+                // Much lower threshold for highly controlled momentum triggering
+        guard abs(velocity) > 0.1 else {
             updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             return
         }
@@ -899,8 +899,8 @@ extension SSRadialMenu {
         // Use different behavior based on scrollingBehavior setting
         switch scrollingBehavior {
         case .simple:
-            // Original simple momentum behavior
-            let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity)
+            // Simple momentum behavior with extremely slow movement
+            let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.001) // Even slower factor for simple mode
             let currentRotation = getCurrentRotation(for: menuLevel)
             var newRotation = currentRotation + momentumRotation
 
@@ -938,8 +938,8 @@ extension SSRadialMenu {
                 // Start continuous momentum for flick gestures
                 startContinuousMomentum(velocity: clampedVelocity, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             } else {
-                // For regular drags in spinWheel mode, create momentum with ultra-high responsiveness for blazing fast movement
-                let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.055) // Ultra-high for blazing fast momentum
+                // For regular drags in spinWheel mode, create momentum with much slower responsiveness for very controlled movement
+                let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.004) // Much slower factor for very controlled regular scrolling
                 let currentRotation = getCurrentRotation(for: menuLevel)
                 var newRotation = currentRotation + momentumRotation
 
@@ -952,13 +952,13 @@ extension SSRadialMenu {
                     }
                 }
 
-                // Use even faster timing for blazing quick momentum
-                withAnimation(.easeOut(duration: 0.25)) {
+                // Use very controlled spring-like animation for precise regular drags
+                withAnimation(.spring(response: 1.0, dampingFraction: 0.85, blendDuration: 0)) {
                     updateRotation(for: menuLevel, value: newRotation)
                     updateStartAngle(for: menuLevel, value: newRotation)
                 }
 
-                Timer.scheduledTimer(withTimeInterval: 0.05, repeats: false) { _ in
+                Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
                     updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
                 }
             }
@@ -1066,13 +1066,16 @@ extension SSRadialMenu {
 
     // MARK: - Momentum Functions
 
-    // Start continuous momentum animation for spin wheel effect
+    // Start continuous momentum animation for spin wheel effect with spring-like behavior
     private func startContinuousMomentum(velocity: Double, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
+        // Enhance velocity for better spring effect on long flicks
+        let enhancedVelocity = velocity * 2.0 // Increased amplification for faster initial velocity
+        
         // Set initial momentum velocity
-        updateMomentumVelocity(for: menuLevel, velocity: velocity)
+        updateMomentumVelocity(for: menuLevel, velocity: enhancedVelocity)
         setMomentumActive(for: menuLevel, value: true)
 
-        // Create and start the momentum timer
+        // Create and start the momentum timer with faster frame rate for smoother spinning
         let timer = Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumFrameRate, repeats: true) { timer in
             self.updateMomentumFrame(timer: timer, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
         }

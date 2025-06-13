@@ -56,8 +56,8 @@ enum AlignmentType {
         }
     }
     
-    func calculateDragDelta(translation: CGSize, sensitivity: Double = 12.0) -> Double {
-        // Slightly increased sensitivity for faster and more responsive dragging
+    func calculateDragDelta(translation: CGSize, sensitivity: Double = 1.2) -> Double {
+        // Very low sensitivity for much slower and more controlled dragging
         let rawDelta = Double(translation.width) * sensitivity
         
         switch self {
@@ -69,8 +69,8 @@ enum AlignmentType {
     }
     
     // Helper function to calculate momentum rotation based on alignment
-    func calculateMomentumRotation(velocity: CGFloat, factor: Double = 0.028) -> Double {
-        // Slightly increased momentum calculation for faster spinning
+    func calculateMomentumRotation(velocity: CGFloat, factor: Double = 0.004) -> Double {
+        // Very slow momentum calculation for controlled regular scrolling
         let rawMomentum = Double(velocity) * factor
         
         // Use the same directional logic as drag delta for consistency
