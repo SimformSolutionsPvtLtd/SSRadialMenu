@@ -27,50 +27,12 @@ struct SSRadialMenu: View {
     let onSubMenuSelection: ((RadialMenuItems) -> Void)?
     let onSubSubMenuSelection: ((RadialMenuItems) -> Void)?
 
-    // Initializer for icon-based FAB buttons (SF Symbols)
+    // Unified initializer for both SF Symbols and asset images
     init(menuItems: [RadialMenuItems],
          alignment: AlignmentType = .bottomTrailing,
-         expandMenuIcon: String,
+         expandMenuIcon: String? = nil,
+         expandMenuImage: String? = nil,
          collapseMenuIcon: String? = nil,
-         mainCardSize: CGFloat = 55.0,
-         spinsItemsDuringDrag: Bool = true,
-         wrapEnabled: Bool = true,
-         zoomEffectEnabled: Bool = true,
-         zoomEffectScale: CGFloat? = nil,
-         zoomOpacityReduction: Double = 0.3,
-         scrollThresholdItemCount: Int = PerformanceConstants.scrollThresholdItemCount,
-         scrollingBehavior: ScrollingBehavior = .simple,
-         spinWheelSpeed: SpinWheelSpeed = .normal,
-         onMainMenuSelection: ((RadialMenuItems) -> Void)? = nil,
-         onSubMenuSelection: ((RadialMenuItems) -> Void)? = nil,
-         onSubSubMenuSelection: ((RadialMenuItems) -> Void)? = nil
-    ) {
-        self.init(
-            menuItems: menuItems,
-            alignment: alignment,
-            expandMenuIcon: expandMenuIcon,
-            collapseMenuIcon: collapseMenuIcon,
-            expandMenuImage: nil,
-            collapseMenuImage: nil,
-            mainCardSize: mainCardSize,
-            spinsItemsDuringDrag: spinsItemsDuringDrag,
-            wrapEnabled: wrapEnabled,
-            zoomEffectEnabled: zoomEffectEnabled,
-            zoomEffectScale: zoomEffectScale,
-            zoomOpacityReduction: zoomOpacityReduction,
-            scrollThresholdItemCount: scrollThresholdItemCount,
-            scrollingBehavior: scrollingBehavior,
-            spinWheelSpeed: spinWheelSpeed,
-            onMainMenuSelection: onMainMenuSelection,
-            onSubMenuSelection: onSubMenuSelection,
-            onSubSubMenuSelection: onSubSubMenuSelection
-        )
-    }
-
-    // Initializer for image-based FAB buttons (asset images)
-    init(menuItems: [RadialMenuItems],
-         alignment: AlignmentType = .bottomTrailing,
-         expandMenuImage: String,
          collapseMenuImage: String? = nil,
          mainCardSize: CGFloat = 55.0,
          spinsItemsDuringDrag: Bool = true,
@@ -85,47 +47,6 @@ struct SSRadialMenu: View {
          onSubMenuSelection: ((RadialMenuItems) -> Void)? = nil,
          onSubSubMenuSelection: ((RadialMenuItems) -> Void)? = nil
     ) {
-        self.init(
-            menuItems: menuItems,
-            alignment: alignment,
-            expandMenuIcon: nil,
-            collapseMenuIcon: nil,
-            expandMenuImage: expandMenuImage,
-            collapseMenuImage: collapseMenuImage,
-            mainCardSize: mainCardSize,
-            spinsItemsDuringDrag: spinsItemsDuringDrag,
-            wrapEnabled: wrapEnabled,
-            zoomEffectEnabled: zoomEffectEnabled,
-            zoomEffectScale: zoomEffectScale,
-            zoomOpacityReduction: zoomOpacityReduction,
-            scrollThresholdItemCount: scrollThresholdItemCount,
-            scrollingBehavior: scrollingBehavior,
-            spinWheelSpeed: spinWheelSpeed,
-            onMainMenuSelection: onMainMenuSelection,
-            onSubMenuSelection: onSubMenuSelection,
-            onSubSubMenuSelection: onSubSubMenuSelection
-        )
-    }
-
-    // Private designated initializer to eliminate code duplication
-    private init(menuItems: [RadialMenuItems],
-                alignment: AlignmentType,
-                expandMenuIcon: String?,
-                collapseMenuIcon: String?,
-                expandMenuImage: String?,
-                collapseMenuImage: String?,
-                mainCardSize: CGFloat,
-                spinsItemsDuringDrag: Bool,
-                wrapEnabled: Bool,
-                zoomEffectEnabled: Bool,
-                zoomEffectScale: CGFloat?,
-                zoomOpacityReduction: Double,
-                scrollThresholdItemCount: Int,
-                scrollingBehavior: ScrollingBehavior,
-                spinWheelSpeed: SpinWheelSpeed,
-                onMainMenuSelection: ((RadialMenuItems) -> Void)?,
-                onSubMenuSelection: ((RadialMenuItems) -> Void)?,
-                onSubSubMenuSelection: ((RadialMenuItems) -> Void)?) {
         self.menuItems = menuItems
         self.alignment = alignment
         self.expandMenuIcon = expandMenuIcon
@@ -147,65 +68,47 @@ struct SSRadialMenu: View {
     }
 
     // MARK: - Optimized State Management
-
+    
     /// Consolidated state for all menu levels to reduce tuple overhead
     private struct MenuState {
-        var rotation: Double = 0
-        var startAngle: Double = 0
-        var isDragging: Bool = false
-        var scaleEffect: CGFloat = 1.0
-        var animatedIndices: Set<Int> = []
-        var momentumVelocity: Double = 0
-        var momentumTimer: Timer? = nil
-        var isMomentumActive: Bool = false
+        var rotation: Double = 0, startAngle: Double = 0
+        var isDragging: Bool = false, scaleEffect: CGFloat = 1.0
+        var animatedIndices: Set<Int> = [], momentumVelocity: Double = 0
+        var momentumTimer: Timer? = nil, isMomentumActive: Bool = false
 
         mutating func reset() {
-            rotation = 0
-            startAngle = 0
-            isDragging = false
-            scaleEffect = 1.0
+            (rotation, startAngle, isDragging, scaleEffect) = (0, 0, false, 1.0)
             animatedIndices.removeAll()
             stopMomentum()
         }
 
         mutating func stopMomentum() {
             momentumTimer?.invalidate()
-            momentumTimer = nil
-            momentumVelocity = 0
-            isMomentumActive = false
+            (momentumTimer, momentumVelocity, isMomentumActive) = (nil, 0, false)
         }
     }
 
     /// Cache for frequently computed values to improve performance
     private struct ComputationCache {
-        var lastMenuLevel: MenuLevel?
-        var lastMainIndex: Int?
-        var lastSubIndex: Int?
+        var lastMenuLevel: MenuLevel?, lastMainIndex: Int?, lastSubIndex: Int?
         var cachedVisibleItems: [(item: RadialMenuItems, index: Int, visualIndex: Int)] = []
         var cacheValidation: String = ""
 
         mutating func invalidate() {
-            lastMenuLevel = nil
-            lastMainIndex = nil
-            lastSubIndex = nil
+            (lastMenuLevel, lastMainIndex, lastSubIndex, cacheValidation) = (nil, nil, nil, "")
             cachedVisibleItems.removeAll()
-            cacheValidation = ""
         }
 
         func isValid(for menuLevel: MenuLevel, mainIndex: Int, subIndex: Int, rotation: Double) -> Bool {
             let currentValidation = "\(menuLevel)-\(mainIndex)-\(subIndex)-\(Int(rotation))"
-            return lastMenuLevel == menuLevel &&
-                   lastMainIndex == mainIndex &&
-                   lastSubIndex == subIndex &&
-                   cacheValidation == currentValidation
+            return lastMenuLevel == menuLevel && lastMainIndex == mainIndex && 
+                   lastSubIndex == subIndex && cacheValidation == currentValidation
         }
 
         mutating func update(for menuLevel: MenuLevel, mainIndex: Int, subIndex: Int, rotation: Double, items: [(item: RadialMenuItems, index: Int, visualIndex: Int)]) {
-            lastMenuLevel = menuLevel
-            lastMainIndex = mainIndex
-            lastSubIndex = subIndex
-            cachedVisibleItems = items
+            (lastMenuLevel, lastMainIndex, lastSubIndex) = (menuLevel, mainIndex, subIndex)
             cacheValidation = "\(menuLevel)-\(mainIndex)-\(subIndex)-\(Int(rotation))"
+            cachedVisibleItems = items
         }
     }
 
@@ -297,71 +200,47 @@ struct SSRadialMenu: View {
 
 // Menu View Creation - UI-related view building functions:
 extension SSRadialMenu {
-    // FAB Button
+    // FAB Button - Optimized with consolidated image/icon handling
     @ViewBuilder
     private var mainFabButton: some View {
         Button(action: {
-            if showingSubMenuForIndex != nil {
-                closeSubMenu()
-            }
+            if showingSubMenuForIndex != nil { closeSubMenu() }
             showMenuCards.toggle()
             if showMenuCards {
                 resetAllScrollPositions()
                 startSequentialAnimation(for: .main, itemCount: menuItems.count)
             } else {
                 mainMenuState.animatedIndices.removeAll()
-                // Reset all selections when closing the menu
-                selectedMainMenuItem = nil
-                selectedSubMenuItem = nil
-                selectedSubSubMenuItem = nil
-                // Reset zoom effect when closing the menu, if enabled
-                if zoomEffectEnabled {
-                    zoomedItemIndex = nil
-                }
+                (selectedMainMenuItem, selectedSubMenuItem, selectedSubSubMenuItem) = (nil, nil, nil)
+                if zoomEffectEnabled { zoomedItemIndex = nil }
             }
         }, label: {
             ZStack {
-                // Collapse button (shown when menu is expanded)
-                if let collapseMenuIcon = collapseMenuIcon {
-                    // SF Symbol collapse icon
-                    Image(systemName: collapseMenuIcon)
-                        .resizable()
-                        .frame(width: 50, height: 50)
-                        .opacity(showMenuCards ? 1.0 : 0.0)
-                        .scaleEffect(showMenuCards ? 1.0 : 0.3)
-                } else if let collapseMenuImage = collapseMenuImage {
-                    // Asset image collapse icon
-                    Image(collapseMenuImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 50, height: 50)
-                        .clipShape(Circle())
-                        .opacity(showMenuCards ? 1.0 : 0.0)
-                        .scaleEffect(showMenuCards ? 1.0 : 0.3)
-                }
-
-                // Expand button (shown when menu is collapsed)
-                if let expandMenuIcon = expandMenuIcon {
-                    // SF Symbol expand icon
-                    Image(systemName: expandMenuIcon)
-                        .resizable()
-                        .frame(width: 50, height: 50)
-                        .opacity((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.0 : 1.0)
-                        .scaleEffect((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.3 : 1.0)
-                } else if let expandMenuImage = expandMenuImage {
-                    // Asset image expand icon
-                    Image(expandMenuImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 50, height: 50)
-                        .clipShape(Circle())
-                        .opacity((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.0 : 1.0)
-                        .scaleEffect((showMenuCards && (collapseMenuIcon != nil || collapseMenuImage != nil)) ? 0.3 : 1.0)
-                }
+                createFabIcon(isCollapse: true)
+                createFabIcon(isCollapse: false)
             }
         })
         .frame(width: 80, height: 80)
         .clipShape(Circle())
+    }
+    
+    @ViewBuilder
+    private func createFabIcon(isCollapse: Bool) -> some View {
+        let (icon, image) = isCollapse ? (collapseMenuIcon, collapseMenuImage) : (expandMenuIcon, expandMenuImage)
+        let hasAlternative = isCollapse ? (collapseMenuIcon != nil || collapseMenuImage != nil) : false
+        let shouldShow = isCollapse ? showMenuCards : (!showMenuCards || !hasAlternative)
+        let opacity = isCollapse ? (showMenuCards ? 1.0 : 0.0) : (shouldShow ? 1.0 : 0.0)
+        let scale = isCollapse ? (showMenuCards ? 1.0 : 0.3) : (shouldShow ? 1.0 : 0.3)
+        
+        Group {
+            if let icon = icon {
+                Image(systemName: icon).resizable().frame(width: 50, height: 50)
+            } else if let image = image {
+                Image(image).resizable().aspectRatio(contentMode: .fill).frame(width: 50, height: 50).clipShape(Circle())
+            }
+        }
+        .opacity(opacity)
+        .scaleEffect(scale)
     }
 
     // Unified menu view creation
@@ -449,79 +328,33 @@ extension SSRadialMenu {
     }
 }
 
-// MenuCard Component - The MenuCard view builder function
+// MenuCard Component - Optimized card view builder
 extension SSRadialMenu {
     @ViewBuilder
     func MenuCard(item: RadialMenuItems, itemNumber: Int? = nil, hierarchicalIndex: String? = nil, cardSize: CGFloat = 55) -> some View {
         ZStack {
             // Support both SF Symbols (via icon) and asset images (via image)
             if let imageName = item.image {
-                // Use asset image if provided
                 Image(imageName)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: cardSize, height: cardSize)
                     .clipShape(Circle())
                     .padding(cardSize * 0.07)
-            } else {
-                if let systemIcon = item.icon {
-                    // Fallback to SF Symbol icon
-                    Image(systemName: systemIcon)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: cardSize * 0.6, height: cardSize * 0.6)
-                        .foregroundColor(.white)
-                        .padding(cardSize * 0.07)
-                }
+            } else if let systemIcon = item.icon {
+                Image(systemName: systemIcon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: cardSize * 0.6, height: cardSize * 0.6)
+                    .foregroundColor(.white)
+                    .padding(cardSize * 0.07)
             }
 
-            let displayText: String? = {
-                if let badgeText = item.badgeText, !badgeText.isEmpty {
-                    return badgeText
-                } else {
-                    return nil
-                }
-            }()
-
-            let fontSize: CGFloat = {
-                if displayText != nil {
-                    if let hierarchicalIndex = hierarchicalIndex {
-                        let levelCount = hierarchicalIndex.components(separatedBy: ".").count
-                        switch levelCount {
-                        case 2: return cardSize * VisualConstants.fontSizeMedium
-                        case 3: return cardSize * VisualConstants.fontSizeSmall
-                        default: return cardSize * VisualConstants.fontSizeLarge
-                        }
-                    } else {
-                        return cardSize * VisualConstants.fontSizeLarge
-                    }
-                } else {
-                    return 0
-                }
-            }()
-
-            let badgeSize: CGFloat = {
-                if displayText != nil {
-                    if let hierarchicalIndex = hierarchicalIndex {
-                        let levelCount = hierarchicalIndex.components(separatedBy: ".").count
-                        switch levelCount {
-                        case 2: return cardSize * VisualConstants.badgeSizeLarge
-                        case 3: return cardSize * VisualConstants.badgeSizeExtraLarge
-                        default: return cardSize * VisualConstants.badgeSizeMedium
-                        }
-                    } else {
-                        return cardSize * VisualConstants.badgeSizeSmall
-                    }
-                } else {
-                    return 0
-                }
-            }()
-
-            let offsetMultiplier: CGFloat = cardSize / mainCardSize
-
-            // Only show badge if displayText is not nil
-            if let displayText = displayText {
-                Text(displayText)
+            // Optimized badge rendering
+            if let badgeText = item.badgeText, !badgeText.isEmpty {
+                let (fontSize, badgeSize) = calculateBadgeMetrics(cardSize: cardSize, hierarchicalIndex: hierarchicalIndex)
+                
+                Text(badgeText)
                     .font(.bold(.system(size: fontSize))())
                     .foregroundColor(.white)
                     .background(
@@ -529,9 +362,27 @@ extension SSRadialMenu {
                             .fill(Color.black.opacity(VisualConstants.opacityBackground))
                             .frame(width: badgeSize, height: badgeSize)
                     )
-                    .offset(x: VisualConstants.badgeOffset * offsetMultiplier, y: -VisualConstants.badgeOffset * offsetMultiplier)
+                    .offset(x: VisualConstants.badgeOffset * (cardSize / mainCardSize), 
+                           y: -VisualConstants.badgeOffset * (cardSize / mainCardSize))
             }
         }
+    }
+    
+    private func calculateBadgeMetrics(cardSize: CGFloat, hierarchicalIndex: String?) -> (fontSize: CGFloat, badgeSize: CGFloat) {
+        let levelCount = hierarchicalIndex?.components(separatedBy: ".").count ?? 1
+        
+        let fontMultiplier: CGFloat
+        let sizeMultiplier: CGFloat
+        
+        switch levelCount {
+        case 2: (fontMultiplier, sizeMultiplier) = (VisualConstants.fontSizeMedium, VisualConstants.badgeSizeLarge)
+        case 3: (fontMultiplier, sizeMultiplier) = (VisualConstants.fontSizeSmall, VisualConstants.badgeSizeExtraLarge)
+        default: (fontMultiplier, sizeMultiplier) = hierarchicalIndex != nil ? 
+                    (VisualConstants.fontSizeLarge, VisualConstants.badgeSizeMedium) : 
+                    (VisualConstants.fontSizeLarge, VisualConstants.badgeSizeSmall)
+        }
+        
+        return (cardSize * fontMultiplier, cardSize * sizeMultiplier)
     }
 }
 
@@ -628,85 +479,47 @@ extension SSRadialMenu {
     }
 }
 
-// Visibility & Opacity Calculations - Optimized functions for item visibility and opacity
+// Visibility & Opacity Calculations - Optimized functions with consolidated calculations
 extension SSRadialMenu {
-
-    // Cache for computed rotation values to avoid repeated calculations
-    @inline(__always)
-    private func getCachedRotation(for menuLevel: MenuLevel) -> Double {
-        return getCurrentRotation(for: menuLevel)
-    }
-
-    @inline(__always)
-    private func getCurrentRotation(for menuLevel: MenuLevel) -> Double {
-        return getMenuState(for: menuLevel).rotation
-    }
-
-    @inline(__always)
-    private func getCurrentAnimatedIndices(for menuLevel: MenuLevel) -> Set<Int> {
-        return getMenuState(for: menuLevel).animatedIndices
-    }
-
-    @inline(__always)
-    private func getCurrentDragging(for menuLevel: MenuLevel) -> Bool {
-        return getMenuState(for: menuLevel).isDragging
-    }
-
-    @inline(__always)
-    private func getCurrentScaleEffect(for menuLevel: MenuLevel) -> CGFloat {
-        return getMenuState(for: menuLevel).scaleEffect
-    }
+    @inline(__always) private func getCachedRotation(for menuLevel: MenuLevel) -> Double { getCurrentRotation(for: menuLevel) }
+    @inline(__always) private func getCurrentRotation(for menuLevel: MenuLevel) -> Double { getMenuState(for: menuLevel).rotation }
+    @inline(__always) private func getCurrentAnimatedIndices(for menuLevel: MenuLevel) -> Set<Int> { getMenuState(for: menuLevel).animatedIndices }
+    @inline(__always) private func getCurrentDragging(for menuLevel: MenuLevel) -> Bool { getMenuState(for: menuLevel).isDragging }
+    @inline(__always) private func getCurrentScaleEffect(for menuLevel: MenuLevel) -> CGFloat { getMenuState(for: menuLevel).scaleEffect }
 
     private func shouldItemBeVisible(visualIndex: Int, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Bool {
-        if !isScrollingEnabled(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) {
-            return true
-        }
-
-        let currentRotation = getCachedRotation(for: menuLevel)
-        let itemRotation = Double(visualIndex) * anglePerItem - currentRotation
+        guard isScrollingEnabled(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) else { return true }
+        
+        let itemRotation = Double(visualIndex) * anglePerItem - getCachedRotation(for: menuLevel)
         let normalizedRotation = ((itemRotation + halfCircle).truncatingRemainder(dividingBy: fullCircle)) - halfCircle
-        let visibilityThreshold = (totalSpan / 2) + (anglePerItem * visibilityBufferMultiplier)
-        return abs(normalizedRotation) <= visibilityThreshold
+        return abs(normalizedRotation) <= (totalSpan / 2) + (anglePerItem * visibilityBufferMultiplier)
     }
 
     private func getItemOpacity(visualIndex: Int, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Double {
-        if !isScrollingEnabled(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) {
-            return 1.0
-        }
-
-        let currentRotation = getCachedRotation(for: menuLevel)
-        let itemRotation = Double(visualIndex) * anglePerItem - currentRotation
+        guard isScrollingEnabled(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) else { return 1.0 }
+        
+        let itemRotation = Double(visualIndex) * anglePerItem - getCachedRotation(for: menuLevel)
         let normalizedRotation = ((itemRotation + halfCircle).truncatingRemainder(dividingBy: fullCircle)) - halfCircle
+        let distance = abs(normalizedRotation)
         let coreDistance = totalSpan / 2
         let bufferDistance = coreDistance + (anglePerItem * visibilityBufferMultiplier)
-        let distance = abs(normalizedRotation)
-
-        if distance <= coreDistance {
-            return VisualConstants.opacityFull
-        } else if distance <= bufferDistance {
-            let fadeDistance = distance - coreDistance
-            let fadeRange = bufferDistance - coreDistance
-            let fadeRatio = fadeDistance / fadeRange
-            return max(VisualConstants.opacityHidden, VisualConstants.opacityFull - (fadeRatio * VisualConstants.fadeMultiplier))
-        } else {
-            return VisualConstants.opacityHidden
-        }
+        
+        return distance <= coreDistance ? VisualConstants.opacityFull :
+               distance <= bufferDistance ? max(VisualConstants.opacityHidden, VisualConstants.opacityFull - ((distance - coreDistance) / (bufferDistance - coreDistance) * VisualConstants.fadeMultiplier)) :
+               VisualConstants.opacityHidden
     }
 
     private func calculateProgressiveOpacity(startPosition: CGPoint, endPosition: CGPoint, currentPosition: CGPoint, isAnimated: Bool) -> Double {
         guard isAnimated else { return 0.0 }
         let totalDistance = hypot(endPosition.x - startPosition.x, endPosition.y - startPosition.y)
         guard totalDistance > 1.0 else { return 1.0 }
-        let currentDistance = hypot(currentPosition.x - startPosition.x, currentPosition.y - startPosition.y)
-        return min(currentDistance / totalDistance, 1.0)
+        return min(hypot(currentPosition.x - startPosition.x, currentPosition.y - startPosition.y) / totalDistance, 1.0)
     }
 }
 
-// Menu Level Helper Functions - Optimized helper functions for different menu levels.
+// Menu Level Helper Functions - Optimized helper functions with consolidated accessors
 extension SSRadialMenu {
-
     // MARK: - Optimized State Access
-
     private func getMenuState(for menuLevel: MenuLevel) -> MenuState {
         switch menuLevel {
         case .main: return mainMenuState
@@ -723,20 +536,14 @@ extension SSRadialMenu {
         }
     }
 
-    // Helper methods for zoom effect
+    // Consolidated helper methods using computed properties for better performance
     private func shouldApplyZoomEffect(menuLevel: MenuLevel, itemIndex: Int) -> Bool {
-        guard zoomEffectEnabled && zoomEffectScale != 0 && menuLevel == .main else {
-            return false
-        }
-        return zoomedItemIndex == itemIndex
+        zoomEffectEnabled && zoomEffectScale != 0 && menuLevel == .main && zoomedItemIndex == itemIndex
     }
 
-    private func getZoomScale() -> CGFloat {
-        return zoomEffectScale ?? VisualConstants.scaleEffectZoomed
-    }
+    private func getZoomScale() -> CGFloat { zoomEffectScale ?? VisualConstants.scaleEffectZoomed }
 
-    @inline(__always)
-    private func getRadius(for menuLevel: MenuLevel) -> CGFloat {
+    @inline(__always) private func getRadius(for menuLevel: MenuLevel) -> CGFloat {
         switch menuLevel {
         case .main: return radius
         case .sub: return subMenuRadius
@@ -744,8 +551,7 @@ extension SSRadialMenu {
         }
     }
 
-    @inline(__always)
-    private func getCardSize(for menuLevel: MenuLevel) -> CGFloat {
+    @inline(__always) private func getCardSize(for menuLevel: MenuLevel) -> CGFloat {
         switch menuLevel {
         case .main: return mainCardSize
         case .sub: return mainCardSize * subCardSizeMultiplier
@@ -940,258 +746,211 @@ extension SSRadialMenu {
             })
     }
 
-    // Controlled momentum handling for smooth response
+    // Optimized momentum handling for smooth response
     private func handleDragMomentum(velocity: CGFloat, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
-                // Much lower threshold for highly controlled momentum triggering
         guard abs(velocity) > 0.1 else {
             updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             return
         }
 
-        // Stop any existing momentum for this menu level
         stopMomentum(for: menuLevel)
+        
+        let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+        let calculateClampedRotation = { (rotation: Double) -> Double in
+            guard !self.wrapEnabled && itemCount > 0 else { return rotation }
+            let maxRotation = Double(itemCount - 1) * self.anglePerItem - (self.totalSpan / 2)
+            return min(max(0, rotation), maxRotation)
+        }
 
-        // Use different behavior based on scrollingBehavior setting
         switch scrollingBehavior {
         case .simple:
-            // Simple momentum behavior with extremely slow movement
-            let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.001 * spinWheelSpeed.speedMultiplier) // Apply speed multiplier for simple mode
-            let currentRotation = getCurrentRotation(for: menuLevel)
-            var newRotation = currentRotation + momentumRotation
-
-            // If wrap is disabled, ensure rotation stays within valid limits
-            if !wrapEnabled {
-                let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-                if itemCount > 0 {
-                    let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
-                    newRotation = min(max(0, newRotation), maxRotation)
-                }
-            }
-
-            withAnimation(.easeOut(duration: AnimationConstants.momentumDuration)) {
-                updateRotation(for: menuLevel, value: newRotation)
-                updateStartAngle(for: menuLevel, value: newRotation)
-            }
-
-            Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumUpdateDelay, repeats: false) { _ in
-                updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-            }
-
+            applySimpleMomentum(velocity: velocity, menuLevel: menuLevel, calculateClampedRotation: calculateClampedRotation)
         case .spinWheel:
-            // Enhanced momentum behavior with continuous spinning
-            // Calculate initial momentum velocity based on drag velocity with speed multiplier
-            let initialVelocity = alignment.calculateMomentumRotation(velocity: velocity, factor: spinWheelSpeed.velocityMultiplier)
-
-            // Clamp velocity to reasonable limits based on speed setting
-            let clampedVelocity = max(-spinWheelSpeed.maxVelocity,
-                                     min(spinWheelSpeed.maxVelocity, initialVelocity))
-
-            // Check if this is a flick gesture (high velocity) or regular drag
             let isFlick = abs(velocity) > Constants.PerformanceConstants.flickVelocityThreshold
-
             if isFlick {
-                // Start continuous momentum for flick gestures
+                let clampedVelocity = max(-spinWheelSpeed.maxVelocity, min(spinWheelSpeed.maxVelocity, alignment.calculateMomentumRotation(velocity: velocity, factor: spinWheelSpeed.velocityMultiplier)))
                 startContinuousMomentum(velocity: clampedVelocity, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             } else {
-                // For regular drags in spinWheel mode, create momentum with controlled responsiveness based on speed setting
-                let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.004 * spinWheelSpeed.speedMultiplier) // Apply speed multiplier for controlled regular scrolling
-                let currentRotation = getCurrentRotation(for: menuLevel)
-                var newRotation = currentRotation + momentumRotation
-
-                // If wrap is disabled, ensure rotation stays within valid limits
-                if !wrapEnabled {
-                    let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-                    if itemCount > 0 {
-                        let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
-                        newRotation = min(max(0, newRotation), maxRotation)
-                    }
-                }
-
-                // Use very controlled spring-like animation for precise regular drags
-                withAnimation(.spring(response: 1.0, dampingFraction: 0.85, blendDuration: 0)) {
-                    updateRotation(for: menuLevel, value: newRotation)
-                    updateStartAngle(for: menuLevel, value: newRotation)
-                }
-
-                Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
-                    updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-                }
+                applyControlledMomentum(velocity: velocity, menuLevel: menuLevel, calculateClampedRotation: calculateClampedRotation)
             }
+        }
+    }
+    
+    private func applySimpleMomentum(velocity: CGFloat, menuLevel: MenuLevel, calculateClampedRotation: (Double) -> Double) {
+        let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.001 * spinWheelSpeed.speedMultiplier)
+        let newRotation = calculateClampedRotation(getCurrentRotation(for: menuLevel) + momentumRotation)
+        
+        withAnimation(.easeOut(duration: AnimationConstants.momentumDuration)) {
+            updateRotation(for: menuLevel, value: newRotation)
+            updateStartAngle(for: menuLevel, value: newRotation)
+        }
+        
+        Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumUpdateDelay, repeats: false) { _ in
+            self.updateVisibleItemsAnimation(for: menuLevel, mainIndex: 0, subIndex: 0)
+        }
+    }
+    
+    private func applyControlledMomentum(velocity: CGFloat, menuLevel: MenuLevel, calculateClampedRotation: (Double) -> Double) {
+        let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.004 * spinWheelSpeed.speedMultiplier)
+        let newRotation = calculateClampedRotation(getCurrentRotation(for: menuLevel) + momentumRotation)
+        
+        withAnimation(.spring(response: 1.0, dampingFraction: 0.85, blendDuration: 0)) {
+            updateRotation(for: menuLevel, value: newRotation)
+            updateStartAngle(for: menuLevel, value: newRotation)
+        }
+        
+        Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
+            self.updateVisibleItemsAnimation(for: menuLevel, mainIndex: 0, subIndex: 0)
         }
     }
     }
 
 // State Management - Optimized functions for managing state across menu levels
 extension SSRadialMenu {
-    private func setDragging(for menuLevel: MenuLevel, value: Bool) {
+    // Unified state property access
+    private func updateMenuProperty<T>(for menuLevel: MenuLevel, keyPath: WritableKeyPath<MenuState, T>, value: T) {
         updateMenuState(for: menuLevel) { state in
-            state.isDragging = value
+            state[keyPath: keyPath] = value
         }
+    }
+    
+    private func getMenuProperty<T>(for menuLevel: MenuLevel, keyPath: KeyPath<MenuState, T>) -> T {
+        return getMenuState(for: menuLevel)[keyPath: keyPath]
+    }
+
+    // Simplified state accessors using the unified system
+    private func setDragging(for menuLevel: MenuLevel, value: Bool) {
+        updateMenuProperty(for: menuLevel, keyPath: \.isDragging, value: value)
     }
 
     private func updateRotation(for menuLevel: MenuLevel, value: Double) {
-        updateMenuState(for: menuLevel) { state in
-            state.rotation = value
-        }
-        // Invalidate cache when rotation changes
+        updateMenuProperty(for: menuLevel, keyPath: \.rotation, value: value)
         computationCache.invalidate()
     }
 
     private func getStartAngle(for menuLevel: MenuLevel) -> Double {
-        return getMenuState(for: menuLevel).startAngle
+        getMenuProperty(for: menuLevel, keyPath: \.startAngle)
     }
 
     private func updateStartAngle(for menuLevel: MenuLevel, value: Double) {
-        updateMenuState(for: menuLevel) { state in
-            state.startAngle = value
-        }
+        updateMenuProperty(for: menuLevel, keyPath: \.startAngle, value: value)
     }
 
-    // Helper functions for momentum state management
     private func updateMomentumVelocity(for menuLevel: MenuLevel, velocity: Double) {
-        updateMenuState(for: menuLevel) { state in
-            state.momentumVelocity = velocity
-        }
+        updateMenuProperty(for: menuLevel, keyPath: \.momentumVelocity, value: velocity)
     }
 
     private func getMomentumVelocity(for menuLevel: MenuLevel) -> Double {
-        return getMenuState(for: menuLevel).momentumVelocity
+        getMenuProperty(for: menuLevel, keyPath: \.momentumVelocity)
     }
 
     private func updateMomentumTimer(for menuLevel: MenuLevel, timer: Timer?) {
-        updateMenuState(for: menuLevel) { state in
-            state.momentumTimer = timer
-        }
+        updateMenuProperty(for: menuLevel, keyPath: \.momentumTimer, value: timer)
     }
 
     private func getMomentumTimer(for menuLevel: MenuLevel) -> Timer? {
-        return getMenuState(for: menuLevel).momentumTimer
+        getMenuProperty(for: menuLevel, keyPath: \.momentumTimer)
     }
 
     private func setMomentumActive(for menuLevel: MenuLevel, value: Bool) {
-        updateMenuState(for: menuLevel) { state in
-            state.isMomentumActive = value
-        }
+        updateMenuProperty(for: menuLevel, keyPath: \.isMomentumActive, value: value)
     }
 
     private func getMomentumActive(for menuLevel: MenuLevel) -> Bool {
-        return getMenuState(for: menuLevel).isMomentumActive
+        getMenuProperty(for: menuLevel, keyPath: \.isMomentumActive)
     }
 
-    // Menu control functions
-    private func closeSubMenu() {
-        // Stop momentum when closing submenu
-        stopMomentum(for: .sub)
-
-        showingSubMenuForIndex = nil
-        subMenuState.reset()
-
-        // Reset sub-level selections when closing submenu
-        selectedSubMenuItem = nil
-        selectedSubSubMenuItem = nil
-
-        // Reset zoom effect when closing submenu, if enabled
-        if zoomEffectEnabled {
-            zoomedItemIndex = nil
+    // Unified menu control functions
+    private func closeMenu(level: MenuLevel) {
+        stopMomentum(for: level)
+        
+        switch level {
+        case .main:
+            mainMenuState.reset()
+        case .sub:
+            showingSubMenuForIndex = nil
+            subMenuState.reset()
+            selectedSubMenuItem = nil
+            selectedSubSubMenuItem = nil
+            if zoomEffectEnabled { zoomedItemIndex = nil }
+            closeMenu(level: .subSub)
+        case .subSub:
+            showingSubSubMenuForIndex = nil
+            subSubMenuState.reset()
+            selectedSubSubMenuItem = nil
         }
-        closeSubSubMenu()
     }
-
-    private func closeSubSubMenu() {
-        // Stop momentum when closing sub-submenu
-        stopMomentum(for: .subSub)
-
-        showingSubSubMenuForIndex = nil
-        subSubMenuState.reset()
-
-        // Reset sub-sub level selection when closing sub-submenu
-        selectedSubSubMenuItem = nil
-    }
+    
+    private func closeSubMenu() { closeMenu(level: .sub) }
+    private func closeSubSubMenu() { closeMenu(level: .subSub) }
 
     private func resetAllScrollPositions() {
-        // Stop all momentum when resetting positions
-        stopMomentum(for: .main)
-        stopMomentum(for: .sub)
-        stopMomentum(for: .subSub)
-
-        mainMenuState.reset()
-        subMenuState.reset()
-        subSubMenuState.reset()
+        [MenuLevel.main, .sub, .subSub].forEach { level in
+            stopMomentum(for: level)
+            switch level {
+            case .main: mainMenuState.reset()
+            case .sub: subMenuState.reset()
+            case .subSub: subSubMenuState.reset()
+            }
+        }
     }
 
-    // MARK: - Momentum Functions
+    // MARK: - Optimized Momentum Functions
 
     // Start continuous momentum animation for spin wheel effect with spring-like behavior
     private func startContinuousMomentum(velocity: Double, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
-        // Enhance velocity for better spring effect on long flicks with speed multiplier
-        let enhancedVelocity = velocity * 2.0 * spinWheelSpeed.speedMultiplier // Apply speed multiplier for enhanced velocity
-        
-        // Set initial momentum velocity
+        let enhancedVelocity = velocity * 2.0 * spinWheelSpeed.speedMultiplier
         updateMomentumVelocity(for: menuLevel, velocity: enhancedVelocity)
         setMomentumActive(for: menuLevel, value: true)
-
-        // Immediately update visible items to ensure they're aware of momentum mode
         updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
 
-        // Create and start the momentum timer with faster frame rate for smoother spinning
         let timer = Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumFrameRate, repeats: true) { timer in
             self.updateMomentumFrame(timer: timer, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
         }
-
-        // Store the timer
         updateMomentumTimer(for: menuLevel, timer: timer)
     }
 
-    // Update momentum on each frame with improved responsiveness
+    // Optimized momentum frame update with consolidated boundary and velocity handling
     private func updateMomentumFrame(timer: Timer, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
         let currentVelocity = getMomentumVelocity(for: menuLevel)
-
-        // Check if velocity is too low to continue
-        if abs(currentVelocity) < AnimationConstants.momentumMinimumVelocity {
+        
+        guard abs(currentVelocity) >= AnimationConstants.momentumMinimumVelocity else {
             stopMomentum(for: menuLevel)
             updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             return
         }
 
-        // Update rotation based on current velocity with improved smoothness and speed multiplier
         let currentRotation = getCurrentRotation(for: menuLevel)
         var newRotation = currentRotation + (currentVelocity * AnimationConstants.momentumSmoothness * spinWheelSpeed.speedMultiplier)
 
-        // If wrap is disabled, ensure rotation stays within valid limits and stop momentum at edges
+        // Consolidated boundary checking and momentum stopping
         if !wrapEnabled {
             let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             if itemCount > 0 {
                 let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
                 let clampedRotation = min(max(0, newRotation), maxRotation)
-
-                // If we hit the boundary, stop momentum
+                
                 if clampedRotation != newRotation {
-                    newRotation = clampedRotation
+                    updateRotation(for: menuLevel, value: clampedRotation)
+                    updateStartAngle(for: menuLevel, value: clampedRotation)
                     stopMomentum(for: menuLevel)
                     updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
                     return
                 }
+                newRotation = clampedRotation
             }
         }
 
-        // Apply the rotation update directly for smoothest performance
+        // Apply rotation and velocity decay in one go
         updateRotation(for: menuLevel, value: newRotation)
         updateStartAngle(for: menuLevel, value: newRotation)
-
-        // Apply decay to velocity for gradual slowdown
-        let decayedVelocity = currentVelocity * AnimationConstants.momentumDecayRate
-        updateMomentumVelocity(for: menuLevel, velocity: decayedVelocity)
-
-        // Update visible items on every frame during momentum for smooth item appearance
-        // This ensures new items appearing during fast momentum are positioned correctly
+        updateMomentumVelocity(for: menuLevel, velocity: currentVelocity * AnimationConstants.momentumDecayRate)
         updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
     }
 
     // Stop momentum animation
     private func stopMomentum(for menuLevel: MenuLevel) {
-        updateMenuState(for: menuLevel) { state in
-            state.stopMomentum()
-        }
+        updateMenuState(for: menuLevel) { state in state.stopMomentum() }
     }
 
     // Helper function to get the item count for the current menu level
@@ -1212,216 +971,141 @@ extension SSRadialMenu {
     }
 }
 
-// Item Tap Handling - Functions for handling item taps.
+// Item Tap Handling - Optimized functions for handling item taps
 extension SSRadialMenu {
     private func handleItemTap(menuLevel: MenuLevel, mainIndex: Int, subIndex: Int, itemIndex: Int, item: RadialMenuItems) {
         switch menuLevel {
-        case .main:
-            handleMainItemTap(index: itemIndex, item: item)
-        case .sub:
-            handleSubItemTap(mainIndex: mainIndex, subIndex: itemIndex, item: item)
-        case .subSub:
-            handleSubSubItemTap(item: item)
+        case .main: handleMainItemTap(index: itemIndex, item: item)
+        case .sub: handleSubItemTap(mainIndex: mainIndex, subIndex: itemIndex, item: item)
+        case .subSub: handleSubSubItemTap(item: item)
         }
     }
 
+    private func executeItemSelection(item: RadialMenuItems, menuLevel: MenuLevel) {
+        // Update selection tracking
+        switch menuLevel {
+        case .main:
+            (selectedMainMenuItem, selectedSubMenuItem, selectedSubSubMenuItem) = (item, nil, nil)
+            onMainMenuSelection?(item)
+        case .sub:
+            (selectedSubMenuItem, selectedSubSubMenuItem) = (item, nil)
+            onSubMenuSelection?(item)
+        case .subSub:
+            selectedSubSubMenuItem = item
+            onSubSubMenuSelection?(item)
+        }
+        
+        // Execute action and update name
+        item.action?()
+        selectedItemName = item.name
+    }
+
     private func handleMainItemTap(index: Int, item: RadialMenuItems) {
+        // Handle existing submenu closure
         if let currentOpen = showingSubMenuForIndex {
-            if currentOpen == index {
-                closeSubMenu()
-                zoomedItemIndex = nil // Reset zoom when closing submenu
-                return
-            }
+            if currentOpen == index { return closeSubMenu() }
             closeSubMenu()
         }
 
-        // Track selection for main menu
-        selectedMainMenuItem = item
-        // Reset sub-level selections when selecting a new main item
-        selectedSubMenuItem = nil
-        selectedSubSubMenuItem = nil
+        executeItemSelection(item: item, menuLevel: .main)
 
-        // Apply zoom effect to the tapped item if enabled
-        if zoomEffectEnabled && zoomEffectScale != 0 {
-            zoomedItemIndex = index
-        }
+        // Apply zoom effect if enabled
+        if zoomEffectEnabled && zoomEffectScale != 0 { zoomedItemIndex = index }
 
-        // Execute the provided action, if available
-        item.action?()
-
-        // Call the selection closure
-        onMainMenuSelection?(item)
-
+        // Handle submenu or zoom cleanup
         if let subItems = menuItems[index].subMenuItems, !subItems.isEmpty {
             showingSubMenuForIndex = index
-
-            // If wrap is disabled, ensure the rotation starts at 0
-            if !wrapEnabled {
-                updateRotation(for: .sub, value: 0.0)
-                updateStartAngle(for: .sub, value: 0.0)
-            }
-
+            if !wrapEnabled { updateRotation(for: .sub, value: 0.0); updateStartAngle(for: .sub, value: 0.0) }
             startSequentialAnimation(for: .sub, itemCount: subItems.count)
-        } else {
-            selectedItemName = menuItems[index].name
-
-            // For items without submenus, remove zoom effect after a delay if enabled
-            if zoomEffectEnabled && zoomEffectScale != 0 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        if self.zoomedItemIndex == index {
-                            self.zoomedItemIndex = nil
-                        }
-                    }
+        } else if zoomEffectEnabled && zoomEffectScale != 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    if self.zoomedItemIndex == index { self.zoomedItemIndex = nil }
                 }
             }
         }
     }
 
     private func handleSubItemTap(mainIndex: Int, subIndex: Int, item: RadialMenuItems) {
+        // Handle existing sub-submenu closure
         if let currentOpen = showingSubSubMenuForIndex {
-            if currentOpen.mainIndex == mainIndex && currentOpen.subIndex == subIndex {
-                closeSubSubMenu()
-                return
-            }
+            if currentOpen.mainIndex == mainIndex && currentOpen.subIndex == subIndex { return closeSubSubMenu() }
             closeSubSubMenu()
         }
 
-        // Track selection for sub menu
-        selectedSubMenuItem = item
-        // Reset sub-sub level selection when selecting a new sub item
-        selectedSubSubMenuItem = nil
+        executeItemSelection(item: item, menuLevel: .sub)
 
-        // Execute the provided action, if available
-        item.action?()
-
-        // Call the selection closure
-        onSubMenuSelection?(item)
-
+        // Handle sub-submenu
         if let subSubItems = item.subMenuItems, !subSubItems.isEmpty {
             showingSubSubMenuForIndex = (mainIndex: mainIndex, subIndex: subIndex)
-
-            // If wrap is disabled, ensure the rotation starts at 0
-            if !wrapEnabled {
-                updateRotation(for: .subSub, value: 0.0)
-                updateStartAngle(for: .subSub, value: 0.0)
-            }
-
+            if !wrapEnabled { updateRotation(for: .subSub, value: 0.0); updateStartAngle(for: .subSub, value: 0.0) }
             startSequentialAnimation(for: .subSub, itemCount: subSubItems.count)
-        } else {
-            selectedItemName = item.name
         }
     }
 
     private func handleSubSubItemTap(item: RadialMenuItems) {
-        // Track selection for sub-sub menu
-        selectedSubSubMenuItem = item
-
-        // Execute the provided action, if available
-        item.action?()
-
-        // Call the selection closure
-        onSubSubMenuSelection?(item)
-
-        selectedItemName = item.name
+        executeItemSelection(item: item, menuLevel: .subSub)
         closeSubSubMenu()
     }
 }
 
-// Animation Management - Functions for managing animations.
+// Animation Management - Optimized functions for managing animations
 extension SSRadialMenu {
     private func startSequentialAnimation(for menuLevel: MenuLevel, itemCount: Int) {
-        clearAnimatedIndices(for: menuLevel)
+        updateMenuProperty(for: menuLevel, keyPath: \.animatedIndices, value: Set<Int>())
+        
+        let (mainIdx, subIdx) = (showingSubMenuForIndex ?? 0, showingSubSubMenuForIndex?.subIndex ?? 0)
+        let sortedItems = getVisibleItems(for: menuLevel, mainIndex: mainIdx, subIndex: subIdx)
+            .filter { shouldItemBeVisible(visualIndex: $0.visualIndex, menuLevel: menuLevel, mainIndex: mainIdx, subIndex: subIdx) && $0.visualIndex >= 0 }
+            .sorted { $0.index < $1.index }
 
-        let visibleItems = getVisibleItems(for: menuLevel, mainIndex: showingSubMenuForIndex ?? 0, subIndex: showingSubSubMenuForIndex?.subIndex ?? 0)
-        let sortedItems = visibleItems
-            .filter { shouldItemBeVisible(visualIndex: $0.visualIndex, menuLevel: menuLevel, mainIndex: showingSubMenuForIndex ?? 0, subIndex: showingSubSubMenuForIndex?.subIndex ?? 0) }
-            .filter { $0.visualIndex >= 0 } // Filter out items with negative visual indices to prevent items appearing before 0th index
-            .sorted { $0.index < $1.index } // Sort by actual index to ensure proper order (0, 1, 2, 3, 4...)
-
-        // Only animate items from 0th to 4th index (5 items total: 0, 1, 2, 3, 4)
-        let maxAnimatedItems = 5
-
-        for (sequenceIndex, item) in sortedItems.enumerated() {
-            if sequenceIndex < maxAnimatedItems {
-                // Items from 0th to 4th index (indices 0, 1, 2, 3, 4) get sequential pop-out animation
-                let delay = Double(sequenceIndex) * AnimationConstants.itemSequenceDelay
-                Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-                    withAnimation(.spring(response: AnimationConstants.springAnimationResponse, dampingFraction: AnimationConstants.springAnimationDamping)) {
-                        self.addToAnimatedIndices(visualIndex: item.visualIndex, menuLevel: menuLevel)
-                    }
-                }
-            } else {
-                // Items beyond the 4th index appear immediately without animation
-                Timer.scheduledTimer(withTimeInterval: 0.01, repeats: false) { _ in
-                    self.addToAnimatedIndices(visualIndex: item.visualIndex, menuLevel: menuLevel)
+        sortedItems.enumerated().forEach { sequenceIndex, item in
+            let delay = sequenceIndex < 5 ? Double(sequenceIndex) * AnimationConstants.itemSequenceDelay : 0.01
+            let animation: Animation? = sequenceIndex < 5 ? .spring(response: AnimationConstants.springAnimationResponse, dampingFraction: AnimationConstants.springAnimationDamping) : nil
+            
+            Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+                if let animation = animation {
+                    withAnimation(animation) { self.modifyAnimatedIndices(visualIndex: item.visualIndex, menuLevel: menuLevel, operation: .insert) }
+                } else {
+                    self.modifyAnimatedIndices(visualIndex: item.visualIndex, menuLevel: menuLevel, operation: .insert)
                 }
             }
         }
     }
 
-    private func clearAnimatedIndices(for menuLevel: MenuLevel) {
+    private enum AnimationOperation { case insert, remove }
+    
+    private func modifyAnimatedIndices(visualIndex: Int, menuLevel: MenuLevel, operation: AnimationOperation) {
         updateMenuState(for: menuLevel) { state in
-            state.animatedIndices.removeAll()
-        }
-    }
-
-    private func addToAnimatedIndices(visualIndex: Int, menuLevel: MenuLevel) {
-        updateMenuState(for: menuLevel) { state in
-            state.animatedIndices.insert(visualIndex)
+            switch operation {
+            case .insert: state.animatedIndices.insert(visualIndex)
+            case .remove: state.animatedIndices.remove(visualIndex)
+            }
         }
     }
 
     // Unified visibility animation updates with momentum handling
     private func updateVisibleItemsAnimation(for menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
-        let visibleItems = getVisibleItems(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-        var newAnimatedIndices = Set<Int>()
-
-        for item in visibleItems {
-            if shouldItemBeVisible(visualIndex: item.visualIndex, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) {
-                newAnimatedIndices.insert(item.visualIndex)
-            }
-        }
-
+        let newAnimatedIndices = Set(getVisibleItems(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+            .filter { shouldItemBeVisible(visualIndex: $0.visualIndex, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) }
+            .map { $0.visualIndex })
+        
         let currentAnimatedIndices = getCurrentAnimatedIndices(for: menuLevel)
-        let currentDragging = getCurrentDragging(for: menuLevel)
-        let isMomentumActive = getMomentumActive(for: menuLevel)
-        let isSpinWheelMode = scrollingBehavior == .spinWheel
-
-        if currentDragging || (isMomentumActive && isSpinWheelMode) {
-            // Silent updates during dragging or momentum for instant appearance
-            for visualIndex in newAnimatedIndices {
-                if !currentAnimatedIndices.contains(visualIndex) {
-                    addToAnimatedIndices(visualIndex: visualIndex, menuLevel: menuLevel)
+        let isSilentUpdate = getCurrentDragging(for: menuLevel) || (getMomentumActive(for: menuLevel) && scrollingBehavior == .spinWheel)
+        
+        let (toAdd, toRemove) = (newAnimatedIndices.subtracting(currentAnimatedIndices), currentAnimatedIndices.subtracting(newAnimatedIndices))
+        
+        [toAdd, toRemove].enumerated().forEach { operationIndex, indices in
+            let operation: AnimationOperation = operationIndex == 0 ? .insert : .remove
+            let animation: Animation? = isSilentUpdate ? nil : (operation == .insert ? .easeIn(duration: AnimationConstants.fadeInDuration) : .easeOut(duration: AnimationConstants.fadeOutDuration))
+            
+            indices.forEach { visualIndex in
+                if let animation = animation {
+                    withAnimation(animation) { self.modifyAnimatedIndices(visualIndex: visualIndex, menuLevel: menuLevel, operation: operation) }
+                } else {
+                    self.modifyAnimatedIndices(visualIndex: visualIndex, menuLevel: menuLevel, operation: operation)
                 }
             }
-
-            let indicesToRemove = currentAnimatedIndices.subtracting(newAnimatedIndices)
-            for visualIndex in indicesToRemove {
-                removeFromAnimatedIndices(visualIndex: visualIndex, menuLevel: menuLevel)
-            }
-        } else {
-            // Animated updates when not dragging and not in momentum
-            for visualIndex in newAnimatedIndices {
-                if !currentAnimatedIndices.contains(visualIndex) {
-                    withAnimation(.easeIn(duration: AnimationConstants.fadeInDuration)) {
-                        addToAnimatedIndices(visualIndex: visualIndex, menuLevel: menuLevel)
-                    }
-                }
-            }
-
-            let indicesToRemove = currentAnimatedIndices.subtracting(newAnimatedIndices)
-            for visualIndex in indicesToRemove {
-                withAnimation(.easeOut(duration: AnimationConstants.fadeOutDuration)) {
-                    removeFromAnimatedIndices(visualIndex: visualIndex, menuLevel: menuLevel)
-                }
-            }
-        }
-    }
-
-    private func removeFromAnimatedIndices(visualIndex: Int, menuLevel: MenuLevel) {
-        updateMenuState(for: menuLevel) { state in
-            state.animatedIndices.remove(visualIndex)
         }
     }
 }
@@ -1429,79 +1113,49 @@ extension SSRadialMenu {
 // Menu Details & Card Detection - Optimized functions for menu details and card detection
 extension SSRadialMenu {
     private func updateMenuDetailsForCarousel() {
-        let visibleItems = getVisibleItems(for: .main)
         let currentRotation = getCachedRotation(for: .main)
-        var closestItem: (item: RadialMenuItems, index: Int, visualIndex: Int)?
-        var smallestDistance: Double = Double.infinity
-
-        for item in visibleItems {
-            if shouldItemBeVisible(visualIndex: item.visualIndex, menuLevel: .main) {
+        let closestItem = getVisibleItems(for: .main)
+            .filter { shouldItemBeVisible(visualIndex: $0.visualIndex, menuLevel: .main) }
+            .compactMap { item -> (item: RadialMenuItems, distance: Double)? in
                 let itemRotation = Double(item.visualIndex) * anglePerItem - currentRotation
                 let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
-
-                if isCardNearTriangle(itemAngle) {
-                    let distance = abs(itemRotation)
-                    if distance < smallestDistance {
-                        smallestDistance = distance
-                        closestItem = item
-                    }
-                }
+                return isCardNearTriangle(itemAngle) ? (item.item, abs(itemRotation)) : nil
             }
-        }
+            .min { $0.distance < $1.distance }
 
-        if let item = closestItem {
-            selectedItemName = item.item.name
-        }
+        if let item = closestItem { selectedItemName = item.item.name }
     }
 
     private func isCardNearTriangle(_ itemAngle: Double) -> Bool {
-        let triangleAngle = AngleConstants.quarterCircle * 3  // 270 degrees
-        let threshold: Double = AngleConstants.triangleDetectionThreshold
-        let normalizedItemAngle = (itemAngle + AngleConstants.fullCircle).truncatingRemainder(dividingBy: AngleConstants.fullCircle)
-        let normalizedTriangleAngle = (triangleAngle + AngleConstants.fullCircle).truncatingRemainder(dividingBy: AngleConstants.fullCircle)
-        let angleDifference = abs(normalizedItemAngle - normalizedTriangleAngle)
-        return angleDifference <= threshold || angleDifference >= (AngleConstants.fullCircle - threshold)
+        let triangleAngle = AngleConstants.quarterCircle * 3
+        let threshold = AngleConstants.triangleDetectionThreshold
+        let normalizedDifference = abs(((itemAngle + AngleConstants.fullCircle).truncatingRemainder(dividingBy: AngleConstants.fullCircle)) - 
+                                     ((triangleAngle + AngleConstants.fullCircle).truncatingRemainder(dividingBy: AngleConstants.fullCircle)))
+        return normalizedDifference <= threshold || normalizedDifference >= (AngleConstants.fullCircle - threshold)
     }
 }
 
-// Menu Rotation Controls - Functions for rotating menus.
+// Menu Rotation Controls - Optimized functions for rotating menus
 extension SSRadialMenu {
     private func rotateMenu(_ menuLevel: MenuLevel, direction: RotationDirection) {
         let rotationChange = direction == .next ? anglePerItem : -anglePerItem
         let currentRotation = getCurrentRotation(for: menuLevel)
         var newRotation = currentRotation + rotationChange
 
-        // Get the appropriate indices based on menu level
-        let mainIndex: Int
-        let subIndex: Int
+        let (mainIndex, subIndex) = menuLevel == .main ? (0, 0) : 
+                                   menuLevel == .sub ? (showingSubMenuForIndex ?? 0, 0) : 
+                                   (showingSubMenuForIndex ?? 0, showingSubSubMenuForIndex?.subIndex ?? 0)
 
-        switch menuLevel {
-        case .main:
-            mainIndex = 0
-            subIndex = 0
-        case .sub:
-            mainIndex = showingSubMenuForIndex ?? 0
-            subIndex = 0
-        case .subSub:
-            mainIndex = showingSubMenuForIndex ?? 0
-            subIndex = showingSubSubMenuForIndex?.subIndex ?? 0
-        }
-
-        // If wrap is disabled, limit the rotation
+        // Apply boundary constraints if wrap is disabled
         if !wrapEnabled {
             let itemCount = getItemCountForMenu(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-
-            // Calculate rotation limits
             if itemCount > 0 {
                 let maxRotation = Double(itemCount - 1) * anglePerItem - (totalSpan / 2)
-                // Prevent scrolling past boundaries
-                newRotation = min(max(0, newRotation), maxRotation)
-
-                // If we're already at a boundary, don't animate if trying to go beyond
-                if (direction == .previous && currentRotation <= 0) ||
-                   (direction == .next && currentRotation >= maxRotation) {
-                    return
-                }
+                let clampedRotation = min(max(0, newRotation), maxRotation)
+                
+                // Don't animate if already at boundary
+                guard clampedRotation != currentRotation else { return }
+                newRotation = clampedRotation
             }
         }
 

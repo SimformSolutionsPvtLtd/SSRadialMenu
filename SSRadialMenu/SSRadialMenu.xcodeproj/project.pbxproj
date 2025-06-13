@@ -7,13 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D28060D2B23341A000820B9 /* MenuItemModel.swift */; };
+		7D106C332DFC445700096F04 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D106C322DFC445300096F04 /* Constants.swift */; };
 		7D4755E42B8CA7B800C4F67A /* LiquidFluidMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D4755E32B8CA7B800C4F67A /* LiquidFluidMenuView.swift */; };
-		7D92371D2DF0740D00CBDA4E /* DebugInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D92371C2DF0740D00CBDA4E /* DebugInfoView.swift */; };
 		7D9237222DF0756A00CBDA4E /* Enum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D9237212DF0756A00CBDA4E /* Enum.swift */; };
-		7D9237232DF0756B00CBDA4E /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D9237242DF0756B00CBDA4E /* Constants.swift */; };
 		7D9237282DF1892500CBDA4E /* RadialMenuItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D9237232DF07B2F00CBDA4E /* RadialMenuItems.swift */; };
-		7DC84ACB2CDE14C400903218 /* CircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC84ACA2CDE14C400903218 /* CircleView.swift */; };
+		7DA0064C2E0005C5008F232A /* CommonSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DA0064B2E0005C5008F232A /* CommonSettingsView.swift */; };
 		7DFFDCDE2CFDFCD800518066 /* SSRadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DFFDCDD2CFDFCD800518066 /* SSRadialMenuView.swift */; };
 		BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */; };
 		BCBEB58A297ED92F00C03B9C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCBEB589297ED92F00C03B9C /* Assets.xcassets */; };
@@ -24,13 +22,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		7D28060D2B23341A000820B9 /* MenuItemModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemModel.swift; sourceTree = "<group>"; };
+		7D106C322DFC445300096F04 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		7D4755E32B8CA7B800C4F67A /* LiquidFluidMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidFluidMenuView.swift; sourceTree = "<group>"; };
-		7D92371C2DF0740D00CBDA4E /* DebugInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugInfoView.swift; sourceTree = "<group>"; };
 		7D9237212DF0756A00CBDA4E /* Enum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enum.swift; sourceTree = "<group>"; };
 		7D9237232DF07B2F00CBDA4E /* RadialMenuItems.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialMenuItems.swift; sourceTree = "<group>"; };
-		7D9237242DF0756B00CBDA4E /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
-		7DC84ACA2CDE14C400903218 /* CircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleView.swift; sourceTree = "<group>"; };
+		7DA0064B2E0005C5008F232A /* CommonSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonSettingsView.swift; sourceTree = "<group>"; };
 		7DFFDCDD2CFDFCD800518066 /* SSRadialMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuView.swift; sourceTree = "<group>"; };
 		BCBEB582297ED92E00C03B9C /* SSRadialMenu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SSRadialMenu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSRadialMenuApp.swift; sourceTree = "<group>"; };
@@ -53,36 +49,38 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		7D28060C2B233409000820B9 /* Model */ = {
-			isa = PBXGroup;
-			children = (
-				7D28060D2B23341A000820B9 /* MenuItemModel.swift */,
-			);
-			path = Model;
-			sourceTree = "<group>";
-		};
 		7D9237172DF073DC00CBDA4E /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				7D106C322DFC445300096F04 /* Constants.swift */,
 				7D9237212DF0756A00CBDA4E /* Enum.swift */,
-				7D9237242DF0756B00CBDA4E /* Constants.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
 		};
-		7DC84AC92CDE14B700903218 /* CircleView */ = {
+		7DA0064D2E0008AB008F232A /* Demo */ = {
 			isa = PBXGroup;
 			children = (
-				7DC84ACA2CDE14C400903218 /* CircleView.swift */,
+				7DA0064F2E0008DC008F232A /* CommonViews */,
+				FD123ABD2B1234567892 /* FoodDemoView.swift */,
+				FD123ABC2B1234567891 /* CalendarDemoView.swift */,
+				FD123ABB2B1234567890 /* DemoSelectionView.swift */,
 			);
-			path = CircleView;
+			path = Demo;
+			sourceTree = "<group>";
+		};
+		7DA0064F2E0008DC008F232A /* CommonViews */ = {
+			isa = PBXGroup;
+			children = (
+				7DA0064B2E0005C5008F232A /* CommonSettingsView.swift */,
+			);
+			path = CommonViews;
 			sourceTree = "<group>";
 		};
 		7DFFDCDC2CFDFCC700518066 /* CircularView */ = {
 			isa = PBXGroup;
 			children = (
 				7D9237232DF07B2F00CBDA4E /* RadialMenuItems.swift */,
-				7D92371C2DF0740D00CBDA4E /* DebugInfoView.swift */,
 				7DFFDCDD2CFDFCD800518066 /* SSRadialMenuView.swift */,
 			);
 			path = CircularView;
@@ -107,14 +105,10 @@
 		BCBEB584297ED92E00C03B9C /* SSRadialMenu */ = {
 			isa = PBXGroup;
 			children = (
+				7DA0064D2E0008AB008F232A /* Demo */,
 				7D9237172DF073DC00CBDA4E /* Utilities */,
 				7DFFDCDC2CFDFCC700518066 /* CircularView */,
-				7DC84AC92CDE14B700903218 /* CircleView */,
-				7D28060C2B233409000820B9 /* Model */,
 				BCBEB585297ED92E00C03B9C /* SSRadialMenuApp.swift */,
-				FD123ABB2B1234567890 /* DemoSelectionView.swift */,
-				FD123ABC2B1234567891 /* CalendarDemoView.swift */,
-				FD123ABD2B1234567892 /* FoodDemoView.swift */,
 				BCBEB589297ED92F00C03B9C /* Assets.xcassets */,
 				BCBEB58B297ED92F00C03B9C /* SSRadialMenu.entitlements */,
 				BCBEB58C297ED92F00C03B9C /* Preview Content */,
@@ -201,18 +195,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7DC84ACB2CDE14C400903218 /* CircleView.swift in Sources */,
-				7D28060E2B23341A000820B9 /* MenuItemModel.swift in Sources */,
-				7D92371D2DF0740D00CBDA4E /* DebugInfoView.swift in Sources */,
 				7D9237222DF0756A00CBDA4E /* Enum.swift in Sources */,
-				7D9237232DF0756B00CBDA4E /* Constants.swift in Sources */,
 				7DFFDCDE2CFDFCD800518066 /* SSRadialMenuView.swift in Sources */,
+				7DA0064C2E0005C5008F232A /* CommonSettingsView.swift in Sources */,
 				BCBEB586297ED92E00C03B9C /* SSRadialMenuApp.swift in Sources */,
 				7D9237282DF1892500CBDA4E /* RadialMenuItems.swift in Sources */,
 				7D4755E42B8CA7B800C4F67A /* LiquidFluidMenuView.swift in Sources */,
 				FD123ABC2B1234567890 /* DemoSelectionView.swift in Sources */,
 				FD123ABD2B1234567891 /* CalendarDemoView.swift in Sources */,
 				FD123ABE2B1234567892 /* FoodDemoView.swift in Sources */,
+				7D106C332DFC445700096F04 /* Constants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

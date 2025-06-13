@@ -15,6 +15,21 @@ struct CalendarDemoView: View {
     @State private var selectedSubItem: RadialMenuItems? = nil
     @State private var selectedSubSubItem: RadialMenuItems? = nil
     
+    // UI state
+    @State private var showSettings = false
+    
+    // SSRadialMenu configuration parameters
+    @State private var alignment: AlignmentType = .bottomTrailing
+    @State private var mainCardSize: CGFloat = 55.0
+    @State private var spinsItemsDuringDrag: Bool = false
+    @State private var wrapEnabled: Bool = true
+    @State private var zoomEffectEnabled: Bool = true
+    @State private var zoomEffectScale: CGFloat = 1.1
+    @State private var zoomOpacityReduction: Double = 0.3
+    @State private var scrollThresholdItemCount: Int = 4
+    @State private var scrollingBehavior: ScrollingBehavior = .spinWheel
+    @State private var spinWheelSpeed: SpinWheelSpeed = .normal
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea(.all)
@@ -46,6 +61,29 @@ struct CalendarDemoView: View {
                     .buttonStyle(PlainButtonStyle())
                     
                     Spacer()
+                    
+                    Button(action: { showSettings.toggle() }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "gear.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                            
+                            Text("Settings")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            Capsule()
+                                .fill(Color.white.opacity(0.1))
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 .padding(.top, 50)
                 .padding(.horizontal, 20)
@@ -101,17 +139,18 @@ struct CalendarDemoView: View {
                 // Calendar radial menu
                 SSRadialMenu(
                     menuItems: calendarMenuItems,
-                    alignment: AlignmentType.bottomTrailing,
+                    alignment: alignment,
                     expandMenuIcon: "calendar.badge.plus",
                     collapseMenuIcon: "calendar.badge.minus",
-                    mainCardSize: 55.0,
-                    spinsItemsDuringDrag: false,
-                    wrapEnabled: true,
-                    zoomEffectEnabled: true,
-                    zoomEffectScale: 1.1,
-                    scrollThresholdItemCount: 4,
-                    scrollingBehavior: ScrollingBehavior.spinWheel,
-                    spinWheelSpeed: .normal,
+                    mainCardSize: mainCardSize,
+                    spinsItemsDuringDrag: spinsItemsDuringDrag,
+                    wrapEnabled: wrapEnabled,
+                    zoomEffectEnabled: zoomEffectEnabled,
+                    zoomEffectScale: zoomEffectScale,
+                    zoomOpacityReduction: zoomOpacityReduction,
+                    scrollThresholdItemCount: scrollThresholdItemCount,
+                    scrollingBehavior: scrollingBehavior,
+                    spinWheelSpeed: spinWheelSpeed,
                     onMainMenuSelection: { item in
                         selectedMainItem = item
                         selectedSubItem = nil // Reset sub selection when main changes
@@ -128,6 +167,37 @@ struct CalendarDemoView: View {
                 )
             }
         }
+        .overlay(
+            // Settings overlay
+            Group {
+                if showSettings {
+                    Color.black.opacity(0.7)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            showSettings = false
+                        }
+                    
+                    VStack {
+                        CommonSettingsView(
+                            alignment: $alignment,
+                            mainCardSize: $mainCardSize,
+                            spinsItemsDuringDrag: $spinsItemsDuringDrag,
+                            wrapEnabled: $wrapEnabled,
+                            zoomEffectEnabled: $zoomEffectEnabled,
+                            zoomEffectScale: $zoomEffectScale,
+                            zoomOpacityReduction: $zoomOpacityReduction,
+                            scrollThresholdItemCount: $scrollThresholdItemCount,
+                            scrollingBehavior: $scrollingBehavior,
+                            spinWheelSpeed: $spinWheelSpeed,
+                            theme: .calendar,
+                            onDismiss: { showSettings = false }
+                        )
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.clear)
+                }
+            }
+        )
     }
 }
 
