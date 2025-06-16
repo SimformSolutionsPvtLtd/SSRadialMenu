@@ -99,25 +99,50 @@ struct CommonSettingsView: View {
     }
     
     private var alignmentSection: some View {
-        CommonSettingsSection(title: "Alignment", theme: theme) {
-            VStack(spacing: 12) {
-                HStack {
-                    ForEach([AlignmentType.topLeading, .topTrailing], id: \.self) { option in
-                        CommonAlignmentButton(
-                            alignment: option,
-                            isSelected: alignment == option,
+        CommonSettingsSection(title: "Menu Alignment", theme: theme) {
+            VStack(spacing: 16) {
+                // Header description
+                Text("Choose where the radial menu button will appear")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .padding(.bottom, 4)
+                
+                // Alignment options in a grid
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        SimpleAlignmentButton(
+                            title: "Top Left",
+                            alignment: .topLeading,
+                            isSelected: alignment == .topLeading,
                             theme: theme,
-                            action: { alignment = option }
+                            action: { alignment = .topLeading }
+                        )
+                        
+                        SimpleAlignmentButton(
+                            title: "Top Right",
+                            alignment: .topTrailing,
+                            isSelected: alignment == .topTrailing,
+                            theme: theme,
+                            action: { alignment = .topTrailing }
                         )
                     }
-                }
-                HStack {
-                    ForEach([AlignmentType.bottomLeading, .bottomTrailing], id: \.self) { option in
-                        CommonAlignmentButton(
-                            alignment: option,
-                            isSelected: alignment == option,
+                    
+                    HStack(spacing: 12) {
+                        SimpleAlignmentButton(
+                            title: "Bottom Left",
+                            alignment: .bottomLeading,
+                            isSelected: alignment == .bottomLeading,
                             theme: theme,
-                            action: { alignment = option }
+                            action: { alignment = .bottomLeading }
+                        )
+                        
+                        SimpleAlignmentButton(
+                            title: "Bottom Right",
+                            alignment: .bottomTrailing,
+                            isSelected: alignment == .bottomTrailing,
+                            theme: theme,
+                            action: { alignment = .bottomTrailing }
                         )
                     }
                 }
@@ -295,7 +320,8 @@ struct CommonSettingsSection<Content: View>: View {
     }
 }
 
-struct CommonAlignmentButton: View {
+struct SimpleAlignmentButton: View {
+    let title: String
     let alignment: AlignmentType
     let isSelected: Bool
     let theme: SettingsTheme
@@ -303,47 +329,23 @@ struct CommonAlignmentButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
-                ZStack {
-                    Rectangle()
-                        .frame(width: 80, height: 50)
-                        .foregroundColor(.white.opacity(0.2))
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color.white.opacity(0.5), lineWidth: 1)
-                        )
-                    
-                    Circle()
-                        .frame(width: 12, height: 12)
-                        .foregroundColor(isSelected ? theme.accentColor : .white)
-                        .position(positionForAlignment(alignment))
-                }
-                
-                Text(textForAlignment(alignment))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(isSelected ? theme.accentColor : .white)
-            }
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(isSelected ? .black : theme.titleColor)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(isSelected ? theme.accentColor : Color.white.opacity(0.15))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(isSelected ? theme.accentColor : Color.white.opacity(0.3), lineWidth: 1)
+                )
         }
-        .scaleEffect(isSelected ? 1.1 : 1.0)
+        .scaleEffect(isSelected ? 1.02 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isSelected)
-    }
-    
-    private func positionForAlignment(_ alignment: AlignmentType) -> CGPoint {
-        switch alignment {
-        case .topLeading: return CGPoint(x: 20, y: 12.5)
-        case .topTrailing: return CGPoint(x: 60, y: 12.5)
-        case .bottomLeading: return CGPoint(x: 20, y: 37.5)
-        case .bottomTrailing: return CGPoint(x: 60, y: 37.5)
-        }
-    }
-    
-    private func textForAlignment(_ alignment: AlignmentType) -> String {
-        switch alignment {
-        case .topLeading: return "Top Left"
-        case .topTrailing: return "Top Right"
-        case .bottomLeading: return "Bottom Left"
-        case .bottomTrailing: return "Bottom Right"
-        }
     }
 }
 

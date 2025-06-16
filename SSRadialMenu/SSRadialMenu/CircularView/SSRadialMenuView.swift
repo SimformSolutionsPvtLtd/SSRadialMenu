@@ -5,6 +5,7 @@
 //  Created by Rishita Panchal on 02/12/24.
 import SwiftUI
 
+// MARK: - High-performance radial menu with multi-level navigation and smooth animations
 struct SSRadialMenu: View {
     let menuItems: [RadialMenuItems]
     var alignment: AlignmentType = .bottomTrailing
@@ -27,7 +28,7 @@ struct SSRadialMenu: View {
     let onSubMenuSelection: ((RadialMenuItems) -> Void)?
     let onSubSubMenuSelection: ((RadialMenuItems) -> Void)?
 
-    // Unified initializer for both SF Symbols and asset images
+    /// Creates a radial menu with customization options
     init(menuItems: [RadialMenuItems],
          alignment: AlignmentType = .bottomTrailing,
          expandMenuIcon: String? = nil,
@@ -67,44 +68,47 @@ struct SSRadialMenu: View {
         self.onSubSubMenuSelection = onSubSubMenuSelection
     }
 
-    // MARK: - Optimized State Management
-    
-    /// Consolidated state for all menu levels to reduce tuple overhead
+    // MARK: - Optimised State Management
+    /// Animation and interaction state for menu levels, It groups all the animation and interaction state variables for each menu level (main, sub, sub-sub) into a single, organized structure instead of having scattered individual @State variables.
     private struct MenuState {
         var rotation: Double = 0, startAngle: Double = 0
         var isDragging: Bool = false, scaleEffect: CGFloat = 1.0
         var animatedIndices: Set<Int> = [], momentumVelocity: Double = 0
-        var momentumTimer: Timer? = nil, isMomentumActive: Bool = false
+        var isMomentumActive: Bool = false
 
+        /// Resets all state to defaults
         mutating func reset() {
             (rotation, startAngle, isDragging, scaleEffect) = (0, 0, false, 1.0)
             animatedIndices.removeAll()
             stopMomentum()
         }
 
+        /// Stops momentum without affecting other properties
         mutating func stopMomentum() {
-            momentumTimer?.invalidate()
-            (momentumTimer, momentumVelocity, isMomentumActive) = (nil, 0, false)
+            (momentumVelocity, isMomentumActive) = (0, false)
         }
     }
 
-    /// Cache for frequently computed values to improve performance
+    /// Performance cache for computed values, The radial menu frequently needs to calculate which menu items are visible and their positions. Since these calculations involve complex trigonometry and array operations, caching the results dramatically improves performance.
     private struct ComputationCache {
         var lastMenuLevel: MenuLevel?, lastMainIndex: Int?, lastSubIndex: Int?
         var cachedVisibleItems: [(item: RadialMenuItems, index: Int, visualIndex: Int)] = []
         var cacheValidation: String = ""
 
+        /// Invalidates cache forcing fresh computation
         mutating func invalidate() {
             (lastMenuLevel, lastMainIndex, lastSubIndex, cacheValidation) = (nil, nil, nil, "")
             cachedVisibleItems.removeAll()
         }
 
+        /// Checks if cached data is valid for parameters
         func isValid(for menuLevel: MenuLevel, mainIndex: Int, subIndex: Int, rotation: Double) -> Bool {
             let currentValidation = "\(menuLevel)-\(mainIndex)-\(subIndex)-\(Int(rotation))"
             return lastMenuLevel == menuLevel && lastMainIndex == mainIndex && 
                    lastSubIndex == subIndex && cacheValidation == currentValidation
         }
 
+        /// Updates cache with fresh computation results
         mutating func update(for menuLevel: MenuLevel, mainIndex: Int, subIndex: Int, rotation: Double, items: [(item: RadialMenuItems, index: Int, visualIndex: Int)]) {
             (lastMenuLevel, lastMainIndex, lastSubIndex) = (menuLevel, mainIndex, subIndex)
             cacheValidation = "\(menuLevel)-\(mainIndex)-\(subIndex)-\(Int(rotation))"
@@ -129,6 +133,9 @@ struct SSRadialMenu: View {
     @State private var subMenuState = MenuState()
     @State private var subSubMenuState = MenuState()
     @State private var computationCache = ComputationCache()
+    
+    // DisplayLink-based momentum animation coordinator
+    @StateObject private var momentumCoordinator = MomentumAnimationCoordinator()
 
     // Constants - Pre-computed for better performance
     private let radius: CGFloat = LayoutConstants.primaryRadius
@@ -144,36 +151,21 @@ struct SSRadialMenu: View {
     private let fullCircle: Double = AngleConstants.fullCircle
     private let visibilityBufferMultiplier: Double = VisualConstants.visibilityBufferMultiplier
 
-    // Computed properties
+    /// Angular spacing between menu items
     var anglePerItem: Double { totalSpan / Double(maxVisibleItems - 1) }
 
-    // Public access to selected items
+    /// Currently selected main menu item
     var currentSelectedMainItem: RadialMenuItems? { selectedMainMenuItem }
+    
+    /// Currently selected sub menu item
     var currentSelectedSubItem: RadialMenuItems? { selectedSubMenuItem }
+    
+    /// Currently selected sub-sub menu item
     var currentSelectedSubSubItem: RadialMenuItems? { selectedSubSubMenuItem }
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea(.all)
-
-            /**
-                DebugInfoView(
-                    showMenuCards: showMenuCards,
-                    continuousRotation: mainMenuState.rotation,
-                    itemCount: menuItems.count,
-                    isMainMenuScrollingEnabled: isScrollingEnabled(menuLevel: .main),
-                    anglePerItem: anglePerItem,
-                    animatedIndicesCount: mainMenuState.animatedIndices.count,
-                    showingSubMenuForIndex: showingSubMenuForIndex,
-                    subMenuRotation: subMenuState.rotation,
-                    subMenuItemsCount: showingSubMenuForIndex != nil ? (menuItems[showingSubMenuForIndex!].subMenuItems?.count ?? 0) : 0,
-                    isSubMenuScrollingEnabled: { index in isScrollingEnabled(menuLevel: .sub, mainIndex: index) },
-                    rotateSubMenuToPreviousItem: { rotateMenu(.sub, direction: .previous) },
-                    rotateSubMenuToNextItem: { rotateMenu(.sub, direction: .next) },
-                    rotateToPreviousItem: { rotateMenu(.main, direction: .previous) },
-                    rotateToNextItem: { rotateMenu(.main, direction: .next) }
-                )
-            */
 
             GeometryReader { geometry in
                 ZStack {
@@ -198,9 +190,9 @@ struct SSRadialMenu: View {
     }
 }
 
-// Menu View Creation - UI-related view building functions:
+// MARK: - Menu View Creation - UI-related view building functions
 extension SSRadialMenu {
-    // FAB Button - Optimized with consolidated image/icon handling
+    /// Creates main FAB button with expand/collapse functionality
     @ViewBuilder
     private var mainFabButton: some View {
         Button(action: {
@@ -224,6 +216,7 @@ extension SSRadialMenu {
         .clipShape(Circle())
     }
     
+    /// Creates individual FAB icons with state transitions
     @ViewBuilder
     private func createFabIcon(isCollapse: Bool) -> some View {
         let (icon, image) = isCollapse ? (collapseMenuIcon, collapseMenuImage) : (expandMenuIcon, expandMenuImage)
@@ -243,14 +236,14 @@ extension SSRadialMenu {
         .scaleEffect(scale)
     }
 
-    // Unified menu view creation
+    /// Creates radial menu view for specific level with visual effects
     @ViewBuilder
     private func createMenuView(for menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> some View {
         let visibleItems = getVisibleItems(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
-        let currentAnimatedIndices = getCurrentAnimatedIndices(for: menuLevel)
+        let currentAnimatedIndices = animatingItemIndices(for: menuLevel)
         let currentRadius = getRadius(for: menuLevel)
-        let currentDragging = getCurrentDragging(for: menuLevel)
-        let currentScaleEffect = getCurrentScaleEffect(for: menuLevel)
+        let currentDragging = isMenuBeingDragged(for: menuLevel)
+        let currentScaleEffect = menuScaleEffect(for: menuLevel)
 
         ZStack {
             ForEach(Array(visibleItems.enumerated()), id: \.element.visualIndex) { _, item in
@@ -309,14 +302,14 @@ extension SSRadialMenu {
                                 (currentAnimatedIndices.contains(item.visualIndex) ? currentScaleEffect : VisualConstants.scaleEffectMinimal))
                     .opacity(finalOpacity)
                     .animation((currentDragging || isFastMomentum) ? .none : .spring(response: AnimationConstants.springResponseSlow, dampingFraction: AnimationConstants.springAnimationDamping), value: currentAnimatedIndices)
-                    .animation((currentDragging || isFastMomentum) ? .none : .linear(duration: AnimationConstants.fadeOutDuration), value: getCurrentRotation(for: menuLevel))
+                    .animation((currentDragging || isFastMomentum) ? .none : .linear(duration: AnimationConstants.fadeOutDuration), value: menuRotation(for: menuLevel))
                     .animation((currentDragging || isFastMomentum) ? .none : .spring(response: AnimationConstants.springAnimationResponse, dampingFraction: AnimationConstants.springAnimationDamping), value: currentScaleEffect)
                     .animation(zoomEffectEnabled && zoomEffectScale != 0 ?
                               .spring(response: 0.3, dampingFraction: 0.6) : .none, value: zoomedItemIndex)
                     .onTapGesture {
                         handleItemTap(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex, itemIndex: item.index, item: item.item)
                     }
-                    .onChange(of: itemAngle) { _ in
+                    .onChange(of: itemAngle) {
                         if menuLevel == .main && isCardNearTriangle(itemAngle) {
                             selectedItemName = item.item.name
                         }
@@ -328,12 +321,11 @@ extension SSRadialMenu {
     }
 }
 
-// MenuCard Component - Optimized card view builder
+// MARK: - MenuCard Component - Optimized card view builder
 extension SSRadialMenu {
-    @ViewBuilder
+    /// Creates menu cards with icons, images, and badges
     func MenuCard(item: RadialMenuItems, itemNumber: Int? = nil, hierarchicalIndex: String? = nil, cardSize: CGFloat = 55) -> some View {
         ZStack {
-            // Support both SF Symbols (via icon) and asset images (via image)
             if let imageName = item.image {
                 Image(imageName)
                     .resizable()
@@ -368,6 +360,7 @@ extension SSRadialMenu {
         }
     }
     
+    /// Calculates badge sizing based on hierarchy level
     private func calculateBadgeMetrics(cardSize: CGFloat, hierarchicalIndex: String?) -> (fontSize: CGFloat, badgeSize: CGFloat) {
         let levelCount = hierarchicalIndex?.components(separatedBy: ".").count ?? 1
         
@@ -386,8 +379,9 @@ extension SSRadialMenu {
     }
 }
 
-// Menu Configuration & Scrolling - Functions related to menu setup and scrolling behavior.
+// MARK: - Menu Configuration & Scrolling - Functions related to menu setup and scrolling behavior
 extension SSRadialMenu {
+    /// Determines if scrolling should be enabled for menu level
     private func isScrollingEnabled(menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Bool {
         switch menuLevel {
         case .main:
@@ -405,12 +399,14 @@ extension SSRadialMenu {
         }
     }
 
+    /// Calculates effective angular span for menu items
     private func getEffectiveSpan(itemCount: Int, isScrollable: Bool) -> Double {
         return isScrollable ? totalSpan : min(AngleConstants.totalSpan, Double(itemCount - 1) * anglePerItem)
     }
 
+    /// Gets visible items with caching for performance, Calculates which menu items are currently visible based on rotation, handles scrolling logic, and optimises performance through caching.
     private func getVisibleItems(for menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> [(item: RadialMenuItems, index: Int, visualIndex: Int)] {
-        let currentRotation = getCachedRotation(for: menuLevel)
+        let currentRotation = viewportRotation(for: menuLevel)
 
         // Check cache validity
         if computationCache.isValid(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex, rotation: currentRotation) {
@@ -471,6 +467,7 @@ extension SSRadialMenu {
         return result
     }
 
+    /// Proper modulo operation for negative numbers
     private func modulo(_ a: Int, _ b: Int) -> Int {
         // This function should only be called when wrapEnabled is true
         // Proper modulo operation that handles negative numbers correctly
@@ -479,26 +476,51 @@ extension SSRadialMenu {
     }
 }
 
-// Visibility & Opacity Calculations - Optimized functions with consolidated calculations
+// MARK: - Visibility & Opacity Calculations - Optimised functions with consolidated calculations
 extension SSRadialMenu {
-    @inline(__always) private func getCachedRotation(for menuLevel: MenuLevel) -> Double { getCurrentRotation(for: menuLevel) }
-    @inline(__always) private func getCurrentRotation(for menuLevel: MenuLevel) -> Double { getMenuState(for: menuLevel).rotation }
-    @inline(__always) private func getCurrentAnimatedIndices(for menuLevel: MenuLevel) -> Set<Int> { getMenuState(for: menuLevel).animatedIndices }
-    @inline(__always) private func getCurrentDragging(for menuLevel: MenuLevel) -> Bool { getMenuState(for: menuLevel).isDragging }
-    @inline(__always) private func getCurrentScaleEffect(for menuLevel: MenuLevel) -> CGFloat { getMenuState(for: menuLevel).scaleEffect }
+    // MARK: - Menu State Accessors
+    /// High-frequency state accessors for animation and interaction properties
+    /// These functions provide centralized access to menu state properties during animations
+    
+    /// Retrieves the current rotation angle for the specified menu level
+    private func menuRotation(for menuLevel: MenuLevel) -> Double {
+        return getMenuState(for: menuLevel).rotation
+    }
+    
+    /// Gets the rotation angle for viewport calculations (cached for performance)
+    private func viewportRotation(for menuLevel: MenuLevel) -> Double {
+        return menuRotation(for: menuLevel)
+    }
+    
+    /// Retrieves the set of currently animating menu item indices
+    private func animatingItemIndices(for menuLevel: MenuLevel) -> Set<Int> {
+        return getMenuState(for: menuLevel).animatedIndices
+    }
+    
+    /// Checks if the menu level is currently being dragged by user interaction
+    private func isMenuBeingDragged(for menuLevel: MenuLevel) -> Bool {
+        return getMenuState(for: menuLevel).isDragging
+    }
+    
+    /// Gets the current scale effect applied to the menu level
+    private func menuScaleEffect(for menuLevel: MenuLevel) -> CGFloat {
+        return getMenuState(for: menuLevel).scaleEffect
+    }
 
+    /// Determines if item should be visible based on angular position in viewport
     private func shouldItemBeVisible(visualIndex: Int, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Bool {
         guard isScrollingEnabled(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) else { return true }
         
-        let itemRotation = Double(visualIndex) * anglePerItem - getCachedRotation(for: menuLevel)
+        let itemRotation = Double(visualIndex) * anglePerItem - viewportRotation(for: menuLevel)
         let normalizedRotation = ((itemRotation + halfCircle).truncatingRemainder(dividingBy: fullCircle)) - halfCircle
         return abs(normalizedRotation) <= (totalSpan / 2) + (anglePerItem * visibilityBufferMultiplier)
     }
 
+    /// Calculates opacity for smooth fade effects at viewport edges
     private func getItemOpacity(visualIndex: Int, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Double {
         guard isScrollingEnabled(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) else { return 1.0 }
         
-        let itemRotation = Double(visualIndex) * anglePerItem - getCachedRotation(for: menuLevel)
+        let itemRotation = Double(visualIndex) * anglePerItem - viewportRotation(for: menuLevel)
         let normalizedRotation = ((itemRotation + halfCircle).truncatingRemainder(dividingBy: fullCircle)) - halfCircle
         let distance = abs(normalizedRotation)
         let coreDistance = totalSpan / 2
@@ -509,6 +531,7 @@ extension SSRadialMenu {
                VisualConstants.opacityHidden
     }
 
+    /// Calculates progressive opacity during entrance animations
     private func calculateProgressiveOpacity(startPosition: CGPoint, endPosition: CGPoint, currentPosition: CGPoint, isAnimated: Bool) -> Double {
         guard isAnimated else { return 0.0 }
         let totalDistance = hypot(endPosition.x - startPosition.x, endPosition.y - startPosition.y)
@@ -517,9 +540,10 @@ extension SSRadialMenu {
     }
 }
 
-// Menu Level Helper Functions - Optimized helper functions with consolidated accessors
+// MARK: - Menu Level Helper Functions - Optimized helper functions with consolidated accessors
 extension SSRadialMenu {
     // MARK: - Optimized State Access
+    /// Gets MenuState for specified menu level
     private func getMenuState(for menuLevel: MenuLevel) -> MenuState {
         switch menuLevel {
         case .main: return mainMenuState
@@ -528,6 +552,7 @@ extension SSRadialMenu {
         }
     }
 
+    /// Updates MenuState for specified level using closure
     private func updateMenuState(for menuLevel: MenuLevel, _ updateBlock: (inout MenuState) -> Void) {
         switch menuLevel {
         case .main: updateBlock(&mainMenuState)
@@ -537,13 +562,16 @@ extension SSRadialMenu {
     }
 
     // Consolidated helper methods using computed properties for better performance
+    /// Determines if zoom effect should be applied to item
     private func shouldApplyZoomEffect(menuLevel: MenuLevel, itemIndex: Int) -> Bool {
         zoomEffectEnabled && zoomEffectScale != 0 && menuLevel == .main && zoomedItemIndex == itemIndex
     }
 
+    /// Gets zoom scale factor for selected items
     private func getZoomScale() -> CGFloat { zoomEffectScale ?? VisualConstants.scaleEffectZoomed }
 
-    @inline(__always) private func getRadius(for menuLevel: MenuLevel) -> CGFloat {
+    /// Gets circular radius for specified menu level
+    private func getRadius(for menuLevel: MenuLevel) -> CGFloat {
         switch menuLevel {
         case .main: return radius
         case .sub: return subMenuRadius
@@ -551,7 +579,8 @@ extension SSRadialMenu {
         }
     }
 
-    @inline(__always) private func getCardSize(for menuLevel: MenuLevel) -> CGFloat {
+    /// Gets card size for specified menu level
+    private func getCardSize(for menuLevel: MenuLevel) -> CGFloat {
         switch menuLevel {
         case .main: return mainCardSize
         case .sub: return mainCardSize * subCardSizeMultiplier
@@ -559,6 +588,7 @@ extension SSRadialMenu {
         }
     }
 
+    /// Generates hierarchical index string for sub-menu items
     private func getHierarchicalIndex(menuLevel: MenuLevel, mainIndex: Int, subIndex: Int, itemIndex: Int) -> String? {
         switch menuLevel {
         case .main: return nil
@@ -568,8 +598,9 @@ extension SSRadialMenu {
     }
 }
 
-// Item Properties & Position Calculations - Functions for calculating item properties and positions:
+// MARK: - Item Properties & Position Calculations - Functions for calculating item properties and positions
 extension SSRadialMenu {
+    /// Calculates rotation, angle, and opacity properties for menu item
     private func calculateItemProperties(for item: (item: RadialMenuItems, index: Int, visualIndex: Int), menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> (rotation: Double, angle: Double, opacity: Double) {
         if !isScrollingEnabled(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) {
             let staticItemRotation = Double(item.index) * anglePerItem
@@ -577,7 +608,7 @@ extension SSRadialMenu {
             return (staticItemRotation, staticItemAngle, 1.0)
         }
 
-        let currentRotation = getCurrentRotation(for: menuLevel)
+        let currentRotation = menuRotation(for: menuLevel)
         let itemRotation = Double(item.visualIndex) * anglePerItem - currentRotation
         let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
         let opacity = getItemOpacity(visualIndex: item.visualIndex, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
@@ -585,7 +616,7 @@ extension SSRadialMenu {
         return (itemRotation, itemAngle, opacity)
     }
 
-    // Unified initial position calculation for smooth circular flow
+    /// Calculates initial position for items during entrance animations. Used during scrolling, when items need to appear/disappear with directional flow. 
     private func getInitialPosition(for item: (item: RadialMenuItems, index: Int, visualIndex: Int), menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> CGPoint {
         // Check if we're in momentum mode (spinWheel with active momentum)
         let isMomentumActive = getMomentumActive(for: menuLevel)
@@ -593,7 +624,7 @@ extension SSRadialMenu {
         
         // For momentum/spinWheel mode, items should appear directly at their final position with exact radius
         if isMomentumActive && isSpinWheelMode {
-            let currentRotation = getCurrentRotation(for: menuLevel)
+            let currentRotation = menuRotation(for: menuLevel)
             let itemRotation = Double(item.visualIndex) * anglePerItem - currentRotation
             let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
             let itemRadius = getRadius(for: menuLevel) // Use exact radius, no modifications
@@ -605,7 +636,7 @@ extension SSRadialMenu {
         }
         
         // For non-momentum scenarios, calculate natural entry position
-        let currentRotation = getCurrentRotation(for: menuLevel)
+        let currentRotation = menuRotation(for: menuLevel)
         let itemRotation = Double(item.visualIndex) * anglePerItem - currentRotation
         let itemAngle = alignment.itemAngleForCarousel(rotation: itemRotation)
         let itemRadius = getRadius(for: menuLevel)
@@ -654,6 +685,16 @@ extension SSRadialMenu {
         }
     }
 
+    /**
+     * Provides default initial positions for menu levels when specific item positioning isn't needed.
+     * Used for Menu opening/closing, fallback scenarios, non-scrolling contexts
+     *
+     * - Parameters:
+     *   - menuLevel: Which menu level to get default position for
+     *   - mainIndex: Index for sub-menu context
+     *   - subIndex: Index for sub-sub-menu context
+     * - Returns: Default CGPoint for the menu level
+     */
     private func getDefaultInitialPosition(for menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> CGPoint {
         switch menuLevel {
         case .main:
@@ -664,7 +705,7 @@ extension SSRadialMenu {
         case .subSub:
             let parentSubMenuAngle: Double = {
                 if isScrollingEnabled(menuLevel: .sub, mainIndex: mainIndex) {
-                    let subItemRotation = Double(subIndex) * anglePerItem - getCurrentRotation(for: .sub)
+                    let subItemRotation = Double(subIndex) * anglePerItem - menuRotation(for: .sub)
                     return alignment.itemAngleForCarousel(rotation: subItemRotation)
                 } else {
                     let staticSubItemRotation = Double(subIndex) * anglePerItem
@@ -675,6 +716,13 @@ extension SSRadialMenu {
         }
     }
 
+    /**
+     * Calculates the fixed angle for a main menu item.
+     * Used for consistent positioning of sub-menu anchor points.
+     * 
+     * - Parameter itemIndex: Index of the main menu item
+     * - Returns: Angle in degrees for the item's position
+     */
     private func getFixedMainItemAngle(for itemIndex: Int) -> Double {
         let baseVisualIndex = itemIndex
         let itemRotation = Double(baseVisualIndex) * anglePerItem
@@ -682,8 +730,27 @@ extension SSRadialMenu {
     }
 }
 
-// Drag Gesture Handling - Functions for handling drag gestures and momentum:
+// MARK: - Drag Gesture Handling - Functions for handling drag gestures and momentum
 extension SSRadialMenu {
+    /**
+     * Creates a conditional drag gesture for menu levels that support scrolling.
+     * 
+     * The gesture is only enabled when:
+     * - The menu level has enough items to require scrolling
+     * - No child menus are currently open (prevents conflicting gestures)
+     * 
+     * Features:
+     * - Immediate momentum cancellation when user starts dragging
+     * - Speed-sensitive drag calculations for spin wheel behavior
+     * - Boundary clamping when wrap is disabled
+     * - Smooth momentum continuation on gesture end
+     * 
+     * - Parameters:
+     *   - menuLevel: Which menu level to create gesture for
+     *   - mainIndex: Context index for sub-menu gestures
+     *   - subIndex: Context index for sub-sub-menu gestures
+     * - Returns: Optional AnyGesture that handles the drag interactions
+     */
     private func createConditionalDragGesture(for menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> AnyGesture<DragGesture.Value>? {
         let shouldEnableDrag = {
             switch menuLevel {
@@ -728,7 +795,7 @@ extension SSRadialMenu {
             }
             .onEnded { value in
                 setDragging(for: menuLevel, value: false)
-                updateStartAngle(for: menuLevel, value: getCurrentRotation(for: menuLevel))
+                updateStartAngle(for: menuLevel, value: menuRotation(for: menuLevel))
 
                 // Much more controlled momentum handling for very smooth gestures
                 let velocity = value.velocity.width
@@ -746,7 +813,7 @@ extension SSRadialMenu {
             })
     }
 
-    // Optimized momentum handling for smooth response
+    /// Processes drag momentum for appropriate animation response
     private func handleDragMomentum(velocity: CGFloat, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
         guard abs(velocity) > 0.1 else {
             updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
@@ -776,91 +843,114 @@ extension SSRadialMenu {
         }
     }
     
+    /// Applies simple momentum animation with smooth easing
     private func applySimpleMomentum(velocity: CGFloat, menuLevel: MenuLevel, calculateClampedRotation: (Double) -> Double) {
         let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.001 * spinWheelSpeed.speedMultiplier)
-        let newRotation = calculateClampedRotation(getCurrentRotation(for: menuLevel) + momentumRotation)
+        let newRotation = calculateClampedRotation(menuRotation(for: menuLevel) + momentumRotation)
         
         withAnimation(.easeOut(duration: AnimationConstants.momentumDuration)) {
             updateRotation(for: menuLevel, value: newRotation)
             updateStartAngle(for: menuLevel, value: newRotation)
         }
         
-        Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumUpdateDelay, repeats: false) { _ in
+        DispatchQueue.main.asyncAfter(deadline: .now() + AnimationConstants.momentumUpdateDelay) {
             self.updateVisibleItemsAnimation(for: menuLevel, mainIndex: 0, subIndex: 0)
         }
     }
     
+    /// Applies controlled momentum with spring animation
     private func applyControlledMomentum(velocity: CGFloat, menuLevel: MenuLevel, calculateClampedRotation: (Double) -> Double) {
         let momentumRotation = alignment.calculateMomentumRotation(velocity: velocity, factor: 0.004 * spinWheelSpeed.speedMultiplier)
-        let newRotation = calculateClampedRotation(getCurrentRotation(for: menuLevel) + momentumRotation)
+        let newRotation = calculateClampedRotation(menuRotation(for: menuLevel) + momentumRotation)
         
         withAnimation(.spring(response: 1.0, dampingFraction: 0.85, blendDuration: 0)) {
             updateRotation(for: menuLevel, value: newRotation)
             updateStartAngle(for: menuLevel, value: newRotation)
         }
         
-        Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             self.updateVisibleItemsAnimation(for: menuLevel, mainIndex: 0, subIndex: 0)
         }
     }
-    }
+}
 
-// State Management - Optimized functions for managing state across menu levels
+// MARK: - State Management - Optimized functions for managing state across menu levels
 extension SSRadialMenu {
-    // Unified state property access
+    /// Updates MenuState property using KeyPath for type safety
     private func updateMenuProperty<T>(for menuLevel: MenuLevel, keyPath: WritableKeyPath<MenuState, T>, value: T) {
         updateMenuState(for: menuLevel) { state in
             state[keyPath: keyPath] = value
         }
     }
     
+    /// Gets MenuState property using KeyPath for type safety
     private func getMenuProperty<T>(for menuLevel: MenuLevel, keyPath: KeyPath<MenuState, T>) -> T {
         return getMenuState(for: menuLevel)[keyPath: keyPath]
     }
 
-    // Simplified state accessors using the unified system
+    /// Sets dragging state for menu level
     private func setDragging(for menuLevel: MenuLevel, value: Bool) {
         updateMenuProperty(for: menuLevel, keyPath: \.isDragging, value: value)
     }
 
+    /// Updates rotation angle and invalidates computation cache
     private func updateRotation(for menuLevel: MenuLevel, value: Double) {
         updateMenuProperty(for: menuLevel, keyPath: \.rotation, value: value)
         computationCache.invalidate()
     }
 
+    /// Gets starting angle for drag calculations
     private func getStartAngle(for menuLevel: MenuLevel) -> Double {
         getMenuProperty(for: menuLevel, keyPath: \.startAngle)
     }
 
+    /**
+     * Updates the starting angle after drag operations complete.
+     * Sets new baseline for future drag calculations.
+     */
     private func updateStartAngle(for menuLevel: MenuLevel, value: Double) {
         updateMenuProperty(for: menuLevel, keyPath: \.startAngle, value: value)
     }
 
+    /**
+     * Updates momentum velocity for continuous spinning animations.
+     * Used by the DisplayLink-based momentum system.
+     */
     private func updateMomentumVelocity(for menuLevel: MenuLevel, velocity: Double) {
         updateMenuProperty(for: menuLevel, keyPath: \.momentumVelocity, value: velocity)
     }
 
+    /**
+     * Gets current momentum velocity for frame-based updates.
+     * Used in momentum decay calculations.
+     */
     private func getMomentumVelocity(for menuLevel: MenuLevel) -> Double {
         getMenuProperty(for: menuLevel, keyPath: \.momentumVelocity)
     }
 
-    private func updateMomentumTimer(for menuLevel: MenuLevel, timer: Timer?) {
-        updateMenuProperty(for: menuLevel, keyPath: \.momentumTimer, value: timer)
-    }
-
-    private func getMomentumTimer(for menuLevel: MenuLevel) -> Timer? {
-        getMenuProperty(for: menuLevel, keyPath: \.momentumTimer)
-    }
-
+    /**
+     * Sets whether momentum animation is currently active.
+     * Controls DisplayLink activation and momentum-specific behaviors.
+     */
     private func setMomentumActive(for menuLevel: MenuLevel, value: Bool) {
         updateMenuProperty(for: menuLevel, keyPath: \.isMomentumActive, value: value)
     }
 
+    /**
+     * Gets whether momentum animation is currently active.
+     * Used for conditional logic in positioning and animation systems.
+     */
     private func getMomentumActive(for menuLevel: MenuLevel) -> Bool {
         getMenuProperty(for: menuLevel, keyPath: \.isMomentumActive)
     }
 
     // Unified menu control functions
+    /**
+     * Closes a menu level and all its child levels.
+     * Handles cascade closing, state cleanup, and zoom effect reset.
+     * 
+     * - Parameter level: Menu level to close (.main, .sub, .subSub)
+     */
     private func closeMenu(level: MenuLevel) {
         stopMomentum(for: level)
         
@@ -881,9 +971,13 @@ extension SSRadialMenu {
         }
     }
     
+    /// Closes sub-menu level
     private func closeSubMenu() { closeMenu(level: .sub) }
+    
+    /// Closes sub-sub-menu level
     private func closeSubSubMenu() { closeMenu(level: .subSub) }
 
+    /// Resets scroll positions for all menu levels
     private func resetAllScrollPositions() {
         [MenuLevel.main, .sub, .subSub].forEach { level in
             stopMomentum(for: level)
@@ -895,23 +989,20 @@ extension SSRadialMenu {
         }
     }
 
-    // MARK: - Optimized Momentum Functions
-
-    // Start continuous momentum animation for spin wheel effect with spring-like behavior
+    /// Initiates continuous momentum animation for spin wheel behavior
     private func startContinuousMomentum(velocity: Double, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
         let enhancedVelocity = velocity * 2.0 * spinWheelSpeed.speedMultiplier
         updateMomentumVelocity(for: menuLevel, velocity: enhancedVelocity)
         setMomentumActive(for: menuLevel, value: true)
         updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
 
-        let timer = Timer.scheduledTimer(withTimeInterval: AnimationConstants.momentumFrameRate, repeats: true) { timer in
-            self.updateMomentumFrame(timer: timer, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+        momentumCoordinator.startMomentumAnimation {
+            self.updateMomentumFrame(menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
         }
-        updateMomentumTimer(for: menuLevel, timer: timer)
     }
 
-    // Optimized momentum frame update with consolidated boundary and velocity handling
-    private func updateMomentumFrame(timer: Timer, menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
+    /// Updates momentum animation on each display frame
+    private func updateMomentumFrame(menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
         let currentVelocity = getMomentumVelocity(for: menuLevel)
         
         guard abs(currentVelocity) >= AnimationConstants.momentumMinimumVelocity else {
@@ -920,7 +1011,7 @@ extension SSRadialMenu {
             return
         }
 
-        let currentRotation = getCurrentRotation(for: menuLevel)
+        let currentRotation = menuRotation(for: menuLevel)
         var newRotation = currentRotation + (currentVelocity * AnimationConstants.momentumSmoothness * spinWheelSpeed.speedMultiplier)
 
         // Consolidated boundary checking and momentum stopping
@@ -948,12 +1039,13 @@ extension SSRadialMenu {
         updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
     }
 
-    // Stop momentum animation
+    /// Stops momentum animation and cleans up state
     private func stopMomentum(for menuLevel: MenuLevel) {
         updateMenuState(for: menuLevel) { state in state.stopMomentum() }
+        momentumCoordinator.stopMomentumAnimation()
     }
 
-    // Helper function to get the item count for the current menu level
+    /// Gets total number of items for menu level
     private func getItemCountForMenu(menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) -> Int {
         switch menuLevel {
         case .main:
@@ -971,8 +1063,9 @@ extension SSRadialMenu {
     }
 }
 
-// Item Tap Handling - Optimized functions for handling item taps
+// MARK: - Item Tap Handling - Optimized functions for handling item taps
 extension SSRadialMenu {
+    /// Routes item tap events to appropriate handlers
     private func handleItemTap(menuLevel: MenuLevel, mainIndex: Int, subIndex: Int, itemIndex: Int, item: RadialMenuItems) {
         switch menuLevel {
         case .main: handleMainItemTap(index: itemIndex, item: item)
@@ -981,6 +1074,7 @@ extension SSRadialMenu {
         }
     }
 
+    /// Executes item selection with callback notification
     private func executeItemSelection(item: RadialMenuItems, menuLevel: MenuLevel) {
         // Update selection tracking
         switch menuLevel {
@@ -1000,6 +1094,19 @@ extension SSRadialMenu {
         selectedItemName = item.name
     }
 
+    /**
+     * Handles tap events on main menu items.
+     * 
+     * Manages:
+     * - Sub-menu opening/closing logic
+     * - Zoom effect application
+     * - Selection tracking and callbacks
+     * - Animation state transitions
+     * 
+     * - Parameters:
+     *   - index: Index of the tapped main menu item
+     *   - item: The RadialMenuItems object that was tapped
+     */
     private func handleMainItemTap(index: Int, item: RadialMenuItems) {
         // Handle existing submenu closure
         if let currentOpen = showingSubMenuForIndex {
@@ -1026,6 +1133,16 @@ extension SSRadialMenu {
         }
     }
 
+    /**
+     * Handles tap events on sub-menu items.
+     * 
+     * Manages sub-sub-menu opening/closing and proper state cleanup.
+     * 
+     * - Parameters:
+     *   - mainIndex: Index of the parent main menu item
+     *   - subIndex: Index of the tapped sub menu item
+     *   - item: The RadialMenuItems object that was tapped
+     */
     private func handleSubItemTap(mainIndex: Int, subIndex: Int, item: RadialMenuItems) {
         // Handle existing sub-submenu closure
         if let currentOpen = showingSubSubMenuForIndex {
@@ -1043,14 +1160,16 @@ extension SSRadialMenu {
         }
     }
 
+    /// Handles tap events on sub-sub-menu items
     private func handleSubSubItemTap(item: RadialMenuItems) {
         executeItemSelection(item: item, menuLevel: .subSub)
         closeSubSubMenu()
     }
 }
 
-// Animation Management - Optimized functions for managing animations
+// MARK: - Animation Management - Optimised functions for managing animations
 extension SSRadialMenu {
+    /// Starts sequential entrance animation for menu items
     private func startSequentialAnimation(for menuLevel: MenuLevel, itemCount: Int) {
         updateMenuProperty(for: menuLevel, keyPath: \.animatedIndices, value: Set<Int>())
         
@@ -1063,7 +1182,7 @@ extension SSRadialMenu {
             let delay = sequenceIndex < 5 ? Double(sequenceIndex) * AnimationConstants.itemSequenceDelay : 0.01
             let animation: Animation? = sequenceIndex < 5 ? .spring(response: AnimationConstants.springAnimationResponse, dampingFraction: AnimationConstants.springAnimationDamping) : nil
             
-            Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                 if let animation = animation {
                     withAnimation(animation) { self.modifyAnimatedIndices(visualIndex: item.visualIndex, menuLevel: menuLevel, operation: .insert) }
                 } else {
@@ -1073,8 +1192,10 @@ extension SSRadialMenu {
         }
     }
 
+    /// Operations for animated indices set
     private enum AnimationOperation { case insert, remove }
     
+    /// Safely modifies animated indices set for menu level
     private func modifyAnimatedIndices(visualIndex: Int, menuLevel: MenuLevel, operation: AnimationOperation) {
         updateMenuState(for: menuLevel) { state in
             switch operation {
@@ -1084,14 +1205,14 @@ extension SSRadialMenu {
         }
     }
 
-    // Unified visibility animation updates with momentum handling
+    /// Updates which items should be animated based on visibility
     private func updateVisibleItemsAnimation(for menuLevel: MenuLevel, mainIndex: Int = 0, subIndex: Int = 0) {
         let newAnimatedIndices = Set(getVisibleItems(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
             .filter { shouldItemBeVisible(visualIndex: $0.visualIndex, menuLevel: menuLevel, mainIndex: mainIndex, subIndex: subIndex) }
             .map { $0.visualIndex })
         
-        let currentAnimatedIndices = getCurrentAnimatedIndices(for: menuLevel)
-        let isSilentUpdate = getCurrentDragging(for: menuLevel) || (getMomentumActive(for: menuLevel) && scrollingBehavior == .spinWheel)
+        let currentAnimatedIndices = animatingItemIndices(for: menuLevel)
+        let isSilentUpdate = isMenuBeingDragged(for: menuLevel) || (getMomentumActive(for: menuLevel) && scrollingBehavior == .spinWheel)
         
         let (toAdd, toRemove) = (newAnimatedIndices.subtracting(currentAnimatedIndices), currentAnimatedIndices.subtracting(newAnimatedIndices))
         
@@ -1110,10 +1231,11 @@ extension SSRadialMenu {
     }
 }
 
-// Menu Details & Card Detection - Optimized functions for menu details and card detection
+// MARK: - Menu Details & Card Detection - Optimised functions for menu details and card detection
 extension SSRadialMenu {
+    /// Updates selected item name based on closest card to indicator
     private func updateMenuDetailsForCarousel() {
-        let currentRotation = getCachedRotation(for: .main)
+        let currentRotation = viewportRotation(for: .main)
         let closestItem = getVisibleItems(for: .main)
             .filter { shouldItemBeVisible(visualIndex: $0.visualIndex, menuLevel: .main) }
             .compactMap { item -> (item: RadialMenuItems, distance: Double)? in
@@ -1126,6 +1248,7 @@ extension SSRadialMenu {
         if let item = closestItem { selectedItemName = item.item.name }
     }
 
+    /// Determines if card is positioned near selection indicator
     private func isCardNearTriangle(_ itemAngle: Double) -> Bool {
         let triangleAngle = AngleConstants.quarterCircle * 3
         let threshold = AngleConstants.triangleDetectionThreshold
@@ -1135,11 +1258,12 @@ extension SSRadialMenu {
     }
 }
 
-// Menu Rotation Controls - Optimized functions for rotating menus
+// MARK: - Menu Rotation Controls - Optimised functions for rotating menus
 extension SSRadialMenu {
+    /// Rotates menu level by one item position in specified direction
     private func rotateMenu(_ menuLevel: MenuLevel, direction: RotationDirection) {
         let rotationChange = direction == .next ? anglePerItem : -anglePerItem
-        let currentRotation = getCurrentRotation(for: menuLevel)
+        let currentRotation = menuRotation(for: menuLevel)
         var newRotation = currentRotation + rotationChange
 
         let (mainIndex, subIndex) = menuLevel == .main ? (0, 0) : 
@@ -1165,5 +1289,39 @@ extension SSRadialMenu {
         }
 
         updateVisibleItemsAnimation(for: menuLevel, mainIndex: mainIndex, subIndex: subIndex)
+    }
+}
+
+// MARK: - DisplayLink-based Animation Coordinator
+
+/// Manages DisplayLink-based momentum animations for smooth scrolling
+class MomentumAnimationCoordinator: ObservableObject {
+    private var displayLink: CADisplayLink?
+    private var momentumUpdateCallback: (() -> Void)?
+
+    /// Starts 60fps momentum animation
+    func startMomentumAnimation(callback: @escaping () -> Void) {
+        stopMomentumAnimation()
+        momentumUpdateCallback = callback
+
+        displayLink = CADisplayLink(target: self, selector: #selector(updateMomentum))
+        displayLink?.add(to: .main, forMode: .common)
+    }
+
+    /// Stops momentum animation and cleans up resources
+    func stopMomentumAnimation() {
+        displayLink?.invalidate()
+        displayLink = nil
+        momentumUpdateCallback = nil
+    }
+
+    /// DisplayLink callback for frame updates
+    @objc private func updateMomentum() {
+        momentumUpdateCallback?()
+    }
+
+    /// Cleanup on deallocation
+    deinit {
+        stopMomentumAnimation()
     }
 }
