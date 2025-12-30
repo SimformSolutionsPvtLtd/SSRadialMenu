@@ -1,4 +1,4 @@
-![](SSRadialMenu/SSRadialMenu/Resoruce/SSRadialMenu.png)
+![](SSRadialMenu/SSRadialMenu/Resource/SSRadialMenu.png)
 # SSRadialMenu
 
 A highly customizable, performance-optimized SwiftUI radial menu component with support for hierarchical navigation, smooth animations, and advanced interaction patterns.
@@ -55,10 +55,10 @@ struct ContentView: View {
 ## Example
 
 ### 1. Calendar menu demo - 
-![](SSRadialMenu/SSRadialMenu/Resoruce/Demo_1.gif)
+![](SSRadialMenu/SSRadialMenu/Resource/Demo_1.gif)
 
 ### 2. Food menu demo - 
-![](SSRadialMenu/SSRadialMenu/Resoruce/Demo_2.gif)
+![](SSRadialMenu/SSRadialMenu/Resource/Demo_2.gif)
 
 ## Installation
 
